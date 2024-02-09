@@ -1,0 +1,17 @@
+Characters vs Identifiers
+
+When the lexer encounters a letter (a-z), it can be sure that is is either a keyword or an identifier.
+
+This is because when a string boundary expressions is encountered, all letters contained within the string expression will be turned into characters (char) all at once, with a string boundary expression on either side. Similar, if not identical, to what that one student suggested in class, this almost crosses the bridge from lexing into parsing. However, this is the extent to which it is feasibly permitted and anything beyond this should not take place.
+
+If something other than a letter (a-z) is observed after a first string boundary and before another, the lexer (in its current basic state) will cease execution and throw a lexer error. Perhaps, it could also highlight where it thinks the second boundary is missing.
+
+
+
+Start   "      "
+---> 0   --->   1   ---> 2  accepting, 
+             / \   \  
+            _[a-z]* \ anything else
+                     \
+                      3  Lex error, unable to proceed to parse
+                      
