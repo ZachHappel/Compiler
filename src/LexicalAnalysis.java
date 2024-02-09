@@ -13,5 +13,10 @@ import java.util.ArrayList;
 // linefeed = 10, carriage return = 13, tab = 11
 // space = 10
 public class LexicalAnalysis {
+
+
+    //public ArrayList Lex () {
+
+    //}
     
 }

@@ -2,7 +2,7 @@
 
 public class FormatToolkit {
 
-    public final Boolean is_verbose;
+    public Boolean is_verbose;
 
     public FormatToolkit() {
         this.is_verbose = true; 
@@ -10,6 +10,14 @@ public class FormatToolkit {
 
     public FormatToolkit( Boolean is_verbose ) {
         this.is_verbose = is_verbose; 
+    }
+
+    public void setIsVerbose( Boolean is_verbose ) {
+        this.is_verbose = is_verbose;
+    }
+
+    public boolean getIsVerbose() {
+        return this.is_verbose;
     }
 
     public void output( String string ) {
