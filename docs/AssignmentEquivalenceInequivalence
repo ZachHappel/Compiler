@@ -1,0 +1,18 @@
+
+By any, I do not mean any -- just anything but the other than the other branch that is a valid char in our language
+
+Start     !      =   
+-----> 0 ---> 1 ---> 2  return nonequiv
+               \ any
+                \___ 3 error invalid symbol at input pos - 1, throw warning? or end execution? 
+
+                For now let us just end execution when these sort of errors are encountered bc it would be easier
+                Deal with proper error handling later
+
+
+Start     =      any   
+-----> 0 ---> 1 ---> 2  return assignment, at input pos - 1, begin lexing again from current inp pos
+               \  =
+                \___ 3 return equivalence
+
+

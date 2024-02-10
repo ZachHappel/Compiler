@@ -8,10 +8,9 @@ If something other than a letter (a-z) is observed after a first string boundary
 
 
 
-Start   "      "
+Start      "          "
 ---> 0   --->   1   ---> 2  accepting, 
              / \   \  
-            _[a-z]* \ anything else
-                     \
+             \ / anything else
+            [a-z]*   \
                       3  Lex error, unable to proceed to parse
-                      

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 // Default should verbose mode, provide option for simplified output
 public class Compiler {
 
-    public static FormatToolkit Toolkit;
+    public static Toolkit Toolkit;
 
     
 

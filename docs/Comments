@@ -1,0 +1,17 @@
+
+
+Input:
+
+Start    /     '*'     *       /
+--- > 0 ---> 1 ---> 2 ---> 3 ---> 4   accepting, do not create token, start input at pos + 1
+                   / \ \___/ 
+                   \ /  any but '/'
+                   any
+                   but '*'
+
+                   Also, if run out of input and uncannot find end of comment, throw lex error and end program eval
+                   Our lanuage is so basic, yet this is still something that would not be tolerated by other programming language   
+
+                   This condition would occur at state 2,
+
+               
