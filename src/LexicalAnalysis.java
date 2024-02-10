@@ -57,15 +57,27 @@ public class LexicalAnalysis {
     }
 
 
+    public static ArrayList<Token> generateTokens (ArrayList<Token> token_stream) {
+        System.out.println("Generating Tokens");
+
+        Token token = new Token();
+        
+        return new ArrayList<Token>(); 
+    }
+
+
 
 
 
     public static ArrayList<Token> Lex(Toolkit tk, String filename) {
         toolkit = tk; 
-        ArrayList<Token> token_stream = new ArrayList<>();
         byte[] file_source_bytearr = getSourceFileData(filename);
         indices = Toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
+        System.out.println("Byte Arr:");
+        for (byte b: file_source_bytearr) System.out.println("Byte: " + b + "Char: " + (char) b);
+        //System.out.println(file_source_bytearr);
         //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
+        ArrayList<Token> token_stream = generateTokens(new ArrayList<Token>());
 
         return token_stream;
     }
