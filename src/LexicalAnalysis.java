@@ -19,7 +19,7 @@ public class LexicalAnalysis {
     public static int[] indices; 
     public static Toolkit toolkit;
    
-    public static int getCurrentLine(int index) {
+    public int getCurrentLine(int index) {
         int i;
         for (i = 0; i < indices.length; i++) {
             if (index < indices[i]) return i;
@@ -56,12 +56,25 @@ public class LexicalAnalysis {
         
     }
 
-
-    public static ArrayList<Token> generateTokens (ArrayList<Token> token_stream) {
-        System.out.println("Generating Tokens");
-
-        Token token = new Token();
+    // Need check for source of length 0
+    public static ArrayList<Token> generateTokens (byte[] source, ArrayList<Token> token_stream) {
         
+        System.out.println("Generating Tokens");
+        Token new_token; 
+
+        if (token_stream.size() == 0) {
+            System.out.println("Empty Token Stream");
+            new_token = new Token(0, 1);
+        } else {
+            int previous_end_pos = (token_stream.get(token_stream.size() - 1)).getEndPos();
+            new_token = new Token(previous_end_pos , previous_end_pos + 1);
+        }
+
+        byte[] current_window_bytearr = Arrays.copyOfRange(source, new_token.getStartPos(), new_token.getEndPos());
+        String[] current_window_stringarr = toolkit.convertByteArrayToStringArray(current_window_bytearr);
+        //String[] current_string_subarray = toolkit.convertByteArrayToStringArray() 
+        
+
         return new ArrayList<Token>(); 
     }
 
@@ -72,13 +85,14 @@ public class LexicalAnalysis {
     public static ArrayList<Token> Lex(Toolkit tk, String filename) {
         toolkit = tk; 
         byte[] file_source_bytearr = getSourceFileData(filename);
-        indices = Toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
+        indices = toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
         System.out.println("Byte Arr:");
-        for (byte b: file_source_bytearr) System.out.println("Byte: " + b + "Char: " + (char) b);
+        //for (byte b: file_source_bytearr) System.out.println("Byte: " + b + "Char: " + (char) b);
         //System.out.println(file_source_bytearr);
         //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
-        ArrayList<Token> token_stream = generateTokens(new ArrayList<Token>());
-
+        ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>());
+        
+        
         return token_stream;
     }
 

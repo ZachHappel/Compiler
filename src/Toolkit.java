@@ -25,7 +25,7 @@ public class Toolkit {
             this.output("Ending execution, " + reason);
             System.exit(0);
     }
-    public static int CountOccurrencesOfByteDecimalValue (byte[] arr, int byte_decimal_value) {
+    public int CountOccurrencesOfByteDecimalValue (byte[] arr, int byte_decimal_value) {
         int occurrences = 0;
         for (int i = 0; i<= arr.length -1; i++) {
             int val = arr[i];
@@ -40,12 +40,22 @@ public class Toolkit {
         return occurrences; 
     }
 
-    public static int CountLineFeeds (byte[] arr) {
+    public int CountLineFeeds (byte[] arr) {
         int amountOfLineFeeds = CountOccurrencesOfByteDecimalValue(arr, 10) + 1; // plus one because first line counts as 1
         return amountOfLineFeeds;
     }
 
-    public static int[] GetIndicesOfLineFeeds (byte[] arr) {
+    public String[] convertByteArrayToStringArray (byte[] byte_arr) {
+
+        String[] string_array = (new String(byte_arr)).split(""); // sub_arr to string
+        return string_array;
+        //for (byte b : byte_arr) {
+
+        //}
+
+    }
+
+    public int[] GetIndicesOfLineFeeds (byte[] arr) {
         int line_feed_amt = CountLineFeeds(arr);
         int[] indices = new int[line_feed_amt];
         int amount_added = 0;

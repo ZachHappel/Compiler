@@ -50,6 +50,16 @@ public class Token {
         this.end_pos = end_pos;
     }
 
+
+    public String getName() { return this.name; }
+    public String getAttribute() { return this.attribute; }
+    public int getStartPos() { return this.start_pos; }
+    public int getEndPos() { return this.end_pos; }
+    public int getStartLineNumber() { return this.start_line_number; }
+    public int getEndLineNumber() { return this.end_line_number; }
+    public int getLineIndex() { return this.line_index; }
+
+
     public void setName(String i) { this.name = i; }
     public void setAttribute(String i) { this.attribute = i; }
     public void setStartPos(int i) { this.start_pos = i; }
