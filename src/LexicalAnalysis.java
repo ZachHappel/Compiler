@@ -17,54 +17,55 @@ import java.util.ArrayList;
 public class LexicalAnalysis {
 
     public static int[] indices; 
-
-    public static int[] GetIndicesOfLineFeeds (byte[] arr) {
-        int line_feed_amt = CountLineFeeds(arr);
-        int[] indices = new int[line_feed_amt];
-        int amount_added = 0;
-        
-        for (int i = 0; i<= arr.length -1; i++) {
-            int val = arr[i];
-            boolean is_line_feed = (val == 10);
-            if (is_line_feed) {
-                indices[amount_added] = i;
-                amount_added = amount_added + 1;  
-            }
-        }
-
-        return indices;
-
-    }
-
+    public static Toolkit toolkit;
+   
     public static int getCurrentLine(int index) {
-        // Toolkit.println("LEN" + indices.length);
-        int line_number = 1;
-        int i, index_at_newline;
-
+        int i;
         for (i = 0; i < indices.length; i++) {
-            // Toolkit.println("Index: " + index + " Value at Indice: " + indices[i]);
-            index_at_newline = indices[i];
-
-            if (index < indices[i]) {
-                return i;
-            } // else if ( ) {
-            else {
-                if (i == indices.length - 1) {
-                    return i + 1;
-                }
-            }
+            if (index < indices[i]) return i;
+            else if (i == indices.length - 1) return i + 1; 
         }
         return i;
     }
 
+    public static byte[] getSourceFileData(String filepath) {
+        
+        try {
+            Path path = Paths.get(filepath);
+            long file_size_in_bytes = Files.size(path);
+            InputStream input = new FileInputStream(filepath);
+            byte[] source_data_bytearr = new byte[Math.toIntExact(file_size_in_bytes)]; 
+            input.read(source_data_bytearr); // Read byte from input stream
+            
+            String source_data_string = new String(source_data_bytearr);
+            //char[] source_data_chararr = source_data_string.toCharArray();
+            
+            String file_info = "|| File Size: " + file_size_in_bytes + " bytes || Remaining Space: " + input.available()
+            + " bytes";
+            toolkit.output(file_info);
+
+            input.close();
+
+            return source_data_bytearr; 
+
+        } catch (IOException io_err) {
+            System.out.println("IOException encountered when reading source file into data\n Outputting stacktrace and halting further execution.");
+            io_err.printStackTrace();
+            return new byte[0];
+        }
+        
+    }
 
 
 
 
-    public static ArrayList<Token> Lex() {
 
+    public static ArrayList<Token> Lex(Toolkit tk, String filename) {
+        toolkit = tk; 
         ArrayList<Token> token_stream = new ArrayList<>();
-
+        byte[] file_source_bytearr = getSourceFileData(filename);
+        indices = Toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
+        //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
 
         return token_stream;
     }

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 // Default should verbose mode, provide option for simplified output
 public class Compiler {
 
-    public static Toolkit Toolkit;
+    public static Toolkit Toolkit = new Toolkit();
 
     
 
@@ -28,7 +28,7 @@ public class Compiler {
         Toolkit.output("Compiling file, " + args[0] + "\nVerbose: " + Toolkit.getIsVerbose());
         
         String fileName = args[0];
-
+        LexicalAnalysis.Lex(Toolkit, fileName);
 
     }
 

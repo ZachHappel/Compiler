@@ -45,4 +45,22 @@ public class Toolkit {
         return amountOfLineFeeds;
     }
 
+    public static int[] GetIndicesOfLineFeeds (byte[] arr) {
+        int line_feed_amt = CountLineFeeds(arr);
+        int[] indices = new int[line_feed_amt];
+        int amount_added = 0;
+        
+        for (int i = 0; i<= arr.length -1; i++) {
+            int val = arr[i];
+            boolean is_line_feed = (val == 10);
+            if (is_line_feed) {
+                indices[amount_added] = i;
+                amount_added = amount_added + 1;  
+            }
+        }
+
+        return indices;
+
+    }
+
 }

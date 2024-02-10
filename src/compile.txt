@@ -2,3 +2,4 @@
 ./FormatToolkit.java
 ./LexicalAnalysis.java
 ./Token.java
+./Toolkit.java
