@@ -267,7 +267,16 @@ public class LexicalAnalysis {
         
         int window_bytearr_length_before_moving_special_characters = token.getEndPos() - token.getStartPos();
 
+
+        // Needs to be...
+        // If length before moving special chars is 1
+        // But if length after moving special chars is 0... return? I think
         if (window_bytearr_length_before_moving_special_characters == 1) {
+
+            if (window_bytearr.length == 0) {
+                System.out.println("Window ByteArr is of length 0 because first byte is special character. Returniing token stream, as incrementaion of end pos is required, if possible at current location within source file");
+                return token_stream;
+            }
 
             System.out.println("Window Length of 1: ");
             byte b = window_bytearr[0]; // only byte in window
