@@ -84,6 +84,7 @@ public class Token {
     public boolean getThereExistsUniqueLongestMatch() { return this.thereExistsUniqueLongestMatch;}
     public int getLongestMatchLength() { return this.longest_match_length;}
     public ArrayList<String> getSharedLongestMatchArray() { return this.shared_longest_match_array;}
+    public Map<String, int[]> getLexemePossibilities() { return this.LexemePossibilities;}
 
     public void setName(String i) { this.name = i; }
     public void setAttribute(String i) { this.attribute = i; }
@@ -107,7 +108,7 @@ public class Token {
         this.LexemePossibilities.put(lexeme_name, indices);
     }
 
-    public void getRemainingPossibilities(Token token) {
+    public void printRemainingPossibilities(Token token) {
         //Map<String, int[]> remaining = new
 
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {

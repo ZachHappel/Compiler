@@ -19,9 +19,27 @@ public class Toolkit {
     public boolean getIsVerbose() {
         return this.is_verbose;
     }
- 
-    
 
+    public boolean hashmapEqualityExists (Map<String, int[]> h1, Map<String, int[]> h2) {
+
+        boolean areEqual = true;
+        
+        if (h1.size() != h2.size()) {
+            areEqual = false; 
+        } else {    
+            for (Map.Entry<String, int[]> entry: h1.entrySet()) {
+                String name = entry.getKey();
+                int[] indices = entry.getValue();
+                if (!h2.containsKey(name) || !h2.get(name).equals(indices)) {
+                    areEqual = false;
+                    break;
+                }
+            }
+        }
+        return areEqual;
+
+    }
+ 
     public boolean isWithinStringExpression(ArrayList<Token> token_stream) {
         return (countStringBoundaryExpressions(token_stream) % 2 == 0 ? false : true);
         //int amount_exprs = countStringBoundaryExpressions(token_stream);

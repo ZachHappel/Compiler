@@ -132,6 +132,20 @@ public class LexicalAnalysis {
                     // Valid thus far, and as such we add it to the HashMap 
                     String type_lowercase = new String (keywords[j]);
                     String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase();
+                    
+                    if (type_lowercase.equals(new String (window_bytearr))) {
+                        toolkit.output("Keyword Full-match: " + keyword_token_name + ", indices: " + indices);
+                        token.setName(keyword_token_name);
+                        token.setAttribute(new String (window_bytearr)); // Set value/attribute to String representation of byte window
+                        //NEED - Line Number
+                        //Token in stream successfully updated and ready for new token to be added. 
+                        //This will happen when performChecks returns token_stream to generateTokens which checks if name on most
+                        //recent token has been set
+
+                        // Can return now because in no case will a full keyword match interfere with another keyword
+                        return current_keyword_matches;
+                    }
+
                     toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
                     current_keyword_matches.put(keyword_token_name, indices);
                     token.updatePossibility(keyword_token_name, indices); // JUST ADDED BEFORE BED
@@ -181,6 +195,9 @@ public class LexicalAnalysis {
 
     }
 
+
+    
+
     
 
     public static void removeAllSymbolsFromPossibilities(Token token ) {
@@ -200,8 +217,24 @@ public class LexicalAnalysis {
     // FOR KEYWORDS IT IS OF, UPDATE INDICES... FOR K: KEYWORDSAPARTOF -> Update tokenpossibilities(k name, tk indices)
     public static ArrayList<Token> performChecks (byte[] src, ArrayList<Token> token_stream) {
         System.out.println("            ~~~~~~~~~~~~~~~~~~~PERFORM CHECKS~~~~~~~~~~~~~~~~~~~");
-        Token token = token_stream.get(token_stream.size() - 1);
+
         
+        
+        Token token = token_stream.get(token_stream.size() - 1);
+        Map<String, int[]> lexemes_possibilities_before_checking = new HashMap<>(token.getPossibilities());
+        
+        if (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, token.getLexemePossibilities())) {
+            System.out.println("Checking Funct Works -- Lexeme Possibilities Same Before Check");
+        } else {
+            System.out.println("Checking Funct Works -- Lexeme Possibilities Are Not Same");
+            //System.out.println("Length Before: " + lexemes_possibilities_before_checking.size() + ", Length After: " + (token.getLexemePossibilities()).size());
+        }
+        
+        Map<String, int[]> testHash = new HashMap<>(token.getPossibilities());
+        testHash.put("Hello", new int[]{1,1});
+        boolean changeMadeOnPurposeMadeEqualityFunctionReturnFalse = (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, testHash));
+        System.out.println("is modified equalityHashMapTest equal to unmodified: " + changeMadeOnPurposeMadeEqualityFunctionReturnFalse);
+
         boolean isWithinString = toolkit.isWithinStringExpression(token_stream);
         System.out.println("Is within String: " + isWithinString);
         //Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())
@@ -251,6 +284,24 @@ public class LexicalAnalysis {
         }
         
         token.printRemainingPossibilities(true);
+
+        // Lexeme Possibilities - Has the amount changed since performing these checks?
+
+        if (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, token.getLexemePossibilities())) {
+            System.out.println("Lexeme Possibilities Unchanged During Last Check");
+        } else {
+            System.out.println("Lexeme Possibilities have changed");
+            //System.out.println("Length Before: " + lexemes_possibilities_before_checking.size() + ", Length After: " + (token.getLexemePossibilities()).size());
+        }
+
+
+        if ((token.getLexemePossibilities()).size() == (lexemes_possibilities_before_checking.size())) {
+            // This case proves that there has been 
+
+
+        } else {    
+        }
+        
         /**
         Token test = new Token(0, 0);
         test.setName("Hello");
@@ -258,6 +309,8 @@ public class LexicalAnalysis {
         test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
         token_stream.add(test);
         **/
+
+
         return token_stream; 
 
 
@@ -295,6 +348,8 @@ public class LexicalAnalysis {
         current_token.setEndPos(current_token.getEndPos() + 1);
         
         performChecks(src, token_stream); 
+        // Need to implement check for in string and comments in a more comprehensive way
+        // Pretty positive within-string expr and definitely within-comment need be addressed here
 
         //Token new_current_token = token_stream.get(token_stream.size() - 1); // DEF not needed but scared
         boolean has_match_after_checks = current_token.name == null ? false : true;
@@ -315,6 +370,11 @@ public class LexicalAnalysis {
                 //current_token.setEndPos(current_token.getEndPos() + 1);
                 token_stream = generateTokens(src, token_stream);
             } else {
+                // Need check here for remaining unmatched token when end of src is reached
+                // When testing single keyword testfile, there are 3 possibilities remaining when window = "int", 
+                // End of src, and nothing happens it exits
+                // What should happen is that the longest match should be taken, assigned to the token name, value set, and new token
+                // should be created
                 System.out.println("src.length - 1 != current_token.getEndPos() - 1 ");
             }
 
