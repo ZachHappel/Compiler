@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -151,10 +152,11 @@ public class Token {
     }
 
 
-    public void printRemainingPossibilities() {
+    public void printRemainingPossibilities(boolean with_indices) {
         System.out.println("Remaining Probabilities");
         for (Map.Entry<String, int[]> entry : (this.LexemePossibilities).entrySet()) {
-            System.out.println(entry.getKey());
+            if (with_indices) System.out.println(entry.getKey() + ", " + Arrays.toString(entry.getValue()));
+            else System.out.println(entry.getKey());
         }
     }
 

@@ -107,11 +107,11 @@ public class LexicalAnalysis {
         "if".getBytes(),
      };
 
-    public static Map<String, int[]> isOfKeyword (byte[] window_bytearr, int tk_start_pos, int tk_end_pos) {
+    public static Map<String, int[]> isOfKeyword (byte[] window_bytearr, Token token) {
         Map<String, int[]> current_keyword_matches = new HashMap<String, int[]>() {{}};
         //ArrayList<String> current_keyword_matches = new ArrayList<String>();
         
-        int[] indices = new int[]{tk_start_pos, tk_end_pos};
+        int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
         int window_bytearr_size = window_bytearr.length; 
         int amount_of_keywords = keywords.length; 
         toolkit.output("Keyword Bytes vs Window Bytes: ");
@@ -134,6 +134,7 @@ public class LexicalAnalysis {
                     String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase();
                     toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
                     current_keyword_matches.put(keyword_token_name, indices);
+                    token.updatePossibility(keyword_token_name, indices); // JUST ADDED BEFORE BED
                 }
                     
             }
@@ -152,8 +153,8 @@ public class LexicalAnalysis {
 
     // Take list of keyword (semi)matches and remove all but those keywords from the token's Lexeme Possibilities 
     public static void removeKeywordImpossibilities( Map<String, int[]> keyword_matches, Token token ) {
-        
-
+        int keyword_matches_amount = keyword_matches.size(); 
+        System.out.println("Amount of Keyword Semi Matches: " + keyword_matches.size());
         // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
         // Use this as a reference and make removals on the actual token's hashmap
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
@@ -171,12 +172,16 @@ public class LexicalAnalysis {
             if (possibility_name.contains("KEYWORD_") && !keyword_match_names.contains(possibility_name)) {
                 System.out.println("Removing KEYWORD Possibility: " + possibility_name); 
                 token.removePossiblity(possibility_name);
+                keyword_matches_amount = keyword_matches_amount - 1;
             }
             
 
         }
+        System.out.println("Remaining Keyword Semi Matches: " + keyword_matches_amount);
 
     }
+
+    
 
     public static void removeAllSymbolsFromPossibilities(Token token ) {
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
@@ -194,15 +199,17 @@ public class LexicalAnalysis {
     // RETURN KEYWORDS IT IS OF "IF, PRINT, WHILE" etc
     // FOR KEYWORDS IT IS OF, UPDATE INDICES... FOR K: KEYWORDSAPARTOF -> Update tokenpossibilities(k name, tk indices)
     public static ArrayList<Token> performChecks (byte[] src, ArrayList<Token> token_stream) {
+        System.out.println("            ~~~~~~~~~~~~~~~~~~~PERFORM CHECKS~~~~~~~~~~~~~~~~~~~");
         Token token = token_stream.get(token_stream.size() - 1);
         
         boolean isWithinString = toolkit.isWithinStringExpression(token_stream);
+        System.out.println("Is within String: " + isWithinString);
         //Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())
 
         // If not in string, we want all special characters removed
         // If it IS within a string, we want all special characters BUT spaces removed
         byte[] window_bytearr = isWithinString ? toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())) : toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
-        
+        System.out.println("            ~~~~~~~~~~~~~~~~~~~Checking Window: " + new String(window_bytearr)); 
         //toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
         //toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
         
@@ -211,7 +218,7 @@ public class LexicalAnalysis {
         //boolean isWithinComment = tool
 
         
-        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token.getStartPos(), token.getEndPos());
+        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
         
         System.out.println("\nKeyword Matches: ");
         for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) {
@@ -222,7 +229,6 @@ public class LexicalAnalysis {
         }
 
         removeKeywordImpossibilities(keyword_matches, token);
-        token.printRemainingPossibilities();
         
         if (window_bytearr.length == 1) {
             byte b = window_bytearr[0]; // only byte in window
@@ -230,16 +236,21 @@ public class LexicalAnalysis {
             // Update Character with the indices of where a valid match was found
             if ( b >= 97 && b < 123) { 
                 
-
+                
                 
                 token.updatePossibility("IDENTIFIER", indices);
                 token.updatePossibility("CHARACTER", indices);
+                removeAllSymbolsFromPossibilities(token);
+                token.removePossiblity("EOP");
+                token.removePossiblity("DIGIT");
+
             } else if ( b == 123) {
                 token.updatePossibility("SYMBOL_OPENBLOCK", indices);
             } 
-
+            
         }
         
+        token.printRemainingPossibilities(true);
         /**
         Token test = new Token(0, 0);
         test.setName("Hello");
@@ -254,14 +265,15 @@ public class LexicalAnalysis {
 
     public static ArrayList<Token> generateTokens (byte[] src, ArrayList<Token> token_stream) {
         
+        System.out.println("~~~~~~~~~~~~~~~~~~~GENERATE TOKENS~~~~~~~~~~~~~~~~~~~");
         // If no token in stream and there exists source input
         // create token, add it to the token stream,
         // call generateTokens recursively
         if (token_stream.size() == 0 && src.length > 0) {
-            System.out.println("Hello");
+            System.out.println("Adding First Token");
             Token starting_token = new Token(0, 0); // end_pos will get incremented
             token_stream.add(starting_token);
-            System.out.println("SDASDS: " + token_stream.size());
+            System.out.println("Current Stream Size: " + token_stream.size());
 
             return generateTokens(src, token_stream);
         }
@@ -279,6 +291,7 @@ public class LexicalAnalysis {
         // Increase the end position, and check  //!!
         // REMOVING INCREMENT HERE, against all judgement... But I think it is actually wrong according to my notes
         // Sike, I am leaving it
+        System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");
         current_token.setEndPos(current_token.getEndPos() + 1);
         
         performChecks(src, token_stream); 
@@ -298,7 +311,8 @@ public class LexicalAnalysis {
         } else {
 
             if (src.length - 1 != current_token.getEndPos() - 1) {
-                current_token.setEndPos(current_token.getEndPos() + 1);
+                //System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");
+                //current_token.setEndPos(current_token.getEndPos() + 1);
                 token_stream = generateTokens(src, token_stream);
             } else {
                 System.out.println("src.length - 1 != current_token.getEndPos() - 1 ");
