@@ -107,7 +107,7 @@ public class LexicalAnalysis {
         "if".getBytes(),
      };
 
-    public static void isOfKeyword (byte[] window_bytearr, int tk_start_pos, int tk_end_pos) {
+    public static Map<String, int[]> isOfKeyword (byte[] window_bytearr, int tk_start_pos, int tk_end_pos) {
         Map<String, int[]> current_keyword_matches = new HashMap<String, int[]>() {{}};
         //ArrayList<String> current_keyword_matches = new ArrayList<String>();
         
@@ -138,7 +138,39 @@ public class LexicalAnalysis {
                     
             }
         }
+    
+        return current_keyword_matches; 
+        // PerformChecks need to remove, from Possibilities, all keywords that are not retured from here as being semi-matches.
+        // If it fails here on X keyword, it is not X keyword
+    }
+
+
+    // Take list of keyword (semi)matches and remove all but those keywords from the token's Lexeme Possibilities 
+    public static void removeKeywordImpossibilities( Map<String, int[]> keyword_matches, Token token ) {
+        
+
+        // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
+        // Use this as a reference and make removals on the actual token's hashmap
+        Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
+
+        ArrayList<String> keyword_match_names = new ArrayList<String>(); 
+        
+        // Add all matching names to ArrayList
+        for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { keyword_match_names.add(entry.getKey());}
+        
+        for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
+            String possibility_name = entry.getKey();
             
+            // If possibility is of kind "KEYWORD"
+            // but is not among those which have been identified as being semi-matches
+            if (possibility_name.contains("KEYWORD_") && !keyword_match_names.contains(possibility_name)) {
+                System.out.println("Removing KEYWORD Possibility: " + possibility_name); 
+                token.removePossiblity(possibility_name);
+            }
+            
+
+        }
+
     }
     
 
@@ -149,34 +181,56 @@ public class LexicalAnalysis {
     public static ArrayList<Token> performChecks (byte[] src, ArrayList<Token> token_stream) {
         Token token = token_stream.get(token_stream.size() - 1);
         byte[] window_bytearr = Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos());
-
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
+        boolean isWithinString = toolkit.isWithinStringExpression(token_stream);
+
+
+        
+        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token.getStartPos(), token.getEndPos());
+        
+        System.out.println("\nKeyword Matches: ");
+        for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) {
+            String name = entry.getKey();
+            int[] i = entry.getValue();
+            System.out.println("Keyword: " + name + " Indices: " + i + " Length of match: " + (i[1] - i[0]));    
+
+        }
+
+        removeKeywordImpossibilities(keyword_matches, token);
+        token.printRemainingPossibilities();
         
         if (window_bytearr.length == 1) {
             byte b = window_bytearr[0]; // only byte in window
             
-            if ( b >= 97 && b < 123) {
-                // Update Character with the indices of where a valid match was found
+            // Update Character with the indices of where a valid match was found
+            if ( b >= 97 && b < 123) {   
+                
                 token.updatePossibility("IDENTIFIER", indices);
                 token.updatePossibility("CHARACTER", indices);
             } else if ( b == 123) {
                 token.updatePossibility("SYMBOL_OPENBLOCK", indices);
-            }
+            } 
 
         }
         
+        /**
         Token test = new Token(0, 0);
         test.setName("Hello");
         test.setEndPos(1);
         test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
         token_stream.add(test);
-
+        **/
         return token_stream; 
+
+
     }
 
     public static ArrayList<Token> generateTokens (byte[] src, ArrayList<Token> token_stream) {
         
-        if (token_stream.size() == 0) {
+        // If no token in stream and there exists source input
+        // create token, add it to the token stream,
+        // call generateTokens recursively
+        if (token_stream.size() == 0 && src.length > 0) {
             System.out.println("Hello");
             Token starting_token = new Token(0, 0); // end_pos will get incremented
             token_stream.add(starting_token);
@@ -185,15 +239,21 @@ public class LexicalAnalysis {
             return generateTokens(src, token_stream);
         }
 
+        // Get most recent token
         Token current_token = token_stream.get(token_stream.size() - 1);
-        
+                
         boolean has_match = current_token.name == null ? false : true;
-        
+        // If match has been made, and no new token appeneded, then success -- time to return
         if (has_match) {
             System.out.println("Has Match, SUCCESS");
             return token_stream; // Because a new token wasn't appended, that means no more tokens to be created
         }
 
+        // Increase the end position, and check 
+        // !!
+        //!!
+        // REMOVING INCREMENT HERE, against all judgement... But I think it is actually wrong according to my notes
+        // Sike, I am leaving it
         current_token.setEndPos(current_token.getEndPos() + 1);
         
         performChecks(src, token_stream); 
@@ -206,10 +266,12 @@ public class LexicalAnalysis {
             if (src.length - 1 == new_current_token.getEndPos()) {
                 return token_stream; // Success
             } else {
-                Token new_token = new Token(new_current_token.getEndPos(), new_current_token.getEndPos() + 1);
+                Token new_token = new Token(new_current_token.getEndPos(), new_current_token.getEndPos()); // removed increment
                 token_stream.add(new_token);
                 return generateTokens(src, token_stream);
             }
+        } else {
+
         }
 
         System.out.println("After Checks: " + token_stream.size());
@@ -223,15 +285,19 @@ public class LexicalAnalysis {
         byte[] file_source_bytearr = getSourceFileData(filename);
         indices = toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
         System.out.println("Byte Arr:");
-        byte[] test_arr = new byte[]{105};
-
+        
+        
+        /**  Test for isOfKeyword 
+        //byte[] test_arr = new byte[]{105};
+        byte[] test_arr = new byte[]{105, 110};
         for (byte b: test_arr) System.out.println("Byte: " + b + ", Char: " + (char) b);
-
         isOfKeyword(test_arr, 0, 2);
         //System.out.println(file_source_bytearr);
         //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
+       **/
+
+
        
-        /**
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>());
         
         System.out.println("Token Stream: ");
@@ -240,8 +306,8 @@ public class LexicalAnalysis {
         }
         
         return token_stream;
-        **/
-        return new ArrayList<Token>();
+
+        //return new ArrayList<Token>();
     }
 
     //public ArrayList Lex () {

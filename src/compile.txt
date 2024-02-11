@@ -1,5 +1,6 @@
 ./Compiler.java
 ./FormatToolkit.java
+./LexemeInfo.java
 ./LexicalAnalysis.java
 ./Token.java
 ./Toolkit.java

@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Map;
+
 public class Toolkit {
     public Boolean is_verbose;
 
@@ -16,6 +19,23 @@ public class Toolkit {
     public boolean getIsVerbose() {
         return this.is_verbose;
     }
+ 
+    
+
+    public boolean isWithinStringExpression(ArrayList<Token> token_stream) {
+        return (countStringBoundaryExpressions(token_stream) % 2 == 0 ? false : true);
+        //int amount_exprs = countStringBoundaryExpressions(token_stream);
+    }
+
+    public int countStringBoundaryExpressions (ArrayList<Token> token_stream) {
+        int count = 0;
+        for (int i = 0; i <= token_stream.size() - 1; i ++) { 
+            if ((token_stream.get(i).getName()) == "STRINGEXPRBOUNDARY") {
+                count = count + 1;
+            }
+        }
+        return count;
+    }
 
     public void output( String string ) {
         if (this.is_verbose) System.out.println(string);
@@ -25,6 +45,7 @@ public class Toolkit {
             this.output("Ending execution, " + reason);
             System.exit(0);
     }
+
     public int CountOccurrencesOfByteDecimalValue (byte[] arr, int byte_decimal_value) {
         int occurrences = 0;
         for (int i = 0; i<= arr.length -1; i++) {
