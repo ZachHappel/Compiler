@@ -1,0 +1,29 @@
+I wish I was documenting here everything that I have been implementing, but I may as well just start from what I am doing now and maybe just go back and add stuff if I remember / want to
+
+
+Right now -- with an unimplemented solution -- when end of source is reached, but there are remaining possibilities outstanding, the token_stream will return with the last token having a name and attribute of null. If you do not know, a "final" AKA emitted token will have a name and attribute/value. Therefore, having the last token in the TS being null means that there is unmatched bytes and lexing is not yet finished.
+
+When I say unimplemented solution, this is not an error per-say. This is just the process of developing this compiler. I knew this was going to happen and now it is time that I implement the solution.
+
+In my notes I have devised the method that I am going to take to solve this. 
+
+(Currently, there is not absolute matching for symbols yet e.g,. when a '{' is found in byte window of length 1, that is guaranteed a SYMBOL_OPENBLOCK. This is not a concern as the same methodology that went into implementing checks for the keywords should be relatively easily transformed.)
+
+In the current state, when end of source (EOS from now on) is encountered, my solution is going to be to check to the remaining possibilities and apply them to our languages hierarchy, determining ultimately which should be chosen. This may not even be required, as within-comment and within-stringexpr will be accounted for, and overlap in our language is not substantial... Nevertheless, the method: 
+
+- Take remaining possibilites, apply them hierarchy. 
+- In particular, this will be used to determine char vs ID. 
+- isOfKeyword and removeKeywordImpossibilities will have already weeded out possibility of a keyword full match, so keywords can be ignored. 
+- In future, implement the to-be-implemented symbol checking which as I said previously, should mimic similar functionality and therefore we can conclude similar results. However, there will be the case where we encounter and non-full-match symbol which will result in either an error in one case. Specific checks will have to be put into place to address this:
+    - if window contains "=" and lexer is waiting for potential full match of "==", create SYMBOL_ASSIGNMENT and then return TS, proceed to parse, etc. 
+    - if window contains "!" that is unequivocally an error as that byte (33) is not contained within our language if not paired up with the byte for = (61) --> Therefore, we throw error. Sorry. Not in our language. Collect $200 and be gone
+
+- No remaining possibility between char/id checking needs with an absolute conclusion needs to be implemented, and such utility can be utilized here.
+    -- Thinking out loud even more than before, because now I am just brainstorming as I type, but we could remove possibilities of keyword via some boolean within the token object which can be flipped at EOS, this would then result in no possibility for keyword to be chosen and the absolute id vs char checking utility will sort it out from there. 
+    -- This is only necessary if the two keyword methods doesn't add KEYWORD_*name* to the possibilities, if they have already been removed. I forget what I did. I think it just checks within the remaining possibilities and then sees how the current byte window matches against those.... 
+
+
+    In the char/id utility, the determined lexeme's indices will be utilized as the basis for the next token's starting pos and end pos, as will anything (like some symbols) which require a retraction of the window.
+    
+
+
