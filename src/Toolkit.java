@@ -46,6 +46,8 @@ public class Toolkit {
             System.exit(0);
     }
 
+
+    // From previous attempt at project
     public int CountOccurrencesOfByteDecimalValue (byte[] arr, int byte_decimal_value) {
         int occurrences = 0;
         for (int i = 0; i<= arr.length -1; i++) {
@@ -61,6 +63,7 @@ public class Toolkit {
         return occurrences; 
     }
 
+    // From previous attempt at project
     public int CountLineFeeds (byte[] arr) {
         int amountOfLineFeeds = CountOccurrencesOfByteDecimalValue(arr, 10) + 1; // plus one because first line counts as 1
         return amountOfLineFeeds;
@@ -76,6 +79,7 @@ public class Toolkit {
 
     }
 
+    // From previous attempt at project
     public int[] GetIndicesOfLineFeeds (byte[] arr) {
         int line_feed_amt = CountLineFeeds(arr);
         int[] indices = new int[line_feed_amt];
@@ -92,6 +96,59 @@ public class Toolkit {
 
         return indices;
 
+    }
+
+
+    // From previous attempt at project, gross but it should work
+    public byte[] removeSpecialCharacters(byte[] sub_arr) {
+        int specialchar_count = 0;
+        for (int i = 0; i <= sub_arr.length - 1; i++) {
+            if ((sub_arr[i] == 13) || (sub_arr[i] == 10) || (sub_arr[i] == 11))
+                specialchar_count++;
+        }
+
+        // Toolkit.println("A");
+        int current_index = 0;
+        byte[] modified_sub_arr = new byte[sub_arr.length - specialchar_count]; // create byte arr of new size
+        for (int j = 0; j <= sub_arr.length - 1; j++) {
+            // Toolkit.println("B");
+            if ((sub_arr[j] == 13) || (sub_arr[j] == 10) || (sub_arr[j] == 11)) {
+                // Toolkit.println("B1");
+            } // do nothing if special char
+            else {
+                modified_sub_arr[current_index] = sub_arr[j]; // add char to new modified array
+                current_index++;
+                // Toolkit.println("B2");
+            }
+        }
+
+        return modified_sub_arr;
+    }
+
+    // lazy edit of the first gross one
+    public byte[] removeSpecialCharactersExceptSpaces(byte[] sub_arr) {
+        int specialchar_count = 0;
+        for (int i = 0; i <= sub_arr.length - 1; i++) {
+            if ((sub_arr[i] == 13) || (sub_arr[i] == 11))
+                specialchar_count++;
+        }
+
+        // Toolkit.println("A");
+        int current_index = 0;
+        byte[] modified_sub_arr = new byte[sub_arr.length - specialchar_count]; // create byte arr of new size
+        for (int j = 0; j <= sub_arr.length - 1; j++) {
+            // Toolkit.println("B");
+            if ((sub_arr[j] == 13) || (sub_arr[j] == 11)) {
+                // Toolkit.println("B1");
+            } // do nothing if special char
+            else {
+                modified_sub_arr[current_index] = sub_arr[j]; // add char to new modified array
+                current_index++;
+                // Toolkit.println("B2");
+            }
+        }
+
+        return modified_sub_arr;
     }
 
 }

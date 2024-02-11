@@ -145,6 +145,11 @@ public class LexicalAnalysis {
     }
 
 
+    
+
+    
+
+
     // Take list of keyword (semi)matches and remove all but those keywords from the token's Lexeme Possibilities 
     public static void removeKeywordImpossibilities( Map<String, int[]> keyword_matches, Token token ) {
         
@@ -172,6 +177,16 @@ public class LexicalAnalysis {
         }
 
     }
+
+    public static void removeAllSymbolsFromPossibilities(Token token ) {
+        Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
+        for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
+            String possibility_name = entry.getKey();
+            if (possibility_name.contains("SYMBOL")) token.removePossiblity(possibility_name);
+        }
+    }
+
+    public static void removeImpossibleSymbols() {}
     
 
     // IS OF KEYWORDS FUNCT
@@ -180,10 +195,20 @@ public class LexicalAnalysis {
     // FOR KEYWORDS IT IS OF, UPDATE INDICES... FOR K: KEYWORDSAPARTOF -> Update tokenpossibilities(k name, tk indices)
     public static ArrayList<Token> performChecks (byte[] src, ArrayList<Token> token_stream) {
         Token token = token_stream.get(token_stream.size() - 1);
-        byte[] window_bytearr = Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos());
-        int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
+        
         boolean isWithinString = toolkit.isWithinStringExpression(token_stream);
+        //Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())
 
+        // If not in string, we want all special characters removed
+        // If it IS within a string, we want all special characters BUT spaces removed
+        byte[] window_bytearr = isWithinString ? toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())) : toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
+        
+        //toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
+        //toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
+        
+        
+        int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
+        //boolean isWithinComment = tool
 
         
         Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token.getStartPos(), token.getEndPos());
@@ -203,7 +228,9 @@ public class LexicalAnalysis {
             byte b = window_bytearr[0]; // only byte in window
             
             // Update Character with the indices of where a valid match was found
-            if ( b >= 97 && b < 123) {   
+            if ( b >= 97 && b < 123) { 
+                
+
                 
                 token.updatePossibility("IDENTIFIER", indices);
                 token.updatePossibility("CHARACTER", indices);
@@ -249,28 +276,33 @@ public class LexicalAnalysis {
             return token_stream; // Because a new token wasn't appended, that means no more tokens to be created
         }
 
-        // Increase the end position, and check 
-        // !!
-        //!!
+        // Increase the end position, and check  //!!
         // REMOVING INCREMENT HERE, against all judgement... But I think it is actually wrong according to my notes
         // Sike, I am leaving it
         current_token.setEndPos(current_token.getEndPos() + 1);
         
         performChecks(src, token_stream); 
 
-        Token new_current_token = token_stream.get(token_stream.size() - 1); // DEF not needed but scared
-        boolean has_match_after_checks = new_current_token.name == null ? false : true;
+        //Token new_current_token = token_stream.get(token_stream.size() - 1); // DEF not needed but scared
+        boolean has_match_after_checks = current_token.name == null ? false : true;
         if (has_match_after_checks) {
-            System.out.println("New Current Token End Pos: " + new_current_token.getEndPos());
+            System.out.println("New Current Token End Pos: " + current_token.getEndPos());
             System.out.println("Source length - 1: " + (src.length - 1));
-            if (src.length - 1 == new_current_token.getEndPos()) {
+            if (src.length - 1 == current_token.getEndPos()) {
                 return token_stream; // Success
             } else {
-                Token new_token = new Token(new_current_token.getEndPos(), new_current_token.getEndPos()); // removed increment
+                Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
                 token_stream.add(new_token);
                 return generateTokens(src, token_stream);
             }
         } else {
+
+            if (src.length - 1 != current_token.getEndPos() - 1) {
+                current_token.setEndPos(current_token.getEndPos() + 1);
+                token_stream = generateTokens(src, token_stream);
+            } else {
+                System.out.println("src.length - 1 != current_token.getEndPos() - 1 ");
+            }
 
         }
 
