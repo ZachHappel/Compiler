@@ -133,6 +133,10 @@ public class LexicalAnalysis {
                     String type_lowercase = new String (keywords[j]);
                     String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase();
                     
+                    toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
+                    current_keyword_matches.put(keyword_token_name, indices);
+                    token.updatePossibility(keyword_token_name, indices); // JUST ADDED BEFORE BED
+
                     if (type_lowercase.equals(new String (window_bytearr))) {
                         toolkit.output("Keyword Full-match: " + keyword_token_name + ", indices: " + indices);
                         token.setName(keyword_token_name);
@@ -146,9 +150,7 @@ public class LexicalAnalysis {
                         return current_keyword_matches;
                     }
 
-                    toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
-                    current_keyword_matches.put(keyword_token_name, indices);
-                    token.updatePossibility(keyword_token_name, indices); // JUST ADDED BEFORE BED
+                    
                 }
                     
             }
@@ -263,7 +265,11 @@ public class LexicalAnalysis {
 
         removeKeywordImpossibilities(keyword_matches, token);
         
-        if (window_bytearr.length == 1) {
+        int window_bytearr_length_before_moving_special_characters = token.getEndPos() - token.getStartPos();
+
+        if (window_bytearr_length_before_moving_special_characters == 1) {
+
+            System.out.println("Window Length of 1: ");
             byte b = window_bytearr[0]; // only byte in window
             
             // Update Character with the indices of where a valid match was found
@@ -335,6 +341,8 @@ public class LexicalAnalysis {
         Token current_token = token_stream.get(token_stream.size() - 1);
                 
         boolean has_match = current_token.name == null ? false : true;
+        System.out.println("Current Token Name: " + current_token.name);
+        System.out.println("Current Token getName: " + current_token.getName());
         // If match has been made, and no new token appeneded, then success -- time to return
         if (has_match) {
             System.out.println("Has Match, SUCCESS");
@@ -344,9 +352,11 @@ public class LexicalAnalysis {
         // Increase the end position, and check  //!!
         // REMOVING INCREMENT HERE, against all judgement... But I think it is actually wrong according to my notes
         // Sike, I am leaving it
+       
         System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");
         current_token.setEndPos(current_token.getEndPos() + 1);
         
+
         performChecks(src, token_stream); 
         // Need to implement check for in string and comments in a more comprehensive way
         // Pretty positive within-string expr and definitely within-comment need be addressed here
@@ -354,13 +364,23 @@ public class LexicalAnalysis {
         //Token new_current_token = token_stream.get(token_stream.size() - 1); // DEF not needed but scared
         boolean has_match_after_checks = current_token.name == null ? false : true;
         if (has_match_after_checks) {
+
+            //NEED - Source length appears to be off when compared to test file... Make sure to check
             System.out.println("New Current Token End Pos: " + current_token.getEndPos());
             System.out.println("Source length - 1: " + (src.length - 1));
-            if (src.length - 1 == current_token.getEndPos()) {
+            
+            // Not sure if this should be: 
+            // src.length == curr.getEndPos   or
+            // src.length - 1 >= curr.getEndPos
+            if (src.length == current_token.getEndPos()) {
+                System.out.println("generateLexemes reached end of src, returning token_stream");
                 return token_stream; // Success
             } else {
+                System.out.println("Creating a new token and adding it to the token stream");
                 Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
                 token_stream.add(new_token);
+                System.out.println("Updated Token Stream: ");
+                toolkit.printTokenStream(token_stream);
                 return generateTokens(src, token_stream);
             }
         } else {

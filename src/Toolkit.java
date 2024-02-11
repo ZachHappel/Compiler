@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 public class Toolkit {
@@ -18,6 +19,12 @@ public class Toolkit {
 
     public boolean getIsVerbose() {
         return this.is_verbose;
+    }
+
+    public void printTokenStream (ArrayList<Token> token_stream) {
+        for (Token t : token_stream) {
+            System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute() + ", Indices: " + Arrays.toString(t.getIndices()));
+        }
     }
 
     public boolean hashmapEqualityExists (Map<String, int[]> h1, Map<String, int[]> h2) {

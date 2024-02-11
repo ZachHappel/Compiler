@@ -161,6 +161,10 @@ public class Token {
         }
     }
 
+    public int[] getIndices() {
+        return new int[]{this.start_pos, this.end_pos};
+    }
+
     
 
 
