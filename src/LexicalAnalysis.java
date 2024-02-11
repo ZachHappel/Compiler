@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.ArrayList;
 
 
@@ -57,8 +59,10 @@ public class LexicalAnalysis {
     }
 
     // Need check for source of length 0
-    public static ArrayList<Token> generateTokens (byte[] source, ArrayList<Token> token_stream) {
+    public static ArrayList<Token> generateTokensOld (byte[] source, ArrayList<Token> token_stream) {
         
+
+
         System.out.println("Generating Tokens");
         Token new_token; 
 
@@ -70,8 +74,10 @@ public class LexicalAnalysis {
             new_token = new Token(previous_end_pos , previous_end_pos + 1);
         }
 
-        byte[] current_window_bytearr = Arrays.copyOfRange(source, new_token.getStartPos(), new_token.getEndPos());
-        String[] current_window_stringarr = toolkit.convertByteArrayToStringArray(current_window_bytearr);
+        byte[] window_bytearr = Arrays.copyOfRange(source, new_token.getStartPos(), new_token.getEndPos());
+        String[] window_stringarr = toolkit.convertByteArrayToStringArray(window_bytearr);
+        String window = new String(window_bytearr);
+        System.out.println("Current Window: " + window);
         //String[] current_string_subarray = toolkit.convertByteArrayToStringArray() 
         
 
@@ -79,6 +85,136 @@ public class LexicalAnalysis {
     }
 
 
+    public static ArrayList<Token> performChecksTest (byte[] src, ArrayList<Token> token_stream) {
+        Token test = new Token(0, 0);
+        test.setName("Hello");
+        test.setEndPos(1);
+        test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
+        token_stream.add(test);
+
+        return token_stream; 
+    }
+
+
+    public static byte[][] keywords = new byte[][] {
+        "int".getBytes(), 
+        "string".getBytes(), 
+        "boolean".getBytes(),
+        "print".getBytes(),
+        "while".getBytes(),
+        "true".getBytes(), 
+        "false".getBytes(),
+        "if".getBytes(),
+     };
+
+    public static void isOfKeyword (byte[] window_bytearr, int tk_start_pos, int tk_end_pos) {
+        Map<String, int[]> current_keyword_matches = new HashMap<String, int[]>() {{}};
+        //ArrayList<String> current_keyword_matches = new ArrayList<String>();
+        
+        int[] indices = new int[]{tk_start_pos, tk_end_pos};
+        int window_bytearr_size = window_bytearr.length; 
+        int amount_of_keywords = keywords.length; 
+        toolkit.output("Keyword Bytes vs Window Bytes: ");
+        
+        for (int j = 0; j <= amount_of_keywords - 1; j++ ) {
+            byte[] keyword = keywords[j];
+            
+            for (int k = 0; k <= keyword.length - 1 && k <= window_bytearr.length - 1; k++) {
+                byte byte_from_keyword = keyword[k];
+                byte byte_from_window =  window_bytearr[k];
+                toolkit.output("Byte From Keyword: " + byte_from_keyword + " Byte From Window: " + byte_from_window);
+                if (byte_from_keyword != byte_from_window) {
+                    toolkit.output("Bytes do not match up. Breaking loop. Proceeding to next keyword if available.");                 
+                    break;
+                }
+                
+                if (k == window_bytearr_size - 1 ) {
+                    // Valid thus far, and as such we add it to the HashMap 
+                    String type_lowercase = new String (keywords[j]);
+                    String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase();
+                    toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
+                    current_keyword_matches.put(keyword_token_name, indices);
+                }
+                    
+            }
+        }
+            
+    }
+    
+
+    // IS OF KEYWORDS FUNCT
+    // USES MATRIX WITH KEYWORDS CONVERTED TO BYTES
+    // RETURN KEYWORDS IT IS OF "IF, PRINT, WHILE" etc
+    // FOR KEYWORDS IT IS OF, UPDATE INDICES... FOR K: KEYWORDSAPARTOF -> Update tokenpossibilities(k name, tk indices)
+    public static ArrayList<Token> performChecks (byte[] src, ArrayList<Token> token_stream) {
+        Token token = token_stream.get(token_stream.size() - 1);
+        byte[] window_bytearr = Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos());
+
+        int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
+        
+        if (window_bytearr.length == 1) {
+            byte b = window_bytearr[0]; // only byte in window
+            
+            if ( b >= 97 && b < 123) {
+                // Update Character with the indices of where a valid match was found
+                token.updatePossibility("IDENTIFIER", indices);
+                token.updatePossibility("CHARACTER", indices);
+            } else if ( b == 123) {
+                token.updatePossibility("SYMBOL_OPENBLOCK", indices);
+            }
+
+        }
+        
+        Token test = new Token(0, 0);
+        test.setName("Hello");
+        test.setEndPos(1);
+        test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
+        token_stream.add(test);
+
+        return token_stream; 
+    }
+
+    public static ArrayList<Token> generateTokens (byte[] src, ArrayList<Token> token_stream) {
+        
+        if (token_stream.size() == 0) {
+            System.out.println("Hello");
+            Token starting_token = new Token(0, 0); // end_pos will get incremented
+            token_stream.add(starting_token);
+            System.out.println("SDASDS: " + token_stream.size());
+
+            return generateTokens(src, token_stream);
+        }
+
+        Token current_token = token_stream.get(token_stream.size() - 1);
+        
+        boolean has_match = current_token.name == null ? false : true;
+        
+        if (has_match) {
+            System.out.println("Has Match, SUCCESS");
+            return token_stream; // Because a new token wasn't appended, that means no more tokens to be created
+        }
+
+        current_token.setEndPos(current_token.getEndPos() + 1);
+        
+        performChecks(src, token_stream); 
+
+        Token new_current_token = token_stream.get(token_stream.size() - 1); // DEF not needed but scared
+        boolean has_match_after_checks = new_current_token.name == null ? false : true;
+        if (has_match_after_checks) {
+            System.out.println("New Current Token End Pos: " + new_current_token.getEndPos());
+            System.out.println("Source length - 1: " + (src.length - 1));
+            if (src.length - 1 == new_current_token.getEndPos()) {
+                return token_stream; // Success
+            } else {
+                Token new_token = new Token(new_current_token.getEndPos(), new_current_token.getEndPos() + 1);
+                token_stream.add(new_token);
+                return generateTokens(src, token_stream);
+            }
+        }
+
+        System.out.println("After Checks: " + token_stream.size());
+        return token_stream;
+    }
 
 
 
@@ -87,13 +223,25 @@ public class LexicalAnalysis {
         byte[] file_source_bytearr = getSourceFileData(filename);
         indices = toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
         System.out.println("Byte Arr:");
-        //for (byte b: file_source_bytearr) System.out.println("Byte: " + b + "Char: " + (char) b);
+        byte[] test_arr = new byte[]{105};
+
+        for (byte b: test_arr) System.out.println("Byte: " + b + ", Char: " + (char) b);
+
+        isOfKeyword(test_arr, 0, 2);
         //System.out.println(file_source_bytearr);
         //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
+       
+        /**
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>());
         
+        System.out.println("Token Stream: ");
+        for (Token t : token_stream) {
+            System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute());
+        }
         
         return token_stream;
+        **/
+        return new ArrayList<Token>();
     }
 
     //public ArrayList Lex () {
