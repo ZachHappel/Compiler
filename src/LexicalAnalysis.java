@@ -410,7 +410,7 @@ public class LexicalAnalysis {
                     //token_stream.
                     token.setStartPos(token.getEndPos() - 1);
                     token.setName("SYMBOL_CLOSECOMMENT");
-                    token.setAttribute("/*"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
+                    token.setAttribute("*/"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
                     
                     //Token close_comment_token = new Token(token.getEndPos() - 1, token.getEndPos());
                     //close_comment_token.setName("SYMBOL_CLOSECOMMENT");
