@@ -105,16 +105,17 @@ public class LexicalAnalysis {
         "true".getBytes(), 
         "false".getBytes(),
         "if".getBytes(),
-     };
+    };
 
     public static Map<String, int[]> isOfKeyword (byte[] window_bytearr, Token token) {
+        toolkit.output("\n(!) IS OF KEYWORD?");
         Map<String, int[]> current_keyword_matches = new HashMap<String, int[]>() {{}};
         //ArrayList<String> current_keyword_matches = new ArrayList<String>();
         
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
         int window_bytearr_size = window_bytearr.length; 
         int amount_of_keywords = keywords.length; 
-        toolkit.output("\n(...) Keyword Bytes vs Window Bytes: ");
+        toolkit.output("(...) Keyword Bytes vs Window Bytes: ");
         
         for (int j = 0; j <= amount_of_keywords - 1; j++ ) {
             byte[] keyword = keywords[j];
@@ -122,23 +123,25 @@ public class LexicalAnalysis {
             for (int k = 0; k <= keyword.length - 1 && k <= window_bytearr.length - 1; k++) {
                 byte byte_from_keyword = keyword[k];
                 byte byte_from_window =  window_bytearr[k];
-                toolkit.output("Byte From Keyword: " + byte_from_keyword + " Byte From Window: " + byte_from_window);
+                String equality = (byte_from_keyword == byte_from_window) ? "==" : "!=";
+                toolkit.output("Symbol Byte (" + byte_from_keyword + ") " + equality + " Window Byte (" + byte_from_window + ")");
                 if (byte_from_keyword != byte_from_window) {
-                    toolkit.output("Bytes do not match up. Breaking loop. Proceeding to next keyword if available.");                 
                     break;
                 }
+
+                
                 
                 if (k == window_bytearr_size - 1 ) {
                     // Valid thus far, and as such we add it to the HashMap 
                     String type_lowercase = new String (keywords[j]); // Get String version of keyword that is split in bytearray (the arrays within the array)
                     String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase(); // Combine with "KEYWORD_" to create proper token name
                     
-                    toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
+                    toolkit.output("> Keyword Semi-match: " + keyword_token_name + ", indices: " + Arrays.toString(indices) + ", matching: " + new String(window_bytearr));
                     current_keyword_matches.put(keyword_token_name, indices);
                     token.updatePossibility(keyword_token_name, indices); // JUST ADDED BEFORE BED
 
                     if (type_lowercase.equals(new String (window_bytearr))) {
-                        toolkit.output("Keyword Full-match: " + keyword_token_name + ", indices: " + indices);
+                        toolkit.output("Keyword Full-match: " + keyword_token_name + ", indices: " + Arrays.toString(indices));
                         token.setName(keyword_token_name);
                         token.setAttribute(new String (window_bytearr)); // Set value/attribute to String representation of byte window
                         //NEED - Line Number
@@ -169,9 +172,10 @@ public class LexicalAnalysis {
 
     // Take list of keyword (semi)matches and remove all but those keywords from the token's Lexeme Possibilities 
     public static void removeKeywordImpossibilities( Map<String, int[]> keyword_matches, Token token ) {
+        boolean any_removed = false;
         System.out.println("\n(!) REMOVE KEYWORD IMPOSSIBILITIES");
         int keyword_matches_amount = keyword_matches.size(); 
-        System.out.println("Keyword Semi Matches: " + keyword_matches.size());
+        System.out.println("(?) Keyword Semi Matches: " + keyword_matches.size());
         // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
         // Use this as a reference and make removals on the actual token's hashmap
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
@@ -181,25 +185,122 @@ public class LexicalAnalysis {
         // Add all matching names to ArrayList
         for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { keyword_match_names.add(entry.getKey());}
         
+        System.out.print("(---) Removed KEYWORD Possibilities: " );
         for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
             String possibility_name = entry.getKey();
             
             // If possibility is of kind "KEYWORD"
             // but is not among those which have been identified as being semi-matches
             if (possibility_name.contains("KEYWORD_") && !keyword_match_names.contains(possibility_name)) {
-                System.out.println("Removing KEYWORD Possibility: " + possibility_name); 
+                any_removed = true;
+                System.out.print(possibility_name + ", ");  // Print what is being removed
                 token.removePossiblity(possibility_name);
                 keyword_matches_amount = keyword_matches_amount - 1;
-            }
+            } 
             
 
         }
-        System.out.println("Remaining Keyword Semi Matches: " + keyword_matches_amount);
+
+        if (!any_removed) System.out.println("[...none...]");
+        //System.out.println("\nRemaining Keyword Semi Matches: " + keyword_matches_amount);
 
     }
 
 
+    public static byte[][] symbols = new byte[][] {
+        "=".getBytes(), 
+        "!=".getBytes(), 
+        "==".getBytes(),
+        "{".getBytes(),
+        "}".getBytes(),
+        "\"".getBytes(), 
+        "/*".getBytes(),
+        "*/".getBytes(),
+    };
+
+    public static Map<String, String> symbols_name_map = new HashMap<String, String >() {{
+        put("=", "SYMBOL_ASSIGNMENT");
+        put("!=", "SYMBOL_INEQUIVALENCE");
+        put("==", "SYMBOL_EQUIVALENCE");
+        put("{", "SYMBOL_OPENBLOCK");
+        put("}", "SYMBOL_CLOSEBLOCK");
+        put("\"", "SYMBOL_STRINGEXPRBOUNDARY");
+        put("/*", "SYMBOL_OPENCOMMENT");
+        put("*/", "SYMBOL_CLOSECOMMENT");
+        
+    }};
+
     
+    public static Map<String, int[]> isOfSymbol (byte[] window_bytearr, Token token) {
+        toolkit.output("\n(!) IS OF SYMBOL?");
+        boolean partial_match = false;
+        Map<String, int[]> current_symbol_matches = new HashMap<String, int[]>() {{}};
+        //ArrayList<String> current_keyword_matches = new ArrayList<String>();
+        
+        int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
+        int window_bytearr_size = window_bytearr.length; 
+        int amount_of_symbols = symbols.length; 
+
+        toolkit.output("(...) Symbol Bytes vs Window Bytes: (if bytes are not equal, the loop breaks, attempts next symbol if available)");
+        
+        for (int j = 0; j <= amount_of_symbols - 1; j++ ) {
+            byte[] symbol = symbols[j];
+            
+            for (int s = 0; s <= symbol.length - 1 && s <= window_bytearr.length - 1; s++) {
+                byte byte_from_symbol = symbol[s];
+                byte byte_from_window =  window_bytearr[s];
+                String equality = (byte_from_symbol == byte_from_window) ? "==" : "!=";
+                toolkit.output("Symbol Byte (" + byte_from_symbol + ") " + equality + " Window Byte (" + byte_from_window + ")");
+                if (byte_from_symbol != byte_from_window) {
+                    break;
+                }
+                
+                // End of current window, either full match now or furher matching required
+                if (s == window_bytearr_size - 1 ) {
+                    // Valid thus far, and as such we add it to the HashMap 
+                    String symbol_pattern = new String (symbols[j]); // Get String version of symbol that is split in bytearray (the arrays within the array)
+                    String symbol_token_name = symbols_name_map.get(symbol_pattern);
+                    //symbols_name_map. // Combine with "SYMBOL_" to create proper token name
+                    
+                    toolkit.output("Symbol Semi-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices) + ", matching: " + new String(window_bytearr));
+                    current_symbol_matches.put(symbol_token_name, indices);
+                    token.updatePossibility(symbol_token_name, indices); 
+                    partial_match = true; 
+
+                    if (symbol_pattern.equals(new String (window_bytearr))) {
+
+                        if (symbol_pattern == "=" && (token.getPossibilities().size() != 1)) {
+                            toolkit.output("(WAITING: Need exactly ONE possibility to definitively, fully-match SYMBOL_ASSIGNMENT)");
+                            current_symbol_matches.put(symbol_token_name, indices);
+                            token.updatePossibility(symbol_token_name, indices); 
+                            // Cannot return now, as "=" is the starting point of another symbol
+                            break; // breaks to innermost loop
+                        }
+                        
+                        toolkit.output("Symbol Full-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices));
+                        token.setName(symbol_token_name);
+                        token.setAttribute(new String (window_bytearr)); // Set value/attribute to String representation of byte window
+                        //NEED - Line Number
+                        //Token in stream successfully updated and ready for new token to be added. 
+                        //This will happen when performChecks returns token_stream to generateTokens which checks if name on most
+                        //recent token has been set
+
+                        // Can return now because in no case will a full keyword match interfere with another keyword
+                        return current_symbol_matches;
+                    }
+
+                    
+                }
+                    
+            }
+        }
+
+        if (partial_match) token.removePossibilitiesOfSpecifiedType("SYMBOL", true);
+    
+        return current_symbol_matches; 
+        // PerformChecks need to remove, from Possibilities, all keywords that are not retured from here as being semi-matches.
+        // If it fails here on X keyword, it is not X keyword
+    }
 
     
 
@@ -211,7 +312,38 @@ public class LexicalAnalysis {
         }
     }
 
-    public static void removeImpossibleSymbols() {}
+    
+
+    
+    public static void removeSymbolImpossibilities( Map<String, int[]> symbol_matches, Token token ) {
+        System.out.println("\n(!) REMOVE SYMBOL IMPOSSIBILITIES");
+        int symbol_matches_amount = symbol_matches.size(); 
+        System.out.println("Symbol Semi Matches: " + symbol_matches.size());
+        // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
+        // Use this as a reference and make removals on the actual token's hashmap
+        Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
+
+        ArrayList<String> symbol_match_names = new ArrayList<String>(); 
+        
+        // Add all matching names to ArrayList
+        for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { symbol_match_names.add(entry.getKey());}
+        
+        for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
+            String possibility_name = entry.getKey();
+            
+            // If possibility is of kind "SYMBOL"
+            // but is not among those which have been identified as being semi-matches
+            if (possibility_name.contains("SYMBOL_") && !symbol_match_names.contains(possibility_name)) {
+                System.out.println("Removing SYMBOL Possibility: " + possibility_name); 
+                token.removePossiblity(possibility_name);
+                symbol_matches_amount = symbol_matches_amount - 1;
+            }
+            
+
+        }
+        System.out.println("Remaining Symbol Semi Matches: " + symbol_matches_amount);
+
+    }
     
 
     // IS OF KEYWORDS FUNCT
@@ -219,36 +351,81 @@ public class LexicalAnalysis {
     // RETURN KEYWORDS IT IS OF "IF, PRINT, WHILE" etc
     // FOR KEYWORDS IT IS OF, UPDATE INDICES... FOR K: KEYWORDSAPARTOF -> Update tokenpossibilities(k name, tk indices)
     public static ArrayList<Token> performChecks (byte[] src, ArrayList<Token> token_stream) {
-
         System.out.println("\n(!) PERFORM CHECKS");
 
         Token token = token_stream.get(token_stream.size() - 1);
         boolean isWithinString = toolkit.isWithinStringExpression(token_stream);
+        boolean isWithinComment = toolkit.isWithinComment(token_stream);
         Map<String, int[]> lexemes_possibilities_before_checking = new HashMap<>(token.getPossibilities());
         
+        
         System.out.println("(?) isWithinString: " + isWithinString);
+        System.out.println("(?) isWithinComment: " + isWithinComment);
         
         // If not in string, we want all special characters removed
         // If it IS within a string, we want all special characters BUT spaces removed
         byte[] window_bytearr = isWithinString ? toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())) : toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
-        
         System.out.println("(?) window_bytearr: " + new String(window_bytearr)); 
-        
-        
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
+
         // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
         Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
-        
         System.out.println("\n(...) Keyword Matches: "); for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]));   }
-
         removeKeywordImpossibilities(keyword_matches, token);
-        
+        if (token.getName() != null) {
+            return token_stream;
+        }
+
+        Map<String, int[]> symbol_matches = isOfSymbol(window_bytearr, token);
+        System.out.println("\n(...) Symbol Matches: "); for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]));   }
+        removeSymbolImpossibilities(symbol_matches, token);
+        if (token.getName() != null) {
+            return token_stream;
+        }
+
         int window_bytearr_length_before_moving_special_characters = token.getEndPos() - token.getStartPos();
 
 
         // Needs to be...
         // If length before moving special chars is 1
         // But if length after moving special chars is 0... return? I think
+
+        // if window != [...,...,..., *, /] -> ignore  =>  return token_stream
+        // NEED CONSIDER - This may need to be moved before any symbol or keyword matching
+        if (isWithinComment) {
+            //Wait... 
+            // Encountered when /* Token already created... So we do not need to make it (even though I am going to delete later.. Ik this is just for testing)
+            System.out.println("Within Comment");
+            if ( (window_bytearr[window_bytearr.length - 2 ] == 42) && (window_bytearr[window_bytearr.length - 1 ] == 47) ) {
+                System.out.println("Last 2 bytes in window are close comment symbol");
+               
+                
+                /**
+                Token open_comment_token = new Token(token.getStartPos(), token.getStartPos() + 1); // Create that initial OPENCOMMENT 
+                open_comment_token.setName("SYMBOL_OPENCOMMENT");
+                open_comment_token.setAttribute("/*");
+                **/
+                //token_stream.
+                token.setStartPos(token.getEndPos() - 1);
+                token.setName("SYMBOL_CLOSECOMMENT");
+                token.setAttribute("/*"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
+                
+                //Token close_comment_token = new Token(token.getEndPos() - 1, token.getEndPos());
+                //close_comment_token.setName("SYMBOL_CLOSECOMMENT");
+                //close_comment_token.setAttribute("*/");
+
+                //token_stream.remove(token_stream.size() - 1);
+                //token_stream.add(open_comment_token); //Even though we will remove these... Add open comment first
+                //token_stream.add(close_comment_token); // Then add close comment
+
+                System.out.println("Returning token stream with open and close comment tokens inserted");
+                return token_stream;
+            }
+            
+            System.out.println("SYMBOL_ENDCOMMENT not matched, returning token_stream");
+            return token_stream;
+        }
+
         if (window_bytearr_length_before_moving_special_characters == 1) {
             System.out.println("(Window Length of 1) ");
             
@@ -261,13 +438,20 @@ public class LexicalAnalysis {
             
             // [a-z]
             if ( b >= 97 && b < 123) { 
-                token.updatePossibility("IDENTIFIER", indices);
-                token.updatePossibility("CHARACTER", indices);
-                removeAllSymbolsFromPossibilities(token);
-                token.removePossiblity("EOP");
-                token.removePossiblity("DIGIT");
 
-            // 
+                if (isWithinString) {
+                    token.updatePossibility("CHARACTER", indices); // MATCH?
+                } else {
+                    token.updatePossibility("IDENTIFIER", indices);
+                    token.removePossiblity("EOP"); // Not sure if this and the below 2 should be here
+                    token.removePossiblity("DIGIT");
+                    token.removePossibilitiesOfSpecifiedType("SYMBOL", false);
+                    //removeAllSymbolsFromPossibilities(token);
+                }
+                
+                
+            
+            // { 
             } else if ( b == 123) {
                 token.updatePossibility("SYMBOL_OPENBLOCK", indices);
             } 
@@ -344,21 +528,23 @@ public class LexicalAnalysis {
         }
 
         // Get most recent token
-        Token current_token = token_stream.get(token_stream.size() - 1);
-                
+        Token current_token = token_stream.get(token_stream.size() - 1);   
         boolean has_match = current_token.name == null ? false : true;
+
         System.out.println("(?) Current Token Name: " + current_token.getName() + " / Amount of Lexeme Possibilities: " + (current_token.getPossibilities()).size() + " / Current Window Size: " + (current_token.getEndPos() - current_token.getStartPos()));
-        // If match has been made, and no new token appeneded, then success -- time to return
+        
+       
         if (has_match) {
+            // If match has been made, and no new token appeneded, then success -- time to return
             System.out.println("Has Match, SUCCESS");
-            return token_stream; // Because a new token wasn't appended, that means no more tokens to be created
+            return token_stream;
         }
 
         // Increase the end position, and check  //!!
         // REMOVING INCREMENT HERE, against all judgement... But I think it is actually wrong according to my notes
         // Sike, I am leaving it
        
-        System.out.println("> Expanding window");
+        System.out.println("> Expanding window (end_pos + 1)");
         current_token.setEndPos(current_token.getEndPos() + 1);
         
 
@@ -406,7 +592,7 @@ public class LexicalAnalysis {
 
         }
 
-        System.out.println("After Checks: " + token_stream.size());
+        //System.out.println("After Checks: " + token_stream.size());
         return token_stream;
     }
 

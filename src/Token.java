@@ -165,6 +165,26 @@ public class Token {
         return new int[]{this.start_pos, this.end_pos};
     }
 
+
+    public void removePossibilitiesOfSpecifiedType(String type, boolean remove_all_but) {
+
+        String type_uppercase = type.toUpperCase();
+        Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(this.getPossibilities());
+        
+        // Remove all but specified type
+        if ( remove_all_but ) {
+            for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
+                String possibility_name = entry.getKey();
+                if (!possibility_name.contains(type_uppercase)) this.removePossiblity(possibility_name);
+            }
+        } else {
+            for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
+                String possibility_name = entry.getKey();
+                if (possibility_name.contains(type_uppercase)) this.removePossiblity(possibility_name);
+            }
+        }
+        
+    }
     
 
 

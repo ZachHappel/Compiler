@@ -46,7 +46,26 @@ public class Toolkit {
         return areEqual;
 
     }
+
+    //public boolean countComplimentingCommentSymbols(ArrayList<Token> token_stream) {}
  
+    public boolean isWithinComment (ArrayList<Token> token_stream) {
+        return (countCommentSymbols(token_stream) % 2 == 0 ? false : true);
+    }
+    
+    // I am not a fan, but this works because we do not allow in our language something like this: /*  */ */
+    // Instead it has to be like this: /*  */ /* */
+    public int countCommentSymbols (ArrayList<Token> token_stream) {
+        int count = 0;
+        for (int i = 0; i <= token_stream.size() - 1; i ++) { 
+            String tk_name = (token_stream.get(i)).getName(); 
+            if ( tk_name == "SYMBOL_OPENCOMMENT" || tk_name == "SYMBOL_CLOSECOMMENT") {
+                count = count + 1;
+            }
+        }
+        return count;
+    }
+
     public boolean isWithinStringExpression(ArrayList<Token> token_stream) {
         return (countStringBoundaryExpressions(token_stream) % 2 == 0 ? false : true);
         //int amount_exprs = countStringBoundaryExpressions(token_stream);
@@ -55,7 +74,7 @@ public class Toolkit {
     public int countStringBoundaryExpressions (ArrayList<Token> token_stream) {
         int count = 0;
         for (int i = 0; i <= token_stream.size() - 1; i ++) { 
-            if ((token_stream.get(i).getName()) == "STRINGEXPRBOUNDARY") {
+            if ((token_stream.get(i).getName()) == "SYMBOL_STRINGEXPRBOUNDARY") {
                 count = count + 1;
             }
         }
