@@ -130,8 +130,8 @@ public class LexicalAnalysis {
                 
                 if (k == window_bytearr_size - 1 ) {
                     // Valid thus far, and as such we add it to the HashMap 
-                    String type_lowercase = new String (keywords[j]);
-                    String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase();
+                    String type_lowercase = new String (keywords[j]); // Get String version of keyword that is split in bytearray (the arrays within the array)
+                    String keyword_token_name = "KEYWORD_" + type_lowercase.toUpperCase(); // Combine with "KEYWORD_" to create proper token name
                     
                     toolkit.output("Keyword Semi-match: " + keyword_token_name + ", indices: " + indices);
                     current_keyword_matches.put(keyword_token_name, indices);
@@ -253,6 +253,8 @@ public class LexicalAnalysis {
         //boolean isWithinComment = tool
 
         
+
+        // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
         Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
         
         System.out.println("\nKeyword Matches: ");
@@ -272,26 +274,24 @@ public class LexicalAnalysis {
         // If length before moving special chars is 1
         // But if length after moving special chars is 0... return? I think
         if (window_bytearr_length_before_moving_special_characters == 1) {
-
+            System.out.println("(Window Length of 1) ");
+            
             if (window_bytearr.length == 0) {
                 System.out.println("Window ByteArr is of length 0 because first byte is special character. Returniing token stream, as incrementaion of end pos is required, if possible at current location within source file");
                 return token_stream;
             }
-
-            System.out.println("Window Length of 1: ");
+            
             byte b = window_bytearr[0]; // only byte in window
             
-            // Update Character with the indices of where a valid match was found
+            // [a-z]
             if ( b >= 97 && b < 123) { 
-                
-                
-                
                 token.updatePossibility("IDENTIFIER", indices);
                 token.updatePossibility("CHARACTER", indices);
                 removeAllSymbolsFromPossibilities(token);
                 token.removePossiblity("EOP");
                 token.removePossiblity("DIGIT");
 
+            // 
             } else if ( b == 123) {
                 token.updatePossibility("SYMBOL_OPENBLOCK", indices);
             } 
