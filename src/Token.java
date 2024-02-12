@@ -114,7 +114,7 @@ public class Token {
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
             String name = entry.getKey();
             int[] i = entry.getValue();
-            System.out.println("Keyword: " + name + " Indices: " + i + " Length of match: " + (i[1] - i[0]));    
+            System.out.println("Name: " + name + " Indices: " + i + " Length of match: " + (i[1] - i[0]));    
 
         }
     }
@@ -130,7 +130,7 @@ public class Token {
             int[] i = entry.getValue();
             int difference = i[1] - i[0];
             
-            System.out.println("Keyword: " + name + " Indices: " + i + " Length of match: " + difference);    
+            System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + difference);    
             
             if (difference == this.longest_match_length && this.longest_match_length > 0) {
                 matches_of_same_length.add(name);
@@ -154,7 +154,7 @@ public class Token {
 
 
     public void printRemainingPossibilities(boolean with_indices) {
-        System.out.println("Remaining Probabilities");
+        System.out.println("\n(...) Remaining Probabilities");
         for (Map.Entry<String, int[]> entry : (this.LexemePossibilities).entrySet()) {
             if (with_indices) System.out.println(entry.getKey() + ", " + Arrays.toString(entry.getValue()));
             else System.out.println(entry.getKey());

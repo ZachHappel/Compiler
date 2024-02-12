@@ -126,7 +126,7 @@ public class Toolkit {
 
     // From previous attempt at project, gross but it should work
     public byte[] removeSpecialCharacters(byte[] sub_arr) {
-        System.out.println("Sub Array Length: "+ sub_arr.length);
+        //System.out.println("Sub Array Length: "+ sub_arr.length);
         int specialchar_count = 0;
         for (int i = 0; i <= sub_arr.length - 1; i++) {
             if ((sub_arr[i] == 13) || (sub_arr[i] == 10) || (sub_arr[i] == 11) || (sub_arr[i] == 32))
@@ -148,7 +148,7 @@ public class Toolkit {
             }
         }
 
-        System.out.println("Modified Sub Array Length: "+ modified_sub_arr.length); 
+        //System.out.println("Modified Sub Array Length: "+ modified_sub_arr.length); 
         return modified_sub_arr;
     }
 
