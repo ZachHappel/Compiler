@@ -218,6 +218,7 @@ public class LexicalAnalysis {
         "\"".getBytes(), 
         "/*".getBytes(),
         "*/".getBytes(),
+        "+".getBytes(),
     };
 
     public static Map<String, String> symbols_name_map = new HashMap<String, String >() {{
@@ -231,6 +232,7 @@ public class LexicalAnalysis {
         put("\"", "SYMBOL_STRINGEXPRBOUNDARY");
         put("/*", "SYMBOL_OPENCOMMENT");
         put("*/", "SYMBOL_CLOSECOMMENT");
+        put("+", "SYMBOL_INTOP");
         
     }};
 
