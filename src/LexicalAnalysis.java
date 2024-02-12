@@ -213,6 +213,8 @@ public class LexicalAnalysis {
         "==".getBytes(),
         "{".getBytes(),
         "}".getBytes(),
+        "(".getBytes(),
+        ")".getBytes(),
         "\"".getBytes(), 
         "/*".getBytes(),
         "*/".getBytes(),
@@ -224,6 +226,8 @@ public class LexicalAnalysis {
         put("==", "SYMBOL_EQUIVALENCE");
         put("{", "SYMBOL_OPENBLOCK");
         put("}", "SYMBOL_CLOSEBLOCK");
+        put("(", "SYMBOL_OPENPAREN");
+        put(")", "SYMBOL_CLOSEPAREN");
         put("\"", "SYMBOL_STRINGEXPRBOUNDARY");
         put("/*", "SYMBOL_OPENCOMMENT");
         put("*/", "SYMBOL_CLOSECOMMENT");
@@ -418,7 +422,7 @@ public class LexicalAnalysis {
             byte b = window_bytearr[0]; // only byte in window
             System.out.println("BBBBB");
             
-            if ( b >= 97 && b < 123) { // [a-z]
+            if ( b >= 97 && b < 123 || (b == 32 && isWithinString)) { // [a-z]
                 System.out.println("CCCCC");
                 token.removePossiblity("EOP"); // Not sure if this and the below 2 should be here
                 token.removePossiblity("DIGIT");
