@@ -393,34 +393,11 @@ public class LexicalAnalysis {
         // if window != [...,...,..., *, /] -> ignore  =>  return token_stream
         // NEED CONSIDER - This may need to be moved before any symbol or keyword matching
         if (isWithinComment) {
-            //Wait... 
-            // Encountered when /* Token already created... So we do not need to make it (even though I am going to delete later.. Ik this is just for testing)
-            System.out.println("Within Comment");
-
             if (window_bytearr.length >= 2) {
-                if ( (window_bytearr[window_bytearr.length - 2 ] == 42) && (window_bytearr[window_bytearr.length - 1 ] == 47) ) {
-                    System.out.println("Last 2 bytes in window are close comment symbol");
-                   
-                    
-                    /**
-                    Token open_comment_token = new Token(token.getStartPos(), token.getStartPos() + 1); // Create that initial OPENCOMMENT 
-                    open_comment_token.setName("SYMBOL_OPENCOMMENT");
-                    open_comment_token.setAttribute("/*");
-                    **/
-                    //token_stream.
+                if ( (window_bytearr[window_bytearr.length - 2 ] == 42) && (window_bytearr[window_bytearr.length - 1 ] == 47) ) { // Close commment symbol
                     token.setStartPos(token.getEndPos() - 1);
                     token.setName("SYMBOL_CLOSECOMMENT");
                     token.setAttribute("*/"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
-                    
-                    //Token close_comment_token = new Token(token.getEndPos() - 1, token.getEndPos());
-                    //close_comment_token.setName("SYMBOL_CLOSECOMMENT");
-                    //close_comment_token.setAttribute("*/");
-    
-                    //token_stream.remove(token_stream.size() - 1);
-                    //token_stream.add(open_comment_token); //Even though we will remove these... Add open comment first
-                    //token_stream.add(close_comment_token); // Then add close comment
-    
-                    System.out.println("Returning token stream with open and close comment tokens inserted");
                     return token_stream;
                 }
             }
@@ -430,149 +407,109 @@ public class LexicalAnalysis {
             return token_stream;
         }
 
-        if (window_bytearr_length_before_moving_special_characters == 1) {
-            System.out.println("(Window Length of 1) ");
-            
-            if (window_bytearr.length == 0) {
-                System.out.println("(?) Window ByteArr is of length 0 because first byte is special character. Returniing token stream, as incrementaion of end pos is required, if possible at current location within source file");
-                return token_stream;
-            }
-            
-            byte b = window_bytearr[0]; // only byte in window
-            
-            // [a-z]
-            if ( b >= 97 && b < 123) { 
+        //Window ByteArr is of length 0 because first byte is special character. Returniing token stream, as incrementaion of end pos is required, if possible at current location within source file
 
+        System.out.println("window_bytearr_length_before_moving_special_characters: " + window_bytearr_length_before_moving_special_characters);
+        
+        // NEED - Adding "|| window_bytearr.length == 1" needs to be watched
+        if (window_bytearr_length_before_moving_special_characters == 1 || window_bytearr.length == 1) {
+            System.out.println("AAAAA");
+            if (window_bytearr.length == 0) return token_stream; // 0 => only when first byte is a special char 
+            byte b = window_bytearr[0]; // only byte in window
+            System.out.println("BBBBB");
+            
+            if ( b >= 97 && b < 123) { // [a-z]
+                System.out.println("CCCCC");
+                token.removePossiblity("EOP"); // Not sure if this and the below 2 should be here
+                token.removePossiblity("DIGIT");
+                token.removePossibilitiesOfSpecifiedType("SYMBOL", false);
+                
                 if (isWithinString) {
                     token.updatePossibility("CHARACTER", indices); // MATCH?
-                } else {
+                    token.removePossiblity("IDENTIFIER");
+                    token.removePossibilitiesOfSpecifiedType("KEYWORD", false);
+                } 
+                else {
                     token.updatePossibility("IDENTIFIER", indices);
-                    token.removePossiblity("EOP"); // Not sure if this and the below 2 should be here
-                    token.removePossiblity("DIGIT");
-                    token.removePossibilitiesOfSpecifiedType("SYMBOL", false);
-                    //removeAllSymbolsFromPossibilities(token);
+                    token.removePossiblity("CHARACTER");
                 }
                 
+            } else {
+                System.out.println("ELSE Not a-z");
+                token.removePossiblity("IDENTIFIER");
+                token.removePossiblity("CHARACTER");
                 
-            
-            // { 
-            } else if ( b == 123) {
-                token.updatePossibility("SYMBOL_OPENBLOCK", indices);
-            } 
-            
+                if (b >= 47 && b <= 57)  {
+                    System.out.println("Digit!!!!!!!!");
+                    token.updatePossibility("DIGIT", indices);
+                    token.removePossiblity("EOP");  
+                }
+
+                else if ( b == 36 ) {
+                    token.updatePossibility("EOP", indices);     
+                    token.removePossiblity("DIGIT");           
+                    
+                }
+
+            }
+
+
+
+           
+
+        }
+
+        // One possibility remaining -> emit it
+        if (token.getPossibilities().size() == 1) {
+            token.updateTokenWithRemainingNameAndIndices();
+            token.setAttribute(new String(window_bytearr));
         }
         
         token.printRemainingPossibilities(true);
-
-       
-
-       
-        
-      
 
         return token_stream; 
 
 
     }
 
-    // IGNORE
-    //toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
-    //toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));    
-    // Map<String, int[]> testHash = new HashMap<>(token.getPossibilities());
-    //testHash.put("Hello", new int[]{1,1});
-    //boolean changeMadeOnPurposeMadeEqualityFunctionReturnFalse = (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, testHash));
-    //System.out.println("is modified equalityHashMapTest equal to unmodified: " + changeMadeOnPurposeMadeEqualityFunctionReturnFalse);
-    /**
-     * if (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, token.getLexemePossibilities())) {
-            System.out.println("Checking Funct Works -- Lexeme Possibilities Same Before Check");
-        } else {
-            System.out.println("Checking Funct Works -- Lexeme Possibilities Are Not Same");
-            //System.out.println("Length Before: " + lexemes_possibilities_before_checking.size() + ", Length After: " + (token.getLexemePossibilities()).size());
-        }
-     */
-      /**
-        Token test = new Token(0, 0);
-        test.setName("Hello");
-        test.setEndPos(1);
-        test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
-        token_stream.add(test);
-        **/
+   
 
-        /**
-         *  // Lexeme Possibilities - Has the amount changed since performing these checks?
-         *  if (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, token.getLexemePossibilities())) {
-            System.out.println("Lexeme Possibilities Unchanged During Last Check");
-        } else {
-            System.out.println("Lexeme Possibilities have changed");
-            //System.out.println("Length Before: " + lexemes_possibilities_before_checking.size() + ", Length After: " + (token.getLexemePossibilities()).size());
-        }
-
-
-        if ((token.getLexemePossibilities()).size() == (lexemes_possibilities_before_checking.size())) {
-            // This case proves that there has been 
-
-
-        } else {    
-        }
-         */
 
     public static ArrayList<Token> generateTokens (byte[] src, ArrayList<Token> token_stream) {
         
         System.out.println("\n~~~~~~~~~~~~~~~~~~~GENERATE TOKENS~~~~~~~~~~~~~~~~~~~");
-        // If no token in stream and there exists source input
-        // create token, add it to the token stream,
-        // call generateTokens recursively
+        
         if (token_stream.size() == 0 && src.length > 0) {
             System.out.println("Adding First Token");
-            Token starting_token = new Token(0, 0); // end_pos will get incremented
-            token_stream.add(starting_token);
-            System.out.println("Current Stream Size: " + token_stream.size());
-
+            token_stream.add(new Token(0, 0)); // end_pos gets incremented each recursive loop
             return generateTokens(src, token_stream);
         }
 
-        // Get most recent token
-        Token current_token = token_stream.get(token_stream.size() - 1);   
+        Token current_token = token_stream.get(token_stream.size() - 1); // Get most recent token
+        current_token.printShortTokenSummary(toolkit.getIsVerbose());
+
         boolean has_match = current_token.name == null ? false : true;
+        if (has_match) return token_stream; // Success
+               
 
-        System.out.println("(?) Current Token Name: " + current_token.getName() + " / Amount of Lexeme Possibilities: " + (current_token.getPossibilities()).size() + " / Current Window Size: " + (current_token.getEndPos() - current_token.getStartPos()));
-        
-       
-        if (has_match) {
-            // If match has been made, and no new token appeneded, then success -- time to return
-            System.out.println("Has Match, SUCCESS");
-            return token_stream;
-        }
-
-        // Increase the end position, and check  //!!
-        // REMOVING INCREMENT HERE, against all judgement... But I think it is actually wrong according to my notes
-        // Sike, I am leaving it
-       
         System.out.println("> Expanding window (end_pos + 1)");
         current_token.setEndPos(current_token.getEndPos() + 1);
         
 
         performChecks(src, token_stream); 
-        // Need to implement check for in string and comments in a more comprehensive way
-        // Pretty positive within-string expr and definitely within-comment need be addressed here
-
-        //Token new_current_token = token_stream.get(token_stream.size() - 1); // DEF not needed but scared
         boolean has_match_after_checks = current_token.name == null ? false : true;
         
         if (has_match_after_checks) {
-            System.out.println("\n> Definitive match\n");
-            //NEED - Source length appears to be off when compared to test file... Make sure to check
+            System.out.println("\n> Definitive match\n"); //NEED - Source length appears to be off when compared to test file... Make sure to check
             System.out.println("End Position of Matched Lexeme: " + current_token.getEndPos());
             System.out.println("Source length - 1: " + (src.length - 1));
             
-            // Not sure if this should be: 
-            // src.length == curr.getEndPos   or
-            // src.length - 1 >= curr.getEndPos
+            // >=   maybe?
             if (src.length == current_token.getEndPos()) {
-                System.out.println("generateLexemes reached end of src, returning token_stream");
+                toolkit.output("generateLexemes reached end of src, returning token_stream");
                 return token_stream; // Success
             } else {
-                System.out.println("Creating a new token and adding it to the token stream");
+                toolkit.output("Creating a new token and adding it to the token stream");
                 Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
                 token_stream.add(new_token);
                 System.out.println("Updated Token Stream: ");
@@ -585,13 +522,39 @@ public class LexicalAnalysis {
                 //System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");
                 //current_token.setEndPos(current_token.getEndPos() + 1);
                 token_stream = generateTokens(src, token_stream);
+            
+            
+             // Need check here for remaining unmatched token when end of src is reached
+            // When testing single keyword testfile, there are 3 possibilities remaining when window = "int", 
+            // End of src, and nothing happens it exits
+            // What should happen is that the longest match should be taken, assigned to the token name, value set, and new token
+            // should be created
+            
             } else {
-                // Need check here for remaining unmatched token when end of src is reached
-                // When testing single keyword testfile, there are 3 possibilities remaining when window = "int", 
-                // End of src, and nothing happens it exits
-                // What should happen is that the longest match should be taken, assigned to the token name, value set, and new token
-                // should be created
+                current_token.processLongestMatch();
+
+                System.out.println("There exists SHARED longest match: " + current_token.getThereExistsSharedLongestMatch());
+                System.out.println("There exists UNIQUE longest match: " + current_token.getThereExistsUniqueLongestMatch());
+                String longest_full_match_name = current_token.getLongestMatchName();
+                int[] longest_full_match_indices = current_token.getPossibilities().get(longest_full_match_name);
+                System.out.println("Longest Match name: " + longest_full_match_name);
+                System.out.println("Longest Match indices: " + Arrays.toString(longest_full_match_indices));
+               
                 System.out.println("src.length - 1 != current_token.getEndPos() - 1 ");
+
+                String tk_value = new String(Arrays.copyOfRange(src, longest_full_match_indices[0], longest_full_match_indices[1])); 
+                System.out.println("Value at range: " + tk_value);
+                current_token.setName(longest_full_match_name);
+                current_token.setStartPos(longest_full_match_indices[0]);
+                current_token.setEndPos(longest_full_match_indices[1]);
+                current_token.setAttribute(tk_value);
+
+                if (longest_full_match_indices[1] <= src.length - 1) {
+                    Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
+                    token_stream.add(new_token);
+                    token_stream = generateTokens(src, token_stream);
+                }
+                //(longest_full_match_name);
             }
 
         }
@@ -637,3 +600,68 @@ public class LexicalAnalysis {
     //}
     
 }
+
+
+ // IGNORE
+
+    /**
+     * else if ( b == 123) {
+                token.updatePossibility("SYMBOL_OPENBLOCK", indices);
+            } 
+     */
+    //toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
+    //toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));    
+    // Map<String, int[]> testHash = new HashMap<>(token.getPossibilities());
+    //testHash.put("Hello", new int[]{1,1});
+    //boolean changeMadeOnPurposeMadeEqualityFunctionReturnFalse = (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, testHash));
+    //System.out.println("is modified equalityHashMapTest equal to unmodified: " + changeMadeOnPurposeMadeEqualityFunctionReturnFalse);
+    /**
+     * if (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, token.getLexemePossibilities())) {
+            System.out.println("Checking Funct Works -- Lexeme Possibilities Same Before Check");
+        } else {
+            System.out.println("Checking Funct Works -- Lexeme Possibilities Are Not Same");
+            //System.out.println("Length Before: " + lexemes_possibilities_before_checking.size() + ", Length After: " + (token.getLexemePossibilities()).size());
+        }
+     */
+      /**
+        Token test = new Token(0, 0);
+        test.setName("Hello");
+        test.setEndPos(1);
+        test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
+        token_stream.add(test);
+        **/
+
+        /**
+         *  // Lexeme Possibilities - Has the amount changed since performing these checks?
+         *  if (toolkit.hashmapEqualityExists(lexemes_possibilities_before_checking, token.getLexemePossibilities())) {
+            System.out.println("Lexeme Possibilities Unchanged During Last Check");
+        } else {
+            System.out.println("Lexeme Possibilities have changed");
+            //System.out.println("Length Before: " + lexemes_possibilities_before_checking.size() + ", Length After: " + (token.getLexemePossibilities()).size());
+        }
+
+
+        if ((token.getLexemePossibilities()).size() == (lexemes_possibilities_before_checking.size())) {
+            // This case proves that there has been 
+
+
+        } else {    
+        }
+
+        
+         */
+
+         
+        //Token close_comment_token = new Token(token.getEndPos() - 1, token.getEndPos());
+        //close_comment_token.setName("SYMBOL_CLOSECOMMENT");
+        //close_comment_token.setAttribute("*/");
+
+        //token_stream.remove(token_stream.size() - 1);
+        //token_stream.add(open_comment_token); //Even though we will remove these... Add open comment first
+        //token_stream.add(close_comment_token); // Then add close comment
+         /**
+        Token open_comment_token = new Token(token.getStartPos(), token.getStartPos() + 1); // Create that initial OPENCOMMENT 
+        open_comment_token.setName("SYMBOL_OPENCOMMENT");
+        open_comment_token.setAttribute("/*");
+        **/
+        //token_stream.

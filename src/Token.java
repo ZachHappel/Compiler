@@ -108,6 +108,11 @@ public class Token {
         this.LexemePossibilities.put(lexeme_name, indices);
     }
 
+
+    public void printShortTokenSummary (boolean is_verbose) {
+        if (is_verbose) System.out.println("(?) Current Token Name: " + this.getName() + " / Amount of Lexeme Possibilities: " + (this.getPossibilities()).size() + " / Current Window Size: " + (this.getEndPos() - this.getStartPos()));
+    }
+
     public void printRemainingPossibilities(Token token) {
         //Map<String, int[]> remaining = new
 
@@ -122,7 +127,6 @@ public class Token {
 
     public void processLongestMatch () {
         
-
         ArrayList<String> matches_of_same_length = new ArrayList<String>();
 
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
@@ -136,10 +140,15 @@ public class Token {
                 matches_of_same_length.add(name);
             }
 
+            // Excluding keyword should work for all cases
             if (difference > this.longest_match_length) {
-                this.longest_match_length = difference; // Update longest match length
-                this.longest_match_name = name; // Update name of longest match
-                matches_of_same_length = new ArrayList<String>(); // Reset similarities because new longest found
+                if (!name.contains("KEYWORD")) { // Because partial matches do not count
+                    this.thereExistsSharedLongestMatch = false; 
+                    this.thereExistsUniqueLongestMatch = true; 
+                    this.longest_match_length = difference; // Update longest match length
+                    this.longest_match_name = name; // Update name of longest match
+                    matches_of_same_length = new ArrayList<String>(); // Reset similarities because new longest found
+                }
             }
 
             //if (diff)
@@ -163,6 +172,21 @@ public class Token {
 
     public int[] getIndices() {
         return new int[]{this.start_pos, this.end_pos};
+    }
+
+
+   
+
+
+    // Tired.... I apologize to any future employer who sees this abomination
+    // Needs to be only used in the event that there is one and only one possibility remaining=
+    public void updateTokenWithRemainingNameAndIndices () {
+        for (Map.Entry<String, int[]> entry : (this.getPossibilities()).entrySet()) {
+            this.setName(entry.getKey());
+            this.setStartPos(entry.getValue()[0]);
+            this.setEndPos(entry.getValue()[1]);
+            break;
+        }
     }
 
 

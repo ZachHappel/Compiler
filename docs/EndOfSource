@@ -25,5 +25,10 @@ In the current state, when end of source (EOS from now on) is encountered, my so
 
     In the char/id utility, the determined lexeme's indices will be utilized as the basis for the next token's starting pos and end pos, as will anything (like some symbols) which require a retraction of the window.
     
+---------------
 
 
+Oh wait, I did create a method for removing symbols earlier lol
+
+
+Resisting the urge to hardcode bytes for symbols and now my eyes are drifting towards chars/ids too.....
