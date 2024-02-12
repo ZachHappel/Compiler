@@ -370,14 +370,14 @@ public class LexicalAnalysis {
 
         // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
         Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
-        System.out.println("\n(...) Keyword Matches: "); for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]));   }
+        System.out.println("\n(...) Keyword Matches: "); for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
         removeKeywordImpossibilities(keyword_matches, token);
         if (token.getName() != null) {
             return token_stream;
         }
 
         Map<String, int[]> symbol_matches = isOfSymbol(window_bytearr, token);
-        System.out.println("\n(...) Symbol Matches: "); for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]));   }
+        System.out.println("\n(...) Symbol Matches: "); for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
         removeSymbolImpossibilities(symbol_matches, token);
         if (token.getName() != null) {
             return token_stream;
@@ -396,31 +396,35 @@ public class LexicalAnalysis {
             //Wait... 
             // Encountered when /* Token already created... So we do not need to make it (even though I am going to delete later.. Ik this is just for testing)
             System.out.println("Within Comment");
-            if ( (window_bytearr[window_bytearr.length - 2 ] == 42) && (window_bytearr[window_bytearr.length - 1 ] == 47) ) {
-                System.out.println("Last 2 bytes in window are close comment symbol");
-               
-                
-                /**
-                Token open_comment_token = new Token(token.getStartPos(), token.getStartPos() + 1); // Create that initial OPENCOMMENT 
-                open_comment_token.setName("SYMBOL_OPENCOMMENT");
-                open_comment_token.setAttribute("/*");
-                **/
-                //token_stream.
-                token.setStartPos(token.getEndPos() - 1);
-                token.setName("SYMBOL_CLOSECOMMENT");
-                token.setAttribute("/*"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
-                
-                //Token close_comment_token = new Token(token.getEndPos() - 1, token.getEndPos());
-                //close_comment_token.setName("SYMBOL_CLOSECOMMENT");
-                //close_comment_token.setAttribute("*/");
 
-                //token_stream.remove(token_stream.size() - 1);
-                //token_stream.add(open_comment_token); //Even though we will remove these... Add open comment first
-                //token_stream.add(close_comment_token); // Then add close comment
-
-                System.out.println("Returning token stream with open and close comment tokens inserted");
-                return token_stream;
+            if (window_bytearr.length >= 2) {
+                if ( (window_bytearr[window_bytearr.length - 2 ] == 42) && (window_bytearr[window_bytearr.length - 1 ] == 47) ) {
+                    System.out.println("Last 2 bytes in window are close comment symbol");
+                   
+                    
+                    /**
+                    Token open_comment_token = new Token(token.getStartPos(), token.getStartPos() + 1); // Create that initial OPENCOMMENT 
+                    open_comment_token.setName("SYMBOL_OPENCOMMENT");
+                    open_comment_token.setAttribute("/*");
+                    **/
+                    //token_stream.
+                    token.setStartPos(token.getEndPos() - 1);
+                    token.setName("SYMBOL_CLOSECOMMENT");
+                    token.setAttribute("/*"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
+                    
+                    //Token close_comment_token = new Token(token.getEndPos() - 1, token.getEndPos());
+                    //close_comment_token.setName("SYMBOL_CLOSECOMMENT");
+                    //close_comment_token.setAttribute("*/");
+    
+                    //token_stream.remove(token_stream.size() - 1);
+                    //token_stream.add(open_comment_token); //Even though we will remove these... Add open comment first
+                    //token_stream.add(close_comment_token); // Then add close comment
+    
+                    System.out.println("Returning token stream with open and close comment tokens inserted");
+                    return token_stream;
+                }
             }
+            
             
             System.out.println("SYMBOL_ENDCOMMENT not matched, returning token_stream");
             return token_stream;
