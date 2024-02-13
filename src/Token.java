@@ -31,12 +31,6 @@ public class Token {
     public int longest_match_length = 0;
     public ArrayList<String> shared_longest_match_array;
 
-    public String last_remaining_possibility_name;
-    public int[] last_remaining_possibility_indices;
-
-    public boolean remaining_possibilites_are_unset; 
-
-
     
     public Map<String, int[]> LexemePossibilities = new HashMap<String, int[]>() {{
         put("KEYWORD_INT", new int[]{-1, -1});
@@ -72,8 +66,6 @@ public class Token {
         this.end_pos = end_pos;
     }
 
-    
-
 
     public String getName() { return this.name; }
     public String getAttribute() { return this.attribute; }
@@ -93,8 +85,7 @@ public class Token {
     public int getLongestMatchLength() { return this.longest_match_length;}
     public ArrayList<String> getSharedLongestMatchArray() { return this.shared_longest_match_array;}
     public Map<String, int[]> getLexemePossibilities() { return this.LexemePossibilities;}
-    public boolean getRemainingPossibilitiesAreUnset() { return this.remaining_possibilites_are_unset;}
-    
+
     public void setName(String i) { this.name = i; }
     public void setAttribute(String i) { this.attribute = i; }
     public void setStartPos(int i) { this.start_pos = i; }
@@ -106,7 +97,6 @@ public class Token {
     public void setIsWithinComment(boolean i) {this.isWithinComment = i; }
     public void setIsWithinStringExpression(boolean i) {this.isWithinStringExpression = i; }
     public void setWindowIsFullyExpanded(boolean i) {this.windowIsFullyExpanded = i; }
-    public void setRemainingPossibilitiesAreUnset(boolean i) { this.remaining_possibilites_are_unset = i;}
     
 
 
@@ -134,26 +124,9 @@ public class Token {
         }
     }
 
-    public void setLastRemainingPossibilityName (String name) {
-        this.last_remaining_possibility_name = name;
-    }
-    
-    public String getLastRemainingPossibilityName () {
-        return this.last_remaining_possibility_name; 
-    }
-
-    public void setLastRemainingPossibilityIndices (int[] i) {
-        this.last_remaining_possibility_indices = i;
-    }
-    
-    public int[] getLastRemainingPossibilityIndices () {
-        return this.last_remaining_possibility_indices;
-    }
-
 
     public void processLongestMatch () {
         
-        int entirely_nonmatching_count = 0;
         ArrayList<String> matches_of_same_length = new ArrayList<String>();
 
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
@@ -163,8 +136,6 @@ public class Token {
             
             System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + difference);    
             
-            if ( ( i[0] == - 1 ) && ( i[1] == -1) ) entirely_nonmatching_count = entirely_nonmatching_count + 1; 
-
             if (difference == this.longest_match_length && this.longest_match_length > 0) {
                 matches_of_same_length.add(name);
             }
@@ -188,11 +159,6 @@ public class Token {
             this.thereExistsSharedLongestMatch = true;
             this.shared_longest_match_array = matches_of_same_length; 
         }
-
-        if (entirely_nonmatching_count == this.getLexemePossibilities().size()) {
-            System.out.println("Entirely unmatching == same size");
-            setRemainingPossibilitiesAreUnset(true);
-        }
     }
 
 
@@ -214,17 +180,15 @@ public class Token {
 
     // Tired.... I apologize to any future employer who sees this abomination
     // Needs to be only used in the event that there is one and only one possibility remaining=
-    public void updateTokenFinalPossibilityFields () {
+    public void updateTokenWithRemainingNameAndIndices () {
         for (Map.Entry<String, int[]> entry : (this.getPossibilities()).entrySet()) {
-            this.setLastRemainingPossibilityName(entry.getKey());
-            this.setLastRemainingPossibilityIndices(new int[]{entry.getValue()[0], entry.getValue()[1]});
-            //this.setStartPos(entry.getValue()[0]);
-            //this.setEndPos(entry.getValue()[1]);
+            this.setName(entry.getKey());
+            this.setStartPos(entry.getValue()[0]);
+            this.setEndPos(entry.getValue()[1]);
             break;
         }
     }
 
-    
 
     public void removePossibilitiesOfSpecifiedType(String type, boolean remove_all_but) {
 

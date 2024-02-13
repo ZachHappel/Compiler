@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Toolkit {
@@ -33,10 +32,6 @@ public class Toolkit {
         this.indices = indices; 
     }
 
-    public int[] getIndices () {
-        return this.indices;
-    }
-
     public boolean hashmapEqualityExists (Map<String, int[]> h1, Map<String, int[]> h2) {
 
         boolean areEqual = true;
@@ -55,16 +50,6 @@ public class Toolkit {
         }
         return areEqual;
 
-    }
-
-    public ArrayList<Token> removeCommentTokens( ArrayList<Token> ts) {
-        ArrayList<Token> ts_clone = new ArrayList<>(ts);
-        for (Token t : ts_clone ) {
-            if ( t.getName().contains("COMMENT")) {
-                ts.remove(t);
-            }
-        }
-        return ts;
     }
 
     //public boolean countComplimentingCommentSymbols(ArrayList<Token> token_stream) {}
@@ -146,14 +131,14 @@ public class Toolkit {
     // From previous attempt at project
     public int[] GetIndicesOfLineFeeds (byte[] arr) {
         int line_feed_amt = CountLineFeeds(arr);
-        this.indices = new int[line_feed_amt];
+        int[] indices = new int[line_feed_amt];
         int amount_added = 0;
         
         for (int i = 0; i<= arr.length -1; i++) {
             int val = arr[i];
             boolean is_line_feed = (val == 10);
             if (is_line_feed) {
-                this.indices[amount_added] = i;
+                indices[amount_added] = i;
                 amount_added = amount_added + 1;  
             }
         }
@@ -162,47 +147,26 @@ public class Toolkit {
 
     }
 
-    public int getCurrentLineOld(int index) {
+    public int getCurrentLine(int index) {
         // Toolkit.println("LEN" + indices.length);
         int line_number = 1;
         int i, index_at_newline;
 
-        for (i = 0; i < this.indices.length; i++) {
+        for (i = 0; i < indices.length; i++) {
             // Toolkit.println("Index: " + index + " Value at Indice: " + indices[i]);
 
-            index_at_newline = this.indices[i];
+            index_at_newline = indices[i];
 
-            if (index < this.indices[i]) {
+            if (index < indices[i]) {
                 return i;
             } // else if ( ) {
             else {
-                if (i == this.indices.length - 1) {
+                if (i == indices.length - 1) {
                     return i + 1;
                 }
             }
         }
         return i;
-    }
-
-
-    // I can do columns later 
-    //public Map<Integer, int[]> line_mapped_to_linestartindex_and_lineendindex = new HashMap<>(); 
-
-    public int getCurrentLine (int index) {
-        int line_number = 1; // Starting line
-        int prev_line_index = 0; // For comparison
-        for (int l : indices) {
-            if ( (prev_line_index < index) && (index < l )) {
-                return line_number;
-            } else if ( l == 0 )  {
-                // last line
-                return indices.length;
-            } else {
-                prev_line_index = line_number;
-                line_number = line_number + 1; 
-            }
-        }
-        return -1; // Should not be reached
     }
 
 
