@@ -4,6 +4,7 @@ import java.util.Map;
 
 public class Toolkit {
     public Boolean is_verbose;
+    public int[] indices;
 
     public Toolkit() {
         this.is_verbose = true; 
@@ -25,6 +26,10 @@ public class Toolkit {
         for (Token t : token_stream) {
             System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute() + ", Indices: " + Arrays.toString(t.getIndices()));
         }
+    }
+
+    public void setIndices (int[] indices) {
+        this.indices = indices; 
     }
 
     public boolean hashmapEqualityExists (Map<String, int[]> h1, Map<String, int[]> h2) {
@@ -140,6 +145,28 @@ public class Toolkit {
 
         return indices;
 
+    }
+
+    public int getCurrentLine(int index) {
+        // Toolkit.println("LEN" + indices.length);
+        int line_number = 1;
+        int i, index_at_newline;
+
+        for (i = 0; i < indices.length; i++) {
+            // Toolkit.println("Index: " + index + " Value at Indice: " + indices[i]);
+
+            index_at_newline = indices[i];
+
+            if (index < indices[i]) {
+                return i;
+            } // else if ( ) {
+            else {
+                if (i == indices.length - 1) {
+                    return i + 1;
+                }
+            }
+        }
+        return i;
     }
 
 

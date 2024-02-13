@@ -468,7 +468,13 @@ public class LexicalAnalysis {
         // One possibility remaining -> emit it
         if (token.getPossibilities().size() == 1) {
             token.updateTokenWithRemainingNameAndIndices();
-            token.setAttribute(new String(window_bytearr));
+            System.out.println("Token Indices Length: " + (token.getEndPos() - token.getStartPos())); 
+            System.out.println("window_bytearr length: " + window_bytearr.length);
+            
+            // Creates a copy of the byte window using the length of the token match, starting at 0, so receives the correct value and not whatever is currently in the byte window
+            // Fixed the issue over matching that I talked about in class
+            String tk_value = new String(Arrays.copyOfRange(window_bytearr, 0, (token.getEndPos() - token.getStartPos())));  
+            token.setAttribute(tk_value);
         }
         
         token.printRemainingPossibilities(true);
@@ -504,12 +510,15 @@ public class LexicalAnalysis {
 
         performChecks(src, token_stream); 
         boolean has_match_after_checks = current_token.name == null ? false : true;
+
         
         if (has_match_after_checks) {
             System.out.println("\n> Definitive match\n"); //NEED - Source length appears to be off when compared to test file... Make sure to check
             System.out.println("End Position of Matched Lexeme: " + current_token.getEndPos());
             System.out.println("Source length - 1: " + (src.length - 1));
             
+            current_token.setStartLineNumber(toolkit.getCurrentLine(current_token.getStartPos()));
+            current_token.setEndLineNumber(toolkit.getCurrentLine(current_token.getEndPos()));
             // >=   maybe?
             if (src.length == current_token.getEndPos()) {
                 toolkit.output("generateLexemes reached end of src, returning token_stream");
@@ -573,27 +582,14 @@ public class LexicalAnalysis {
 
     public static ArrayList<Token> Lex(Toolkit tk, String filename) {
         toolkit = tk; 
-        byte[] file_source_bytearr = getSourceFileData(filename);
-        indices = toolkit.GetIndicesOfLineFeeds(file_source_bytearr);
-        System.out.println("Byte Arr:");
+        byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
+        toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(file_source_bytearr)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         
-        
-        /**  Test for isOfKeyword 
-        //byte[] test_arr = new byte[]{105};
-        byte[] test_arr = new byte[]{105, 110};
-        for (byte b: test_arr) System.out.println("Byte: " + b + ", Char: " + (char) b);
-        isOfKeyword(test_arr, 0, 2);
-        //System.out.println(file_source_bytearr);
-        //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
-       **/
-
-
-       
-        ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>());
+        ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
         
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
-            System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute());
+            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "]");
         }
         
         return token_stream;
@@ -609,6 +605,20 @@ public class LexicalAnalysis {
 
 
  // IGNORE
+
+    //indices = 
+            //System.out.println("Byte Arr:");
+            
+            
+            /**  Test for isOfKeyword 
+            //byte[] test_arr = new byte[]{105};
+            byte[] test_arr = new byte[]{105, 110};
+            for (byte b: test_arr) System.out.println("Byte: " + b + ", Char: " + (char) b);
+            isOfKeyword(test_arr, 0, 2);
+            //System.out.println(file_source_bytearr);
+            //Toolkit.GetIndicesOfLineFeeds(file_byte_arr);
+    **/
+
 
     /**
      * else if ( b == 123) {
