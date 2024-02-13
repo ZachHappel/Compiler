@@ -30,6 +30,13 @@ public class LexicalAnalysis {
         return i;
     }
 
+    public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{
+        add("IDENTIFIER");
+        add("CHARACTER");
+        add("DIGIT");
+        add("EOP");
+    }};
+
     public static byte[] getSourceFileData(String filepath) {
         
         try {
@@ -256,7 +263,7 @@ public class LexicalAnalysis {
                 byte byte_from_symbol = symbol[s];
                 byte byte_from_window =  window_bytearr[s];
                 String equality = (byte_from_symbol == byte_from_window) ? "==" : "!=";
-                toolkit.output("Symbol Byte (" + byte_from_symbol + ") " + equality + " Window Byte (" + byte_from_window + ")");
+                //UNCOOMENT LATER - toolkit.output("Symbol Byte (" + byte_from_symbol + ") " + equality + " Window Byte (" + byte_from_window + ")");
                 if (byte_from_symbol != byte_from_window) {
                     break;
                 }
@@ -267,7 +274,8 @@ public class LexicalAnalysis {
                     String symbol_pattern = new String (symbols[j]); // Get String version of symbol that is split in bytearray (the arrays within the array)
                     String symbol_token_name = symbols_name_map.get(symbol_pattern);
                     //symbols_name_map. // Combine with "SYMBOL_" to create proper token name
-                    
+                    System.out.println("SADJHASDJKA");
+                    token.printRemainingPossibilities(true);
                     toolkit.output("Symbol Semi-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices) + ", matching: " + new String(window_bytearr));
                     current_symbol_matches.put(symbol_token_name, indices);
                     token.updatePossibility(symbol_token_name, indices); 
@@ -372,6 +380,8 @@ public class LexicalAnalysis {
         // If it IS within a string, we want all special characters BUT spaces removed
         byte[] window_bytearr = isWithinString ? toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())) : toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
         System.out.println("(?) window_bytearr: " + new String(window_bytearr)); 
+        System.out.println("(?) window_bytearr length: " + window_bytearr.length); 
+        System.out.println("(?) window_bytearr start index: " + token.getStartPos()); 
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
 
         // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
@@ -419,13 +429,17 @@ public class LexicalAnalysis {
         
         // NEED - Adding "|| window_bytearr.length == 1" needs to be watched
         if (window_bytearr_length_before_moving_special_characters == 1 || window_bytearr.length == 1) {
-            System.out.println("AAAAA");
-            if (window_bytearr.length == 0) return token_stream; // 0 => only when first byte is a special char 
+            System.out.println("AAAAA-- tk indices: " + Arrays.toString(token.getIndices()));
+            if (window_bytearr.length == 0) {
+            
+                System.out.println("CASE: returning because window_byte array has length of 0, meanwhile with special characters is 1");
+                return token_stream; // 0 => only when first byte is a special char 
+            }
             byte b = window_bytearr[0]; // only byte in window
-            System.out.println("BBBBB");
+            System.out.println("BBBBB-- tk indices: " + Arrays.toString(token.getIndices()));
             
             if ( b >= 97 && b < 123 || (b == 32 && isWithinString)) { // [a-z]
-                System.out.println("CCCCC");
+                System.out.println("CCCCC-- tk indices: " + Arrays.toString(token.getIndices()));
                 token.removePossiblity("EOP"); // Not sure if this and the below 2 should be here
                 token.removePossiblity("DIGIT");
                 token.removePossibilitiesOfSpecifiedType("SYMBOL", false);
@@ -460,14 +474,38 @@ public class LexicalAnalysis {
             }
 
 
+            
+
 
            
 
         }
 
+        if (window_bytearr.length == 0) {
+            System.out.println("Returning because bytearr is len of 0");
+            return token_stream;
+        }
+
+
         // One possibility remaining -> emit it
         if (token.getPossibilities().size() == 1) {
-            token.updateTokenWithRemainingNameAndIndices();
+            token.updateTokenFinalPossibilityFields();
+            String final_possibility_name = token.getLastRemainingPossibilityName();
+            int[] final_possibility_indices = token.getLastRemainingPossibilityIndices();
+            System.out.println("final_possibility_name: " + final_possibility_name);
+            System.out.println("Final Poss Indices: " + Arrays.toString(final_possibility_indices));
+            System.out.println("ungrouped_tks_of_length_one.contains(final_possibility_name): " + ungrouped_tks_of_length_one.contains(final_possibility_name)); 
+            //token.updateTokenWithRemainingNameAndIndices();
+            if (ungrouped_tks_of_length_one.contains(final_possibility_name)) {
+                System.out.println("Ungrouped Token, " + token.getName() + ", matched. ");
+                token.setName(final_possibility_name);
+                token.setEndPos(token.getStartPos() + 1 ); // Start_pos stays same
+                token.setAttribute(new String(Arrays.copyOfRange(window_bytearr, 0, 1)));
+                //token.setAttribute(new String(Arrays.copyOfRange(window_bytearr, final_possibility_indices[0], final_possibility_indices[1])));
+                System.out.println("returining");
+                return token_stream;
+            }
+            //if (ungrouped_single_i_tokens.
             System.out.println("Token Indices Length: " + (token.getEndPos() - token.getStartPos())); 
             System.out.println("window_bytearr length: " + window_bytearr.length);
             
@@ -488,17 +526,24 @@ public class LexicalAnalysis {
 
 
     public static ArrayList<Token> generateTokens (byte[] src, ArrayList<Token> token_stream) {
-        
         System.out.println("\n~~~~~~~~~~~~~~~~~~~GENERATE TOKENS~~~~~~~~~~~~~~~~~~~");
+        System.out.println("Token Stream Length: " + token_stream.size());
         
         if (token_stream.size() == 0 && src.length > 0) {
             System.out.println("Adding First Token");
             token_stream.add(new Token(0, 0)); // end_pos gets incremented each recursive loop
             return generateTokens(src, token_stream);
         }
-
+        
+        System.out.println("Source Length: " + src.length + " T-end: " + token_stream.get(token_stream.size() - 1).getEndPos());
         Token current_token = token_stream.get(token_stream.size() - 1); // Get most recent token
+        System.out.println("Remaining Possibilities Amount: " + current_token.getPossibilities().size());
+        current_token.printRemainingPossibilities(true);
         current_token.printShortTokenSummary(toolkit.getIsVerbose());
+        System.out.println("Current Token Stream Length: " + token_stream.size());
+        System.out.println("Token Stream: ");
+        toolkit.printTokenStream(token_stream);
+
 
         boolean has_match = current_token.name == null ? false : true;
         if (has_match) return token_stream; // Success
@@ -517,8 +562,8 @@ public class LexicalAnalysis {
             System.out.println("End Position of Matched Lexeme: " + current_token.getEndPos());
             System.out.println("Source length - 1: " + (src.length - 1));
             
-            current_token.setStartLineNumber(toolkit.getCurrentLine(current_token.getStartPos()));
-            current_token.setEndLineNumber(toolkit.getCurrentLine(current_token.getEndPos()));
+            current_token.setStartLineNumber(toolkit.getCurrentLine(current_token.getEndPos())); // Using end_pos works accurately when start_pos does not
+            //current_token.setEndLineNumber(toolkit.getCurrentLine(current_token.getEndPos()));
             // >=   maybe?
             if (src.length == current_token.getEndPos()) {
                 toolkit.output("generateLexemes reached end of src, returning token_stream");
@@ -533,7 +578,7 @@ public class LexicalAnalysis {
             }
         } else {
 
-            if (src.length - 1 != current_token.getEndPos() - 1) {
+            if (src.length - 1 != current_token.getEndPos()) {
                 //System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");
                 //current_token.setEndPos(current_token.getEndPos() + 1);
                 token_stream = generateTokens(src, token_stream);
@@ -547,15 +592,24 @@ public class LexicalAnalysis {
             
             } else {
                 current_token.processLongestMatch();
+               
+                if (!current_token.getThereExistsSharedLongestMatch() && !current_token.getThereExistsUniqueLongestMatch() && current_token.getRemainingPossibilitiesAreUnset()) {
+                    token_stream.removeLast();
+                   return token_stream;   
+                }
 
                 System.out.println("There exists SHARED longest match: " + current_token.getThereExistsSharedLongestMatch());
                 System.out.println("There exists UNIQUE longest match: " + current_token.getThereExistsUniqueLongestMatch());
+                System.out.println("Remaining are unset: " + current_token.getRemainingPossibilitiesAreUnset());
+                
                 String longest_full_match_name = current_token.getLongestMatchName();
                 int[] longest_full_match_indices = current_token.getPossibilities().get(longest_full_match_name);
                 System.out.println("Longest Match name: " + longest_full_match_name);
                 System.out.println("Longest Match indices: " + Arrays.toString(longest_full_match_indices));
                
                 System.out.println("src.length - 1 != current_token.getEndPos() - 1 ");
+                System.out.println("End game");
+                System.out.println("Remaining Possibilities Amount: " + current_token.getPossibilities().size());
 
                 String tk_value = new String(Arrays.copyOfRange(src, longest_full_match_indices[0], longest_full_match_indices[1])); 
                 System.out.println("Value at range: " + tk_value);
@@ -583,15 +637,18 @@ public class LexicalAnalysis {
     public static ArrayList<Token> Lex(Toolkit tk, String filename) {
         toolkit = tk; 
         byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
+        //for (byte b: file_source_bytearr) System.out.println("Byte: " + b + ", Char: " + (char) b);
+        //System.exit(0);
         toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(file_source_bytearr)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
         
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
-            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "]");
+            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "] Line: " + t.getStartLineNumber());
         }
         
+        System.out.println("Line Indices: " + Arrays.toString(toolkit.getIndices()));
         return token_stream;
 
         //return new ArrayList<Token>();
