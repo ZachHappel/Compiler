@@ -26,11 +26,11 @@ public class Token {
 
     public boolean thereExistsSharedLongestMatch;
     public boolean thereExistsUniqueLongestMatch;
-
     public String longest_match_name;
     public int longest_match_length = 0;
     public ArrayList<String> shared_longest_match_array;
-
+    public boolean remaining_possibilites_are_unset;
+    public boolean remaining_possibilities_are_impossible;
     
     public Map<String, int[]> LexemePossibilities = new HashMap<String, int[]>() {{
         put("KEYWORD_INT", new int[]{-1, -1});
@@ -85,6 +85,7 @@ public class Token {
     public int getLongestMatchLength() { return this.longest_match_length;}
     public ArrayList<String> getSharedLongestMatchArray() { return this.shared_longest_match_array;}
     public Map<String, int[]> getLexemePossibilities() { return this.LexemePossibilities;}
+    public boolean getRemainingPossibilitiesAreImpossible() { return this.remaining_possibilities_are_impossible;}
 
     public void setName(String i) { this.name = i; }
     public void setAttribute(String i) { this.attribute = i; }
@@ -97,7 +98,7 @@ public class Token {
     public void setIsWithinComment(boolean i) {this.isWithinComment = i; }
     public void setIsWithinStringExpression(boolean i) {this.isWithinStringExpression = i; }
     public void setWindowIsFullyExpanded(boolean i) {this.windowIsFullyExpanded = i; }
-    
+    public void setRemainingPossibilitiesAreImpossible(boolean i) { this.remaining_possibilities_are_impossible = i;}
 
 
     public void removePossiblity(String lexeme_name) {
@@ -126,7 +127,8 @@ public class Token {
 
 
     public void processLongestMatch () {
-        
+
+        int count_of_remaining_possibilies_completely_unmatched = 0;
         ArrayList<String> matches_of_same_length = new ArrayList<String>();
 
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
@@ -136,6 +138,8 @@ public class Token {
             
             System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + difference);    
             
+            if ( ( i[0] == - 1 ) && ( i[1] == -1) ) count_of_remaining_possibilies_completely_unmatched = count_of_remaining_possibilies_completely_unmatched + 1; 
+
             if (difference == this.longest_match_length && this.longest_match_length > 0) {
                 matches_of_same_length.add(name);
             }
@@ -159,6 +163,12 @@ public class Token {
             this.thereExistsSharedLongestMatch = true;
             this.shared_longest_match_array = matches_of_same_length; 
         }
+
+        if (count_of_remaining_possibilies_completely_unmatched == this.getLexemePossibilities().size()) {
+            System.out.println("Entirely unmatching == same size");
+            setRemainingPossibilitiesAreImpossible(true);
+        }
+
     }
 
 

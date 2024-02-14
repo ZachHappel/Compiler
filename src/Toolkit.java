@@ -202,7 +202,7 @@ public class Toolkit {
     public byte[] removeSpecialCharactersExceptSpaces(byte[] sub_arr) {
         int specialchar_count = 0;
         for (int i = 0; i <= sub_arr.length - 1; i++) {
-            if ((sub_arr[i] == 13) || (sub_arr[i] == 11))
+            if ((sub_arr[i] == 13) || (sub_arr[i] == 11) || (sub_arr[i] == 10))
                 specialchar_count++;
         }
 
@@ -211,7 +211,7 @@ public class Toolkit {
         byte[] modified_sub_arr = new byte[sub_arr.length - specialchar_count]; // create byte arr of new size
         for (int j = 0; j <= sub_arr.length - 1; j++) {
             // Toolkit.println("B");
-            if ((sub_arr[j] == 13) || (sub_arr[j] == 11)) {
+            if ((sub_arr[j] == 13) || (sub_arr[j] == 11) || (sub_arr[j] == 10)) {
                 // Toolkit.println("B1");
             } // do nothing if special char
             else {

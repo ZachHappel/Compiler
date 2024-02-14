@@ -369,7 +369,33 @@ public class LexicalAnalysis {
         System.out.println("(?) isWithinComment: " + isWithinComment);
         
         // If not in string, we want all special characters removed
-        // If it IS within a string, we want all special characters BUT spaces removed
+        // If it IS within a string, we want all special characters EXCEPT spaces removed
+        // window_bytearr is a copy of the byte[] src from the current token's start_pos to end_pos 
+
+        /*
+
+        This means that no matter what lay between pattern-matching byte chars, only the pattern-critical chars will be considered when testing for matches.
+        Additionally, when the pattern is matched and a token match is delcared, via assigning the originally "null" token with a name and attribute (the pattern which was matched,)
+        the indices of the token still refer directly to the breadth of search within the byte[] src, thus allowing lex to proceed immediately beyond the last considered index.
+
+        */
+
+        /*
+        
+        window_bytearr:
+        A byte array used in the implementation of the expanding window concept. 
+        Made via copy of the src array, using the most-recent token's indices as its own
+        Using predetermined factors relevant to understanding the position of the window within the source code, isWithinString and isWithinComment, particular bytes can be stripped from the byte array before the value is assigned
+        
+        removeSpecialCharactersExceptSpaces: removes special characters of byte value 13, 11, and 10 
+        This is used for within strings
+
+        removeSpecialCharacters: removes special characters of byte value 13, 11, 10, and 32 (space)
+        This is used for within comments
+
+
+        */
+
         byte[] window_bytearr = isWithinString ? toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())) : toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
         System.out.println("(?) window_bytearr: " + new String(window_bytearr)); 
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
@@ -555,7 +581,16 @@ public class LexicalAnalysis {
                 System.out.println("Longest Match name: " + longest_full_match_name);
                 System.out.println("Longest Match indices: " + Arrays.toString(longest_full_match_indices));
                
-                System.out.println("src.length - 1 != current_token.getEndPos() - 1 ");
+                System.out.println("src.length - 1, " + (src.length - 1));
+                System.out.println("current_token.getEndPos() - 1 " + (current_token.getEndPos() - 1));
+
+
+                // Check to see if of the remaining possibilites, are all completely without any match whatsoever?
+                if (current_token.getRemainingPossibilitiesAreImpossible()) {
+                    token_stream.removeLast(); 
+                    return token_stream;
+                    // If so, remove unmatchable token and return the token stream
+                }
 
                 String tk_value = new String(Arrays.copyOfRange(src, longest_full_match_indices[0], longest_full_match_indices[1])); 
                 System.out.println("Value at range: " + tk_value);
@@ -585,7 +620,10 @@ public class LexicalAnalysis {
         byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
         toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(file_source_bytearr)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         
+        for (byte b: file_source_bytearr) System.out.println(b);
+        //System.exit(0);
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
+        
         
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
