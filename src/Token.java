@@ -31,6 +31,10 @@ public class Token {
     public ArrayList<String> shared_longest_match_array;
     public boolean remaining_possibilites_are_unset;
     public boolean remaining_possibilities_are_impossible;
+    public String f_possibility_name;
+
+    public int symbol_semi_matches; 
+    public int keyword_semi_matches;
     
     public Map<String, int[]> LexemePossibilities = new HashMap<String, int[]>() {{
         put("KEYWORD_INT", new int[]{-1, -1});
@@ -86,6 +90,9 @@ public class Token {
     public ArrayList<String> getSharedLongestMatchArray() { return this.shared_longest_match_array;}
     public Map<String, int[]> getLexemePossibilities() { return this.LexemePossibilities;}
     public boolean getRemainingPossibilitiesAreImpossible() { return this.remaining_possibilities_are_impossible;}
+    public int getSymbolSemiMatchesAmount( ) { return this.symbol_semi_matches;}
+    public int getKeywordSemiMatchesAmount( ) { return this.keyword_semi_matches; }
+
 
     public void setName(String i) { this.name = i; }
     public void setAttribute(String i) { this.attribute = i; }
@@ -99,7 +106,8 @@ public class Token {
     public void setIsWithinStringExpression(boolean i) {this.isWithinStringExpression = i; }
     public void setWindowIsFullyExpanded(boolean i) {this.windowIsFullyExpanded = i; }
     public void setRemainingPossibilitiesAreImpossible(boolean i) { this.remaining_possibilities_are_impossible = i;}
-
+    public void setSymbolSemiMatchesAmount( int i ) { this.symbol_semi_matches = i; }
+    public void setKeywordSemiMatchesAmount( int i ) { this.keyword_semi_matches = i; }
 
     public void removePossiblity(String lexeme_name) {
         this.LexemePossibilities.remove(lexeme_name);
@@ -107,6 +115,12 @@ public class Token {
 
     public void updatePossibility(String lexeme_name, int[] indices) {
         this.LexemePossibilities.put(lexeme_name, indices);
+    }
+
+    public String getFinalRemainingPossibilityName () {
+        for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
+            this.f_possibility_name = entry.getKey();
+        } return this.f_possibility_name; 
     }
 
 

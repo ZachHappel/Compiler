@@ -20,6 +20,13 @@ public class LexicalAnalysis {
 
     public static int[] indices; 
     public static Toolkit toolkit;
+
+    public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{
+        add("IDENTIFIER");
+        add("CHARACTER");
+        add("DIGIT");
+        add("EOP");
+    }};
    
     public int getCurrentLine(int index) {
         int i;
@@ -176,6 +183,7 @@ public class LexicalAnalysis {
         System.out.println("\n(!) REMOVE KEYWORD IMPOSSIBILITIES");
         int keyword_matches_amount = keyword_matches.size(); 
         System.out.println("(?) Keyword Semi Matches: " + keyword_matches.size());
+        token.setKeywordSemiMatchesAmount(keyword_matches_amount);
         // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
         // Use this as a reference and make removals on the actual token's hashmap
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
@@ -325,6 +333,7 @@ public class LexicalAnalysis {
         System.out.println("\n(!) REMOVE SYMBOL IMPOSSIBILITIES");
         int symbol_matches_amount = symbol_matches.size(); 
         System.out.println("Symbol Semi Matches: " + symbol_matches.size());
+        token.setSymbolSemiMatchesAmount(symbol_matches.size());
         // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
         // Use this as a reference and make removals on the actual token's hashmap
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
@@ -457,29 +466,67 @@ public class LexicalAnalysis {
                 token.removePossibilitiesOfSpecifiedType("SYMBOL", false);
                 
                 if (isWithinString) {
-                    token.updatePossibility("CHARACTER", indices); // MATCH?
-                    token.removePossiblity("IDENTIFIER");
-                    token.removePossibilitiesOfSpecifiedType("KEYWORD", false);
+                    
+                    token.setName("CHARACTER");
+                    token.setAttribute(new String (window_bytearr));
+                    return token_stream; 
+                    /**
+                    if ( token.getSymbolSemiMatchesAmount() == 0)  {
+                       
+                    } else {
+                        // I THINK ALwAYS NO MATTER WHAT
+                        token.updatePossibility("CHARACTER", indices); // MATCH?
+                        token.removePossiblity("IDENTIFIER");
+                        token.removePossibilitiesOfSpecifiedType("KEYWORD", false);
+
+                    }
+                    **/
                 } 
+
                 else {
-                    token.updatePossibility("IDENTIFIER", indices);
-                    token.removePossiblity("CHARACTER");
+                    
+                    if ( token.getKeywordSemiMatchesAmount() == 0 ) {
+                        token.setName("IDENTIFIER");
+                        token.setAttribute(new String (window_bytearr));
+                        return token_stream;
+                        
+                    } else {
+                        token.updatePossibility("IDENTIFIER", indices);
+                        token.removePossiblity("CHARACTER");
+
+                    }
+                    
                 }
                 
             } else {
                 System.out.println("ELSE Not a-z");
                 token.removePossiblity("IDENTIFIER");
                 token.removePossiblity("CHARACTER");
+
                 
-                if (b >= 47 && b <= 57)  {
+                if (b > 47 && b <= 57)  {
+                    
+                    if (isWithinString) {
+                        System.out.println("Throw error here! Digit in string");
+                        System.exit(0);
+                    }
+
                     System.out.println("Digit!!!!!!!!");
-                    token.updatePossibility("DIGIT", indices);
-                    token.removePossiblity("EOP");  
+                    token.setName("DIGIT");
+                    token.setAttribute(new String(window_bytearr));
+                    return token_stream;
+                    //token.updatePossibility("DIGIT", indices);
+                    //token.removePossiblity("EOP");  
+
+
                 }
 
                 else if ( b == 36 ) {
-                    token.updatePossibility("EOP", indices);     
-                    token.removePossiblity("DIGIT");           
+                    token.setName("EOP");
+                    token.setAttribute(new String(window_bytearr));
+                    return token_stream;
+                    //token.updatePossibility("EOP", indices);     
+                    //token.removePossiblity("DIGIT");           
                     
                 }
 
@@ -491,20 +538,46 @@ public class LexicalAnalysis {
 
         }
 
+        /**
         // One possibility remaining -> emit it
         if (token.getPossibilities().size() == 1) {
-            token.updateTokenWithRemainingNameAndIndices();
+            //token.updateTokenWithRemainingNameAndIndices();
+
             System.out.println("Token Indices Length: " + (token.getEndPos() - token.getStartPos())); 
             System.out.println("window_bytearr length: " + window_bytearr.length);
             
+            // If tokens that are not of either keyword or symbol and they are matched with one char
+            // May be able to combine this if statement with the one above using &&, if this really is the only case where this occurs, which this approach suggest because I believe it to be the case
+            if (ungrouped_tks_of_length_one.contains(token.getFinalRemainingPossibilityName()) && (token.getFinalRemainingPossibilityName() == "IDENTIFIER")) { 
+                token.setName(token.getFinalRemainingPossibilityName());
+                
+                // This is highly important because the next token is generated with the previous token's end index as both its start and end pos -- generateToken recursively increments the endPos, expanding the window, algorithmically 
+                //token.setEndPos(token.getStartPos() + 1); // Being one character, the first indice at start_pos is already valid but the end position needs to be adjusted to start_pos + 1
+                // OOPS ^ Huge headache caused by this
+                
+                token.setEndPos(token.getEndPos() - 1);
+                // start = endPos - 2
+                // endPos = endPos - 1
+
+                token.setAttribute( new String ( Arrays.copyOfRange(window_bytearr, 0, 1)));
+
+                return token_stream; 
+
+                
+
+            }
+
             // Creates a copy of the byte window using the length of the token match, starting at 0, so receives the correct value and not whatever is currently in the byte window
             // Fixed the issue over matching that I talked about in class
-            String tk_value = new String(Arrays.copyOfRange(window_bytearr, 0, (token.getEndPos() - token.getStartPos())));  
-            token.setAttribute(tk_value);
+            //String tk_value = new String(Arrays.copyOfRange(window_bytearr, 0, (token.getEndPos() - token.getStartPos())));  
+            //token.setAttribute(tk_value);
         }
+       
+        **/
         
         token.printRemainingPossibilities(true);
 
+        
         return token_stream; 
 
 
@@ -526,6 +599,9 @@ public class LexicalAnalysis {
         Token current_token = token_stream.get(token_stream.size() - 1); // Get most recent token
         current_token.printShortTokenSummary(toolkit.getIsVerbose());
 
+        System.out.println("Token Stream Length:" + token_stream.size());
+        
+
         boolean has_match = current_token.name == null ? false : true;
         if (has_match) return token_stream; // Success
                
@@ -543,8 +619,20 @@ public class LexicalAnalysis {
             System.out.println("End Position of Matched Lexeme: " + current_token.getEndPos());
             System.out.println("Source length - 1: " + (src.length - 1));
             
+
             current_token.setStartLineNumber(toolkit.getCurrentLine(current_token.getStartPos()));
             current_token.setEndLineNumber(toolkit.getCurrentLine(current_token.getEndPos()));
+
+            System.out.println("Remaining Byte Array: ");
+            for (int i = 0; i < src.length - 1; i++) {
+                byte b = src[i];
+                int curr_end_token = current_token.getEndPos(); 
+                if (i > curr_end_token) {
+                    System.out.print(b + ", ");
+                }
+               
+            } 
+            System.out.println("");
             // >=   maybe?
             if (src.length == current_token.getEndPos()) {
                 toolkit.output("generateLexemes reached end of src, returning token_stream");
