@@ -476,6 +476,15 @@ public class LexicalAnalysis {
             if (window_bytearr.length == 0) return token_stream; // 0 => only when first byte is a special char 
             byte b = window_bytearr[0]; // only byte in window
             toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Assigned Byte");
+
+            /**
+            if (isWithinString) {
+                if  ( !(((b >= 97) && ( b < 123)) || (b == 32 ) )) {
+                    System.out.println("Invalid Character within String");
+                    System.exit(0);
+
+                }
+            } **/
             
             if ( b >= 97 && b < 123 || (b == 32 && isWithinString)) { // [a-z]
                 toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Byte Is A-Z OR is Space and isWithinString");
