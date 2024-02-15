@@ -674,6 +674,23 @@ public class LexicalAnalysis {
             }
         } else {
 
+            if (current_token.getPossibilities().size() == 1 && (ungrouped_tks_of_length_one.contains(current_token.getFinalRemainingPossibilityName()))) {
+                System.out.println("There is one lexeme possibility remaining and it is among those that are ungrouped and of one character length. Therefore, we are able to create a token using the current indices and the name of the last remaining lexeme possibility.");
+                String final_possibility_string = current_token.getFinalRemainingPossibilityName();
+                int[] final_possibility_indices = current_token.getFinalRemainingPossibilityIndices();
+                current_token.setName(final_possibility_string);
+                current_token.setStartPos(final_possibility_indices[0]);
+                current_token.setEndPos(final_possibility_indices[1]);
+                
+                current_token.setAttribute(new String (Arrays.copyOfRange(src, final_possibility_indices[0], final_possibility_indices[1])));
+                Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
+                token_stream.add(new_token);
+                System.out.println("Updated Token Stream: ");
+                toolkit.printTokenStream(token_stream);
+                return generateTokens(src, token_stream);
+                
+            }
+
             if (src.length - 1 != current_token.getEndPos() - 1) {
                 toolkit.debugoutput("DEBUG -  No Match && Source Still Remains");
                 //System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");

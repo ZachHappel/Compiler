@@ -24,7 +24,7 @@ public class Toolkit {
 
     public void printTokenStream (ArrayList<Token> token_stream) {
         for (Token t : token_stream) {
-            System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute() + ", Indices: " + Arrays.toString(t.getIndices()));
+            System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute() + ", Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos());
         }
     }
 

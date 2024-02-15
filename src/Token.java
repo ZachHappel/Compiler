@@ -32,9 +32,17 @@ public class Token {
     public boolean remaining_possibilites_are_unset;
     public boolean remaining_possibilities_are_impossible;
     public String f_possibility_name;
+    public int[] f_possibility_indices;
 
     public int symbol_semi_matches; 
     public int keyword_semi_matches;
+    
+    public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{
+        add("IDENTIFIER");
+        add("CHARACTER");
+        add("DIGIT");
+        add("EOP");
+    }};
     
     public Map<String, int[]> LexemePossibilities = new HashMap<String, int[]>() {{
         put("KEYWORD_INT", new int[]{-1, -1});
@@ -70,6 +78,7 @@ public class Token {
         this.end_pos = end_pos;
     }
 
+    
 
     public String getName() { return this.name; }
     public String getAttribute() { return this.attribute; }
@@ -114,13 +123,48 @@ public class Token {
     }
 
     public void updatePossibility(String lexeme_name, int[] indices) {
+
+        System.out.println("Update Possibilities - name: " + lexeme_name);
+        System.out.println("Update Possibilities - indices: " + Arrays.toString(indices));
+        System.out.println("LexemePossibilities.get(lexeme_name)[0]: " + (LexemePossibilities.get(lexeme_name) == null));
+
+        if (ungrouped_tks_of_length_one.contains(lexeme_name)) {
+
+            int[] current_indices = this.LexemePossibilities.get(lexeme_name);
+            int ci_0 = current_indices[0];
+            System.out.println("ABCS: " + Arrays.toString(current_indices)); 
+            System.out.println("ABCS 2: " + Arrays.toString(current_indices)); 
+            if (ci_0 < 0) {
+                System.out.println("Unset, setting...");
+                this.LexemePossibilities.put(lexeme_name, indices);
+            } 
+            return;
+        }
+
         this.LexemePossibilities.put(lexeme_name, indices);
+
+
+        /**
+        // If the lexeme in question is among those of one character length, and its indices have NOT been accounted for, update them (if they have been accounted for already, e.g., not being -1, then it will be ignored)
+        if ((LexemePossibilities.get(lexeme_name) == null) && ungrouped_tks_of_length_one.contains(lexeme_name)) {
+            this.LexemePossibilities.put(lexeme_name, indices);
+        
+        // If it is anything other than those four non-grouped lexemes of length one, update the possibility with the position
+        } else if (!ungrouped_tks_of_length_one.contains(lexeme_name)) {
+            this.LexemePossibilities.put(lexeme_name, indices);
+        } **/
     }
 
     public String getFinalRemainingPossibilityName () {
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
             this.f_possibility_name = entry.getKey();
         } return this.f_possibility_name; 
+    }
+
+    public int[] getFinalRemainingPossibilityIndices () {
+        for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
+           this.f_possibility_indices= entry.getValue();
+        } return this.f_possibility_indices;
     }
 
 
