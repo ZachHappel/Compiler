@@ -173,7 +173,7 @@ public class Toolkit {
             index_at_newline = indices[i];
 
             if (index < indices[i]) {
-                return i;
+                return (i + 1 );
             } // else if ( ) {
             else {
                 if (i == indices.length - 1) {

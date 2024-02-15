@@ -779,7 +779,7 @@ public class LexicalAnalysis {
         
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
-            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "]");
+            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + " (Line Start: " + t.getStartLineNumber() + ", Line End: " + t.getEndLineNumber() );
         }
         
         return token_stream;
