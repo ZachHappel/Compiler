@@ -412,29 +412,8 @@ public class LexicalAnalysis {
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
         toolkit.debugoutput("DEBUG - Retrieved Indices - Token Start and End ");
         // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
-        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
-        System.out.println("\n(...) Keyword Matches: "); for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
-        removeKeywordImpossibilities(keyword_matches, token);
-        if (token.getName() != null) {
-            toolkit.debugoutput("DEBUG - Get Name Is Not Null after IsOfKeyword And Remove Keyword Possibilities ");
-            return token_stream;
-        }
-
-        Map<String, int[]> symbol_matches = isOfSymbol(window_bytearr, token);
-        toolkit.debugoutput("DEBUG - Performed isOfSymbol");
-
-        System.out.println("\n(...) Symbol Matches: "); for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
-        removeSymbolImpossibilities(symbol_matches, token);
-        toolkit.debugoutput("DEBUG - Removed Impossibilities");
-
-        if (token.getName() != null) {
-            toolkit.debugoutput("DEBUG - TOKEN NAME NOT NULL");
-            return token_stream;
-        }
-
-        int window_bytearr_length_before_moving_special_characters = token.getEndPos() - token.getStartPos();
-
-
+        
+        
         // Needs to be...
         // If length before moving special chars is 1
         // But if length after moving special chars is 0... return? I think
@@ -460,6 +439,32 @@ public class LexicalAnalysis {
             System.out.println("SYMBOL_ENDCOMMENT not matched, returning token_stream");
             return token_stream;
         }
+        
+        
+        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
+        System.out.println("\n(...) Keyword Matches: "); for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
+        removeKeywordImpossibilities(keyword_matches, token);
+        if (token.getName() != null) {
+            toolkit.debugoutput("DEBUG - Get Name Is Not Null after IsOfKeyword And Remove Keyword Possibilities ");
+            return token_stream;
+        }
+
+        Map<String, int[]> symbol_matches = isOfSymbol(window_bytearr, token);
+        toolkit.debugoutput("DEBUG - Performed isOfSymbol");
+
+        System.out.println("\n(...) Symbol Matches: "); for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
+        removeSymbolImpossibilities(symbol_matches, token);
+        toolkit.debugoutput("DEBUG - Removed Impossibilities");
+
+        if (token.getName() != null) {
+            toolkit.debugoutput("DEBUG - TOKEN NAME NOT NULL");
+            return token_stream;
+        }
+
+        int window_bytearr_length_before_moving_special_characters = token.getEndPos() - token.getStartPos();
+
+
+        
 
         //Window ByteArr is of length 0 because first byte is special character. Returniing token stream, as incrementaion of end pos is required, if possible at current location within source file
 

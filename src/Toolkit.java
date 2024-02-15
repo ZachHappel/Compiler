@@ -65,9 +65,11 @@ public class Toolkit {
         for (int i = 0; i <= token_stream.size() - 1; i ++) { 
             String tk_name = (token_stream.get(i)).getName(); 
             if ( tk_name == "SYMBOL_OPENCOMMENT" || tk_name == "SYMBOL_CLOSECOMMENT") {
+                System.out.println("Comment Token: " + tk_name);
                 count = count + 1;
             }
         }
+        System.out.println("Count of Comment Symbols: " + count);
         return count;
     }
 
