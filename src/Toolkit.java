@@ -163,8 +163,8 @@ public class Toolkit {
     }
 
     public int getCurrentLine(int index) {
-        // Toolkit.println("LEN" + indices.length);
-        int line_number = 1;
+        // In use, line end number is representative of the current position of the lexeme whereas start position is not -- due to how bytearr matching is conducted
+         
         int i, index_at_newline;
 
         for (i = 0; i < indices.length; i++) {
@@ -173,7 +173,7 @@ public class Toolkit {
             index_at_newline = indices[i];
 
             if (index < indices[i]) {
-                return (i + 1 );
+                return i + 1;
             } // else if ( ) {
             else {
                 if (i == indices.length - 1) {
