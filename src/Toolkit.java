@@ -90,6 +90,19 @@ public class Toolkit {
         if (this.is_verbose) System.out.println(string);
     }
 
+    public void debugoutput( String string ) {
+        if (this.is_verbose) System.out.println(string);
+    }
+
+    public String bytearrNumbersAsString ( byte[] bytearr) {
+        String val_string = "";
+        for (int i = 0; i<= bytearr.length - 1; i++ ) {
+            val_string = val_string + ((int) bytearr[i]) + ", "; 
+        }
+        return val_string;
+    }
+
+
     public void endProgram(String reason) {
             this.output("Ending execution, " + reason);
             System.exit(0);
