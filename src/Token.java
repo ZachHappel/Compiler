@@ -168,8 +168,8 @@ public class Token {
     }
 
 
-    public void printShortTokenSummary (boolean is_verbose) {
-        if (is_verbose) System.out.println("(?) Current Token Name: " + this.getName() + " / Amount of Lexeme Possibilities: " + (this.getPossibilities()).size() + " / Current Window Size: " + (this.getEndPos() - this.getStartPos()));
+    public void printShortTokenSummary (boolean is_verbose, ArrayList<Token> ts) {
+        if (is_verbose) System.out.println("(?) Current Token Name: " + this.getName() + " / Amount of Lexeme Possibilities: " + (this.getPossibilities()).size() + " / Current Window Size: " + (this.getEndPos() - this.getStartPos()) + "/ Token Stream Length:" + ts.size());
     }
 
     public void printRemainingPossibilities(Token token) {

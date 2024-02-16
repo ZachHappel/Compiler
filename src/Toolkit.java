@@ -1,33 +1,86 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Toolkit {
     public Boolean is_verbose;
+    public Boolean is_debug_mode;
     public int[] indices;
 
     public Toolkit() {
-        this.is_verbose = true; 
+        this.is_verbose = true;
+        this.is_debug_mode = false; 
     }
 
-    public Toolkit( Boolean is_verbose ) {
+    public Toolkit( Boolean is_verbose, Boolean is_debug_mode ) { 
         this.is_verbose = is_verbose; 
+        this.is_debug_mode = is_debug_mode;
     }
 
-    public void setIsVerbose( Boolean is_verbose ) {
-        this.is_verbose = is_verbose;
+    
+    public Map<Integer, String> debug_strings = new HashMap<Integer, String>(){{
+        put(0, "DEBUG - Retrieved Indices - Token Start and End ");
+        put(1, "DEBUG - Is Within Comment ");
+        put(2, "DEBUG - Byte Arr Length >=2  ");
+        put(3, "DEBUG - Byte Arr Length >=2 - Last Two are * /");
+        put(4, "DEBUG - SET SYMBOL CLOSE COMMENT");
+        put(5, "DEBUG - Get Name Is Not Null after IsOfKeyword And Remove Keyword Possibilities ");
+        put(6, "DEBUG - Performed isOfSymbol");
+        put(7, "DEBUG - Removed Impossibilities");
+        put(8, "DEBUG - TOKEN NAME NOT NULL");
+        put(9, "DEBUG - Performed isOfKeyword");
+        put(10, "DEBUG - Window Byte Arr Length 1");
+        put(11, "DEBUG - Window Byte Arr Length 1 - Assigned Byte");
+        put(12, "DEBUG - Window Byte Arr Length 1 - Byte Is A-Z OR is Space and isWithinString");
+        put(13, "DEBUG - Window Byte Arr Length 1 - Byte Is A-Z Or SPACE AND Byte Is Within String -> Character");
+        put(14, "DEBUG - Window Byte Arr Length 1 - Byte Is Not Within String");
+        put(15, "DEBUG - Window Byte Arr Length 1 - Byte Is Not Within String - No Keyword Semi Matches -> Identifier");
+        put(16, "DEBUG - Window Byte Arr Length 1 - Byte Is Not Within String - Keyword Semi Matches Exist -> Could Be Identifier, Not A Character");
+        put(17, "DEBUG - Window Byte Arr Length 1 - Not A-Z ");
+        put(18, "DEBUG - Window Byte Arr Length 1 - Not A-Z but IS 0-9");
+        put(19, "DEBUG - Window Byte Arr Length 1 - Not A-Z but IS 0-9 && Is Within String - ERROR");
+        put(20, "DEBUG - Window Byte Arr Length 1 - Not A-Z but IS 0-9 && NOT Within String -> Digit");
+        put(21, "DEBUG - Window Byte Arr Length 1 - Not A-Z - EOP! ");
+        put(22, "DEBUG - Window Byte Arr Length 1 - Not A-Z - Outside Of IF/ELSE-IF For IF Digit or EOP");
+        put(23, "DEBUG - Window Byte Arr Length 1 - Outside Of A-Z else Digit or EOP");
+        put(24, "DEBUG - Byte Arr Window > 1");
+        put(25, "DEBUG - First Token Already Made");
+        put(26, "DEBUG - Window Expanded");
+        put(27, "DEBUG - Just Performed Checks and Checked To See If Token Has Name");
+        put(28, "DEBUG - Just Set Line Numbers");
+        put(29, "DEBUG - Has Match && Source Has Been Exhausted");
+        put(30, "DEBUG -  No Match && Source Still Remains");
+        put(31, "DEBUG - No Match && Source Exhausted");
+        put(32, "DEBUG - No Match && Source Exhausted && Last Possibilities Are Impossible");
+        put(33, "DEBUG - No Match && Source Exhausted && Possibilities ARE Possible");
+        put(34, "DEBUG - No Match && Source Exhausted && Last Possibilities Are Impossible");
+        put(35, "DEBUG - No Match && Source Exhausted && Possibilities ARE Possible BUT full match indices are less than length of source file");
+        put(36, "DEBUG - No Match && Source Exhausted && Possibilities ARE Possible && Longest Full Match Indices are NOT longer than source file --- (?)");
+        put(37, "DEBUG - No Match && Source Exhausted && Outside of IF/ELSE");
+        put(38, "DEBUG - Outside of IF/ELSE Has Match");
+        put(39, "DEBUG - TOKEN NAME NOT NULL");
+        put(40, "DEBUG - Has Match && Source Still Remains");
+    }};
+    
+    public void debug(int key) { 
+        if (this.is_debug_mode) {
+            System.out.println(debug_strings.get(key));
+        }
     }
 
-    public boolean getIsVerbose() {
-        return this.is_verbose;
-    }
+    public boolean getIsVerbose() { return this.is_verbose; }
+    public boolean getIsDebugMode() { return this.is_debug_mode; }
+    
+    public void setIsVerbose( Boolean is_verbose ) { this.is_verbose = is_verbose; }
+    public void setIsDebugMode( Boolean is_debug_mode ) { this.is_debug_mode = is_debug_mode; }
 
     public void printTokenStream (ArrayList<Token> token_stream) {
         for (Token t : token_stream) {
             System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute() + ", Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos());
         }
     }
-
+    
     public void setIndices (int[] indices) {
         this.indices = indices; 
     }

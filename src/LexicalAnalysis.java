@@ -409,8 +409,8 @@ public class LexicalAnalysis {
         System.out.println("(?) window_bytearr: " + new String(window_bytearr)); 
         System.out.println("(?) window_bytearr_vals: " + toolkit.bytearrNumbersAsString(window_bytearr)); 
 
-        int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
-        toolkit.debugoutput("DEBUG - Retrieved Indices - Token Start and End ");
+        int[] indices = new int[]{token.getStartPos(), token.getEndPos()}; toolkit.debug(0);
+        toolkit.debug(0);
         // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
         
         
@@ -421,16 +421,16 @@ public class LexicalAnalysis {
         // if window != [...,...,..., *, /] -> ignore  =>  return token_stream
         // NEED CONSIDER - This may need to be moved before any symbol or keyword matching
         if (isWithinComment) {
-            toolkit.debugoutput("DEBUG - Is Within Comment");
+            toolkit.debug(1);
             if (window_bytearr.length >= 2) {
-                toolkit.debugoutput("DEBUG - Byte Arr Length >=2 ");
+                toolkit.debug(2);
                 if ( (window_bytearr[window_bytearr.length - 2 ] == 42) && (window_bytearr[window_bytearr.length - 1 ] == 47) ) { // Close commment symbol
-                    toolkit.debugoutput("DEBUG - Byte Arr Length >=2 - Last Two are * /");
+                    toolkit.debug(3);
                     token.setStartPos(token.getEndPos() - 1);
                     
                     token.setName("SYMBOL_CLOSECOMMENT");
                     token.setAttribute("*/"); // Instead of having to concoct some ridiculous subarray converted to string, or something of the sort, just putting in /* is much easier and should not cause any trouble
-                    toolkit.debugoutput("DEBUG - SET SYMBOL CLOSE COMMENT");
+                    toolkit.debug(4);
                     return token_stream;
                 }
             }
@@ -441,23 +441,26 @@ public class LexicalAnalysis {
         }
         
         
-        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token);
-        System.out.println("\n(...) Keyword Matches: "); for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
+        Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token); toolkit.debug(9);
+        
+        System.out.println("\n(...) Keyword Matches: "); 
+        for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
         removeKeywordImpossibilities(keyword_matches, token);
         if (token.getName() != null) {
-            toolkit.debugoutput("DEBUG - Get Name Is Not Null after IsOfKeyword And Remove Keyword Possibilities ");
+            toolkit.debug(5);
             return token_stream;
         }
 
         Map<String, int[]> symbol_matches = isOfSymbol(window_bytearr, token);
-        toolkit.debugoutput("DEBUG - Performed isOfSymbol");
+        toolkit.debug(6);
 
-        System.out.println("\n(...) Symbol Matches: "); for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
+        System.out.println("\n(...) Symbol Matches: "); 
+        for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
         removeSymbolImpossibilities(symbol_matches, token);
-        toolkit.debugoutput("DEBUG - Removed Impossibilities");
+        toolkit.debug(7);
 
         if (token.getName() != null) {
-            toolkit.debugoutput("DEBUG - TOKEN NAME NOT NULL");
+            toolkit.debug(39);
             return token_stream;
         }
 
@@ -472,10 +475,10 @@ public class LexicalAnalysis {
         
         // NEED - Adding "|| window_bytearr.length == 1" needs to be watched
         if (window_bytearr_length_before_moving_special_characters == 1 || window_bytearr.length == 1) {
-            toolkit.debugoutput("DEBUG - Window Byte Arr Length 1");
+            toolkit.debug(10);
             if (window_bytearr.length == 0) return token_stream; // 0 => only when first byte is a special char 
             byte b = window_bytearr[0]; // only byte in window
-            toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Assigned Byte");
+            toolkit.debug(11);
 
             /**
             if (isWithinString) {
@@ -487,13 +490,13 @@ public class LexicalAnalysis {
             } **/
             
             if ( b >= 97 && b < 123 || (b == 32 && isWithinString)) { // [a-z]
-                toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Byte Is A-Z OR is Space and isWithinString");
+                toolkit.debug(12);
                 token.removePossiblity("EOP"); // Not sure if this and the below 2 should be here
                 token.removePossiblity("DIGIT");
                 token.removePossibilitiesOfSpecifiedType("SYMBOL", false);
                 
                 if (isWithinString) {
-                    toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Byte Is A-Z Or SPACE AND Byte Is Within String -> Character");
+                    toolkit.debug(13);
                     token.setName("CHARACTER");
                     token.setAttribute(new String (window_bytearr));
                     return token_stream; 
@@ -511,15 +514,15 @@ public class LexicalAnalysis {
                 } 
 
                 else {
-                    toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Byte Is Not Within String");
+                    toolkit.debug(14);
                     if ( token.getKeywordSemiMatchesAmount() == 0 ) {
-                        toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Byte Is Not Within String - No Keyword Semi Matches -> Identifier");
+                        toolkit.debug(15);
                         token.setName("IDENTIFIER");
                         token.setAttribute(new String (window_bytearr));
                         return token_stream;
                         
                     } else {
-                        toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Byte Is Not Within String - Keyword Semi Matches Exist -> Could Be Identifier, Not A Character");
+                        toolkit.debug(16);
                         token.updatePossibility("IDENTIFIER", indices);
                         token.removePossiblity("CHARACTER");
 
@@ -528,21 +531,21 @@ public class LexicalAnalysis {
                 }
                 
             } else {
-                toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Not A-Z ");
+                toolkit.debug(17);
                 System.out.println("ELSE Not a-z");
                 token.removePossiblity("IDENTIFIER");
                 token.removePossiblity("CHARACTER");
 
                 
                 if (b > 47 && b <= 57)  {
-                    toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Not A-Z but IS 0-9");
+                    toolkit.debug(18);
                     if (isWithinString) {
-                        toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Not A-Z but IS 0-9 && Is Within String - ERROR");
+                        toolkit.debug(19);
                         System.out.println("Throw error here! Digit in string");
                         System.exit(0);
                     }
 
-                    toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Not A-Z but IS 0-9 && NOT Within String -> Digit");
+                    toolkit.debug(20);
                     System.out.println("Digit!!!!!!!!");
                     token.setName("DIGIT");
                     token.setAttribute(new String(window_bytearr));
@@ -556,7 +559,7 @@ public class LexicalAnalysis {
                 
 
                 else if ( b == 36 ) {
-                    toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Not A-Z - EOP! ");
+                    toolkit.debug(21);
                     token.setName("EOP");
                     token.setAttribute(new String(window_bytearr));
                     return token_stream;
@@ -565,10 +568,10 @@ public class LexicalAnalysis {
                     
                 }
 
-                toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Not A-Z - Outside Of IF/ELSE-IF For IF Digit or EOP");
+                toolkit.debug(22);
             }
 
-            toolkit.debugoutput("DEBUG - Window Byte Arr Length 1 - Outside Of A-Z else Digit or EOP");
+            toolkit.debug(23);
 
            
 
@@ -610,7 +613,7 @@ public class LexicalAnalysis {
         }
        
         **/
-        toolkit.debugoutput("DEBUG - Byte Arr Window > 1");
+        toolkit.debug(24);
         token.printRemainingPossibilities(true);
 
         
@@ -632,12 +635,12 @@ public class LexicalAnalysis {
             return generateTokens(src, token_stream);
         }
 
-        toolkit.debugoutput("DEBUG - First Token Already Made");
+        toolkit.debug(25);
 
         Token current_token = token_stream.get(token_stream.size() - 1); // Get most recent token
-        current_token.printShortTokenSummary(toolkit.getIsVerbose());
+        current_token.printShortTokenSummary(toolkit.getIsVerbose(), token_stream);
 
-        System.out.println("Token Stream Length:" + token_stream.size());
+        System.out.println("");
         
 
         boolean has_match = current_token.name == null ? false : true;
@@ -646,11 +649,11 @@ public class LexicalAnalysis {
 
         System.out.println("> Expanding window (end_pos + 1)");
         current_token.setEndPos(current_token.getEndPos() + 1);
-        toolkit.debugoutput("DEBUG - Window Expanded");
+        toolkit.debug(26);
 
         performChecks(src, token_stream); 
         boolean has_match_after_checks = current_token.name == null ? false : true;
-        toolkit.debugoutput("DEBUG - Just Performed Checks and Checked To See If Token Has Name");
+        toolkit.debug(27);
         
         if (has_match_after_checks) {
             System.out.println("\n> Definitive match\n"); //NEED - Source length appears to be off when compared to test file... Make sure to check
@@ -660,7 +663,7 @@ public class LexicalAnalysis {
 
             current_token.setStartLineNumber(toolkit.getCurrentLine(current_token.getStartPos()));
             current_token.setEndLineNumber(toolkit.getCurrentLine(current_token.getEndPos()));
-            toolkit.debugoutput("DEBUG - Just Set Line Numbers");
+            toolkit.debug(28);
 
             System.out.println("Remaining Byte Array: ");
             for (int i = 0; i < src.length - 1; i++) {
@@ -674,11 +677,11 @@ public class LexicalAnalysis {
             System.out.println("");
             // >=   maybe?
             if (src.length == current_token.getEndPos()) {
-                toolkit.debugoutput("DEBUG - Has Match && Source Has Been Exhausted");
+                toolkit.debug(29);
                 toolkit.output("generateLexemes reached end of src, returning token_stream");
                 return token_stream; // Success
             } else {
-                toolkit.debugoutput("DEBUG - Has Match && Source Still Remains");
+                toolkit.debug(40);
                 toolkit.output("Creating a new token and adding it to the token stream");
                 Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
                 token_stream.add(new_token);
@@ -706,7 +709,7 @@ public class LexicalAnalysis {
             }
 
             if (src.length - 1 != current_token.getEndPos() - 1) {
-                toolkit.debugoutput("DEBUG -  No Match && Source Still Remains");
+                toolkit.debug(30);
                 //System.out.println("!!!!!!!!!!!!!!!!!!! INCREMENT !!!!!!!!!!!!!!!!!!!!!!!");
                 //current_token.setEndPos(current_token.getEndPos() + 1);
                 token_stream = generateTokens(src, token_stream);
@@ -719,7 +722,7 @@ public class LexicalAnalysis {
             // should be created
             
             } else {
-                toolkit.debugoutput("DEBUG - No Match && Source Exhausted");
+                toolkit.debug(31);
                 current_token.processLongestMatch();
 
                 System.out.println("There exists SHARED longest match: " + current_token.getThereExistsSharedLongestMatch());
@@ -735,32 +738,35 @@ public class LexicalAnalysis {
 
                 // Check to see if of the remaining possibilites, are all completely without any match whatsoever?
                 if (current_token.getRemainingPossibilitiesAreImpossible()) {
-                    toolkit.debugoutput("DEBUG - No Match && Source Exhausted && Last Possibilities Are Impossible");
+                    toolkit.debug(32);
                     token_stream.removeLast(); 
                     return token_stream;
                     // If so, remove unmatchable token and return the token stream
                 }
                 
-                toolkit.debugoutput("DEBUG - No Match && Source Exhausted && Possibilities ARE Possible");
+                toolkit.debug(33);
                 String tk_value = new String(Arrays.copyOfRange(src, longest_full_match_indices[0], longest_full_match_indices[1])); 
                 System.out.println("Value at range: " + tk_value);
                 current_token.setName(longest_full_match_name);
                 current_token.setStartPos(longest_full_match_indices[0]);
                 current_token.setEndPos(longest_full_match_indices[1]);
+
+                //String tk_value_cleaned = Arrays.toString(toolkit.removeSpecialCharactersExceptSpaces(tk_value.getBytes()));
+
                 current_token.setAttribute(tk_value);
 
                 if (longest_full_match_indices[1] <= src.length - 1) {
-                    toolkit.debugoutput("DEBUG - No Match && Source Exhausted && Possibilities ARE Possible BUT full match indices are less than length of source file");
+                    toolkit.debug(35);
                     Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
                     token_stream.add(new_token);
                     token_stream = generateTokens(src, token_stream);
                 }
                 //(longest_full_match_name);
-                toolkit.debugoutput("DEBUG - No Match && Source Exhausted && Possibilities ARE Possible && Longest Full Match Indices are NOT longer than source file --- (?)");
+                toolkit.debug(36);
             }
-            toolkit.debugoutput("DEBUG - No Match && Source Exhausted && Outside of IF/ELSE");
+            toolkit.debug(37);
         }
-        toolkit.debugoutput("DEBUG - Outside of IF/ELSE Has Match");
+        toolkit.debug(38);
         //System.out.println("After Checks: " + token_stream.size());
         return token_stream;
     }
@@ -772,14 +778,16 @@ public class LexicalAnalysis {
         byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
         toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(file_source_bytearr)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         
-        for (byte b: file_source_bytearr) System.out.println(b);
+        //System.out.println(Arrays.toString(file_source_bytearr));
+        
+        //for (byte b: file_source_bytearr) System.out.println(b);
         //System.exit(0);
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
         
         
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
-            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + " (Line Start: " + t.getStartLineNumber() + ", Line End: " + t.getEndLineNumber() );
+            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "] (Ln: " + t.getEndLineNumber() + ") " );
         }
         
         return token_stream;
