@@ -807,7 +807,7 @@ public class LexicalAnalysis {
     //indices = 
             //System.out.println("Byte Arr:");
             
-            
+             
             /**  Test for isOfKeyword 
             //byte[] test_arr = new byte[]{105};
             byte[] test_arr = new byte[]{105, 110};
