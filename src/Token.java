@@ -38,7 +38,7 @@ public class Token {
     public int keyword_semi_matches;
 
     public boolean has_matched_assginment; 
-
+    public String matched_assignment_attribute;
     
     public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{
         add("IDENTIFIER");
@@ -106,6 +106,7 @@ public class Token {
     public int getSymbolSemiMatchesAmount( ) { return this.symbol_semi_matches;}
     public int getKeywordSemiMatchesAmount( ) { return this.keyword_semi_matches; }
     public boolean getHasMatchedAssignment () { return this.has_matched_assginment;  }
+    public String getMatchedAssignmentValue () { return this.matched_assignment_attribute;  }
 
     
     public void setName(String i) { this.name = i; }
@@ -123,13 +124,15 @@ public class Token {
     public void setSymbolSemiMatchesAmount( int i ) { this.symbol_semi_matches = i; }
     public void setKeywordSemiMatchesAmount( int i ) { this.keyword_semi_matches = i; }
     public void setHasMatchedAssignment (boolean i) { this.has_matched_assginment = i; }
+    public void setMatchedAssignmentValue(String i) { this.matched_assignment_attribute = i; }
+    
     
 
     public int[] getIndices() {
         return new int[]{this.start_pos, this.end_pos};
     }
 
-    
+
     public void removePossiblity(String lexeme_name) {
         this.LexemePossibilities.remove(lexeme_name);
     }

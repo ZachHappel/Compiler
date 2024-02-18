@@ -295,6 +295,7 @@ public class LexicalAnalysis {
                         if (symbol_pattern.equals("=") && !token.getHasMatchedAssignment()) {
                             System.out.println("Valid SYMBOL_ASSIGNMENT");
                             token.setHasMatchedAssignment(true);
+                            token.setMatchedAssignmentValue(new String (window_bytearr));
                             token.updatePossibility(symbol_token_name, indices); 
                             current_symbol_matches.put(symbol_token_name, indices);
                          //   break; // Not return, because we need the remaining symbol pattern checks to happen still
@@ -320,11 +321,23 @@ public class LexicalAnalysis {
                     
             }
 
-            if (token.getHasMatchedAssignment() && current_symbol_matches.size() == 1) {
+            System.out.println("This token has matched... : " + token.getHasMatchedAssignment());
+
+            if (token.getHasMatchedAssignment() && current_symbol_matches.size() == 0) {
                 System.out.println("Making assignment");
                 int[] assignment_indices = token.getPossibilities().get("SYMBOL_ASSIGNMENT");
-                System.exit(0);
+                System.out.println("Assignment Indices: " + Arrays.toString(assignment_indices));
+
+                token.setName("SYMBOL_ASSIGNMENT");
+                token.setStartPos(assignment_indices[0]);
+                token.setEndPos(assignment_indices[1]);
+                token.setAttribute(token.getMatchedAssignmentValue());
+
+
+                //System.exit(0);
             }
+
+            //if (token.getHasMatchedAssignment() )
 
         }
 
@@ -336,17 +349,6 @@ public class LexicalAnalysis {
     }
 
 
-    /*
-     * if (symbol_pattern == "=" && (token.getPossibilities().size() != 1)) {
-                            toolkit.output("(WAITING: Need exactly ONE possibility to definitively, fully-match SYMBOL_ASSIGNMENT)");
-                            current_symbol_matches.put(symbol_token_name, indices);
-                            token.updatePossibility(symbol_token_name, indices); 
-                            // Cannot return now, as "=" is the starting point of another symbol
-                            break; // breaks to innermost loop
-                        }
-     */
-    
-
     public static void removeAllSymbolsFromPossibilities(Token token ) {
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
         for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
@@ -356,8 +358,7 @@ public class LexicalAnalysis {
     }
 
     
-
-    
+ 
     public static void removeSymbolImpossibilities( Map<String, int[]> symbol_matches, Token token ) {
         System.out.println("\n(!) REMOVE SYMBOL IMPOSSIBILITIES");
         int symbol_matches_amount = symbol_matches.size(); 
@@ -718,6 +719,7 @@ public class LexicalAnalysis {
                 toolkit.printTokenStream(token_stream);
                 return generateTokens(src, token_stream);
             }
+
         } else {
 
             if (current_token.getPossibilities().size() == 1 && (ungrouped_tks_of_length_one.contains(current_token.getFinalRemainingPossibilityName()))) {
