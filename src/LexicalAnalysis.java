@@ -742,22 +742,24 @@ public class LexicalAnalysis {
         for (Token t : token_stream) {
             System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "] (Ln: " + t.getEndLineNumber() + ") " );
         }
+
+        toolkit.printTokenStreamDetailed(token_stream);
         
         return token_stream;
         
-        //return new ArrayList<Token>();
     }
     
-    //System.out.println(Arrays.toString(file_source_bytearr));
-    //public ArrayList Lex () {
-
-    //}
     
 }
 
 
  // IGNORE
 
+ //System.out.println(Arrays.toString(file_source_bytearr));
+    //public ArrayList Lex () {
+
+    //}
+    
     //indices = 
             //System.out.println("Byte Arr:");
             

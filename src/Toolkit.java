@@ -75,10 +75,38 @@ public class Toolkit {
     public void setIsVerbose( Boolean is_verbose ) { this.is_verbose = is_verbose; }
     public void setIsDebugMode( Boolean is_debug_mode ) { this.is_debug_mode = is_debug_mode; }
 
-    public void printTokenStream (ArrayList<Token> token_stream) {
-        for (Token t : token_stream) {
-            System.out.println("Token: " + t.getName() + " Value/Attribute: " + t.getAttribute() + ", Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos());
+    public String createStringOfSpaces(int how_many_spaces) {
+        String string_of_spaces = "";
+        if (how_many_spaces == 0) return "";
+        for (int i = 0; i <= how_many_spaces -1; i++) {
+            string_of_spaces = string_of_spaces + "░";
         }
+        return string_of_spaces;
+    }
+
+    public void printTokenStream (ArrayList<Token> token_stream) {
+
+        for (Token t : token_stream) {           
+            System.out.println(t.getName() + "| Value/Attribute: \"" + t.getAttribute() + "\", Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos());
+        }
+        //System.out.println(s.length());
+    }
+
+    public void printTokenStreamDetailed (ArrayList<Token> token_stream) {
+        System.out.println("\n┌--------------------------------------------------------------------------------------------------------------------┐");
+        System.out.println("|--------------------------------------------------Token Stream------------------------------------------------------|");
+        System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+        for (Token t : token_stream) {
+            String token_name = t.getName();
+            int token_name_length = token_name.length();
+            int amount_of_extra_spaces = 25 - token_name_length ;
+            // 
+            String additional_spaces = createStringOfSpaces(amount_of_extra_spaces);
+            String indices_portion = "Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos(); 
+            System.out.println("| "+t.getName() + createStringOfSpaces(25 - token_name.length()) + "░|░░░Value/Attribute:░░░\"" + t.getAttribute()  + "\"" + createStringOfSpaces(30 - 21 - (t.getAttribute().length())) +  "|░" + indices_portion + createStringOfSpaces(52 - indices_portion.length()) + "░|");
+        }
+        System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+        System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
     }
     
     public void setIndices (int[] indices) {
