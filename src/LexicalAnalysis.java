@@ -131,7 +131,8 @@ public class LexicalAnalysis {
                 byte byte_from_keyword = keyword[k];
                 byte byte_from_window =  window_bytearr[k];
                 String equality = (byte_from_keyword == byte_from_window) ? "==" : "!=";
-                toolkit.output("Symbol Byte (" + byte_from_keyword + ") " + equality + " Window Byte (" + byte_from_window + ")");
+                //toolkit.output("Symbol Byte (" + byte_from_keyword + ") " + equality + " Window Byte (" + byte_from_window + ")");
+                
                 if (byte_from_keyword != byte_from_window) {
                     break;
                 }
@@ -255,7 +256,8 @@ public class LexicalAnalysis {
         int window_bytearr_size = window_bytearr.length; 
         int amount_of_symbols = symbols.length; 
 
-        toolkit.output("(...) Symbol Bytes vs Window Bytes: (if bytes are not equal, the loop breaks, attempts next symbol if available)");
+        // Need to add debug option for long debug
+        //toolkit.output("(...) Symbol Bytes vs Window Bytes: (if bytes are not equal, the loop breaks, attempts next symbol if available)");
         
         for (int j = 0; j <= amount_of_symbols - 1; j++ ) {
             byte[] symbol = symbols[j];
@@ -264,7 +266,7 @@ public class LexicalAnalysis {
                 byte byte_from_symbol = symbol[s];
                 byte byte_from_window =  window_bytearr[s];
                 String equality = (byte_from_symbol == byte_from_window) ? "==" : "!=";
-                toolkit.output("Symbol Byte (" + byte_from_symbol + ") " + equality + " Window Byte (" + byte_from_window + ")");
+                //toolkit.output("Symbol Byte (" + byte_from_symbol + ") " + equality + " Window Byte (" + byte_from_window + ")");
                 if (byte_from_symbol != byte_from_window) {
                     break;
                 }
@@ -321,31 +323,22 @@ public class LexicalAnalysis {
                     
             }
 
-            System.out.println("This token has matched... : " + token.getHasMatchedAssignment());
 
             if (token.getHasMatchedAssignment() && current_symbol_matches.size() == 0) {
-                System.out.println("Making assignment");
+                toolkit.output("Previously, potential match for SYMBOL_ASSIGNMENT was noted. Now, there are no more remaining symbol matches so we can therefore conclude that the current token is SYMBOL_ASSIGNMENT");
                 int[] assignment_indices = token.getPossibilities().get("SYMBOL_ASSIGNMENT");
-                System.out.println("Assignment Indices: " + Arrays.toString(assignment_indices));
+                //System.out.println("Assignment Indices: " + Arrays.toString(assignment_indices));
 
                 token.setName("SYMBOL_ASSIGNMENT");
                 token.setStartPos(assignment_indices[0]);
                 token.setEndPos(assignment_indices[1]);
                 token.setAttribute(token.getMatchedAssignmentValue());
-
-
-                //System.exit(0);
             }
-
-            //if (token.getHasMatchedAssignment() )
-
         }
 
         if (partial_match) token.removePossibilitiesOfSpecifiedType("SYMBOL", true);
     
         return current_symbol_matches; 
-        // PerformChecks need to remove, from Possibilities, all keywords that are not retured from here as being semi-matches.
-        // If it fails here on X keyword, it is not X keyword
     }
 
 
@@ -360,33 +353,31 @@ public class LexicalAnalysis {
     
  
     public static void removeSymbolImpossibilities( Map<String, int[]> symbol_matches, Token token ) {
-        System.out.println("\n(!) REMOVE SYMBOL IMPOSSIBILITIES");
+        toolkit.output("\n(!) REMOVE SYMBOL IMPOSSIBILITIES");
         int symbol_matches_amount = symbol_matches.size(); 
-        System.out.println("Symbol Semi Matches: " + symbol_matches.size());
+        toolkit.output("Symbol Semi Matches: " + symbol_matches.size());
         token.setSymbolSemiMatchesAmount(symbol_matches.size());
+        
         // REASON: This should resolve ConcurrentModificationException that was occurring when access and modifying the token's Lexeme Possibilities HashMap
         // Use this as a reference and make removals on the actual token's hashmap
         Map<String, int[]> token_lexeme_possibilities_local = new HashMap<>(token.getPossibilities());
 
         ArrayList<String> symbol_match_names = new ArrayList<String>(); 
         
-        // Add all matching names to ArrayList
-        for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { symbol_match_names.add(entry.getKey());}
+        for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { symbol_match_names.add(entry.getKey());}  // Add all matching names to ArrayList
         
         for (Map.Entry<String, int[]> entry : (token_lexeme_possibilities_local).entrySet()) {
             String possibility_name = entry.getKey();
             
-            // If possibility is of kind "SYMBOL"
-            // but is not among those which have been identified as being semi-matches
+            // If possibility is of kind "SYMBOL" but is not among those which have been identified as being semi-matches
             if (possibility_name.contains("SYMBOL_") && !symbol_match_names.contains(possibility_name)) {
-                System.out.println("Removing SYMBOL Possibility: " + possibility_name); 
+                toolkit.output("Removing SYMBOL Possibility: " + possibility_name); 
                 token.removePossiblity(possibility_name);
                 symbol_matches_amount = symbol_matches_amount - 1;
             }
-            
-
         }
-        System.out.println("Remaining Symbol Semi Matches: " + symbol_matches_amount);
+
+        toolkit.output("Remaining Symbol Semi Matches: " + symbol_matches_amount);
 
     }
     
@@ -401,8 +392,6 @@ public class LexicalAnalysis {
         Token token = token_stream.get(token_stream.size() - 1);
         boolean isWithinString = toolkit.isWithinStringExpression(token_stream);
         boolean isWithinComment = toolkit.isWithinComment(token_stream);
-        Map<String, int[]> lexemes_possibilities_before_checking = new HashMap<>(token.getPossibilities());
-        
         
         System.out.println("(?) isWithinString: " + isWithinString);
         System.out.println("(?) isWithinComment: " + isWithinComment);
@@ -435,6 +424,11 @@ public class LexicalAnalysis {
 
         */
 
+       
+        System.out.println("\n");
+
+
+
         byte[] window_bytearr = isWithinString ? toolkit.removeSpecialCharactersExceptSpaces(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos())) : toolkit.removeSpecialCharacters(Arrays.copyOfRange(src, token.getStartPos(), token.getEndPos()));
         System.out.println("(?) window_bytearr: " + new String(window_bytearr)); 
         System.out.println("(?) window_bytearr_vals: " + toolkit.bytearrNumbersAsString(window_bytearr)); 
@@ -443,13 +437,16 @@ public class LexicalAnalysis {
         toolkit.debug(0);
         // Modifications made to token LexemePossibilities via updatePossibility when there is a partial match or a full match
         
-        
-        // Needs to be...
-        // If length before moving special chars is 1
-        // But if length after moving special chars is 0... return? I think
+        byte first_byte = src[token.getStartPos()];
+        if ( (isWithinString) && !( (first_byte >= 97 && first_byte < 123 ) || (first_byte == 32 ) || (first_byte == 34) ) ) {
+            // Purpose of this is to prevent multi-line string expressions. 
+            // It wasn't until the lexer was completed that I realized that new-line, tabs, etc. should be error-invoking, whereas I just ignored those bytes
+            System.out.println("Encountered invalid character within String\n Error occurred with byte, " + first_byte);
+            System.exit(0); // Error handling needed
+        }
+
 
         // if window != [...,...,..., *, /] -> ignore  =>  return token_stream
-        // NEED CONSIDER - This may need to be moved before any symbol or keyword matching
         if (isWithinComment) {
             toolkit.debug(1);
             if (window_bytearr.length >= 2) {
@@ -466,14 +463,14 @@ public class LexicalAnalysis {
             }
             
             
-            System.out.println("SYMBOL_ENDCOMMENT not matched, returning token_stream");
+            toolkit.output("SYMBOL_ENDCOMMENT not matched, returning token_stream");
             return token_stream;
         }
         
         
         Map<String, int[]> keyword_matches = isOfKeyword(window_bytearr, token); toolkit.debug(9);
         
-        System.out.println("\n(...) Keyword Matches: "); 
+        toolkit.output("\n(...) Keyword Matches: "); 
         for (Map.Entry<String, int[]> entry : keyword_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Keyword: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
         removeKeywordImpossibilities(keyword_matches, token);
         if (token.getName() != null) {
@@ -484,7 +481,7 @@ public class LexicalAnalysis {
         Map<String, int[]> symbol_matches = isOfSymbol(window_bytearr, token);
         toolkit.debug(6);
 
-        System.out.println("\n(...) Symbol Matches: "); 
+        toolkit.output("\n(...) Symbol Matches: "); 
         for (Map.Entry<String, int[]> entry : symbol_matches.entrySet()) { String name = entry.getKey(); int[] i = entry.getValue(); System.out.println("Symbol: " + name + " Indices: " + Arrays.toString(i) + " Length of match: " + (i[1] - i[0]) + ", matching: " + new String(window_bytearr));   }
         removeSymbolImpossibilities(symbol_matches, token);
         toolkit.debug(7);
@@ -501,23 +498,18 @@ public class LexicalAnalysis {
 
         //Window ByteArr is of length 0 because first byte is special character. Returniing token stream, as incrementaion of end pos is required, if possible at current location within source file
 
-        System.out.println("window_bytearr_length_before_moving_special_characters: " + window_bytearr_length_before_moving_special_characters);
+        //System.out.println("window_bytearr_length_before_moving_special_characters: " + window_bytearr_length_before_moving_special_characters);
         
         // NEED - Adding "|| window_bytearr.length == 1" needs to be watched
         if (window_bytearr_length_before_moving_special_characters == 1 || window_bytearr.length == 1) {
+            
             toolkit.debug(10);
+           
             if (window_bytearr.length == 0) return token_stream; // 0 => only when first byte is a special char 
+           
             byte b = window_bytearr[0]; // only byte in window
+
             toolkit.debug(11);
-
-            /**
-            if (isWithinString) {
-                if  ( !(((b >= 97) && ( b < 123)) || (b == 32 ) )) {
-                    System.out.println("Invalid Character within String");
-                    System.exit(0);
-
-                }
-            } **/
             
             if ( b >= 97 && b < 123 || (b == 32 && isWithinString)) { // [a-z]
                 toolkit.debug(12);
@@ -527,20 +519,12 @@ public class LexicalAnalysis {
                 
                 if (isWithinString) {
                     toolkit.debug(13);
-                    token.setName("CHARACTER");
+                    
+                    //token.setName("CHARACTER");
+                    token.setName(b == 32 ? "SPACE" : "CHARACTER");
                     token.setAttribute(new String (window_bytearr));
                     return token_stream; 
-                    /**
-                    if ( token.getSymbolSemiMatchesAmount() == 0)  {
-                       
-                    } else {
-                        // I THINK ALwAYS NO MATTER WHAT
-                        token.updatePossibility("CHARACTER", indices); // MATCH?
-                        token.removePossiblity("IDENTIFIER");
-                        token.removePossibilitiesOfSpecifiedType("KEYWORD", false);
-
-                    }
-                    **/
+                  
                 } 
 
                 else {
@@ -560,15 +544,17 @@ public class LexicalAnalysis {
                     
                 }
                 
-            } else {
+            } 
+            
+            else {
+                
                 toolkit.debug(17);
-                System.out.println("ELSE Not a-z");
                 token.removePossiblity("IDENTIFIER");
                 token.removePossiblity("CHARACTER");
 
                 
-                if (b > 47 && b <= 57)  {
-                    toolkit.debug(18);
+                if (b > 47 && b <= 57)  { 
+                    
                     if (isWithinString) {
                         toolkit.debug(19);
                         System.out.println("Throw error here! Digit in string");
@@ -580,76 +566,23 @@ public class LexicalAnalysis {
                     token.setName("DIGIT");
                     token.setAttribute(new String(window_bytearr));
                     return token_stream;
-                    //token.updatePossibility("DIGIT", indices);
-                    //token.removePossiblity("EOP");  
-
-
                 }
-
-                
 
                 else if ( b == 36 ) {
                     toolkit.debug(21);
                     token.setName("EOP");
                     token.setAttribute(new String(window_bytearr));
                     return token_stream;
-                    //token.updatePossibility("EOP", indices);     
-                    //token.removePossiblity("DIGIT");           
-                    
-                }
 
-                toolkit.debug(22);
-            }
+                } toolkit.debug(22);
 
-            toolkit.debug(23);
+            } toolkit.debug(23);
 
-           
+        } toolkit.debug(24);
 
-        }
 
-        /**
-        // One possibility remaining -> emit it
-        if (token.getPossibilities().size() == 1) {
-            //token.updateTokenWithRemainingNameAndIndices();
-
-            System.out.println("Token Indices Length: " + (token.getEndPos() - token.getStartPos())); 
-            System.out.println("window_bytearr length: " + window_bytearr.length);
-            
-            // If tokens that are not of either keyword or symbol and they are matched with one char
-            // May be able to combine this if statement with the one above using &&, if this really is the only case where this occurs, which this approach suggest because I believe it to be the case
-            if (ungrouped_tks_of_length_one.contains(token.getFinalRemainingPossibilityName()) && (token.getFinalRemainingPossibilityName() == "IDENTIFIER")) { 
-                token.setName(token.getFinalRemainingPossibilityName());
-                
-                // This is highly important because the next token is generated with the previous token's end index as both its start and end pos -- generateToken recursively increments the endPos, expanding the window, algorithmically 
-                //token.setEndPos(token.getStartPos() + 1); // Being one character, the first indice at start_pos is already valid but the end position needs to be adjusted to start_pos + 1
-                // OOPS ^ Huge headache caused by this
-                
-                token.setEndPos(token.getEndPos() - 1);
-                // start = endPos - 2
-                // endPos = endPos - 1
-
-                token.setAttribute( new String ( Arrays.copyOfRange(window_bytearr, 0, 1)));
-
-                return token_stream; 
-
-                
-
-            }
-
-            // Creates a copy of the byte window using the length of the token match, starting at 0, so receives the correct value and not whatever is currently in the byte window
-            // Fixed the issue over matching that I talked about in class
-            //String tk_value = new String(Arrays.copyOfRange(window_bytearr, 0, (token.getEndPos() - token.getStartPos())));  
-            //token.setAttribute(tk_value);
-        }
-       
-        **/
-        toolkit.debug(24);
         token.printRemainingPossibilities(true);
-
-        
         return token_stream; 
-
-
     }
 
    
@@ -660,7 +593,7 @@ public class LexicalAnalysis {
         System.out.println("\n~~~~~~~~~~~~~~~~~~~GENERATE TOKENS~~~~~~~~~~~~~~~~~~~");
         
         if (token_stream.size() == 0 && src.length > 0) {
-            System.out.println("Adding First Token");
+            toolkit.output("Adding First Token");
             token_stream.add(new Token(0, 0)); // end_pos gets incremented each recursive loop
             return generateTokens(src, token_stream);
         }
@@ -677,7 +610,7 @@ public class LexicalAnalysis {
         if (has_match) return token_stream; // Success
                
 
-        System.out.println("> Expanding window (end_pos + 1)");
+        toolkit.output("> Expanding window (end_pos + 1)");
         current_token.setEndPos(current_token.getEndPos() + 1);
         toolkit.debug(26);
 
@@ -686,24 +619,19 @@ public class LexicalAnalysis {
         toolkit.debug(27);
         
         if (has_match_after_checks) {
-            System.out.println("\n> Definitive match\n"); //NEED - Source length appears to be off when compared to test file... Make sure to check
-            System.out.println("End Position of Matched Lexeme: " + current_token.getEndPos());
-            System.out.println("Source length - 1: " + (src.length - 1));
+            toolkit.output("\n> Definitive match\n"); //NEED - Source length appears to be off when compared to test file... Make sure to check
+            toolkit.output("End Position of Matched Lexeme: " + current_token.getEndPos());
+            toolkit.output("Source length - 1: " + (src.length - 1));
             
 
             current_token.setStartLineNumber(toolkit.getCurrentLine(current_token.getStartPos()));
             current_token.setEndLineNumber(toolkit.getCurrentLine(current_token.getEndPos()));
             toolkit.debug(28);
 
-            System.out.println("Remaining Byte Array: ");
-            for (int i = 0; i < src.length - 1; i++) {
-                byte b = src[i];
-                int curr_end_token = current_token.getEndPos(); 
-                if (i > curr_end_token) {
-                    System.out.print(b + ", ");
-                }
-               
-            } 
+            toolkit.output("Generate Tokens - Remaining Byte Array: ");
+            toolkit.printRemainingBytes(src, current_token.getEndPos());
+
+            
             System.out.println("");
             // >=   maybe?
             if (src.length == current_token.getEndPos()) {
@@ -723,7 +651,7 @@ public class LexicalAnalysis {
         } else {
 
             if (current_token.getPossibilities().size() == 1 && (ungrouped_tks_of_length_one.contains(current_token.getFinalRemainingPossibilityName()))) {
-                System.out.println("There is one lexeme possibility remaining and it is among those that are ungrouped and of one character length. Therefore, we are able to create a token using the current indices and the name of the last remaining lexeme possibility.");
+                toolkit.output("There is one lexeme possibility remaining and it is among those that are ungrouped and of one character length. Therefore, we are able to create a token using the current indices and the name of the last remaining lexeme possibility.");
                 String final_possibility_string = current_token.getFinalRemainingPossibilityName();
                 int[] final_possibility_indices = current_token.getFinalRemainingPossibilityIndices();
                 current_token.setName(final_possibility_string);
@@ -733,7 +661,7 @@ public class LexicalAnalysis {
                 current_token.setAttribute(new String (Arrays.copyOfRange(src, final_possibility_indices[0], final_possibility_indices[1])));
                 Token new_token = new Token(current_token.getEndPos(), current_token.getEndPos()); // removed increment
                 token_stream.add(new_token);
-                System.out.println("Updated Token Stream: ");
+                toolkit.output("Updated Token Stream: ");
                 toolkit.printTokenStream(token_stream);
                 return generateTokens(src, token_stream);
                 
@@ -755,16 +683,13 @@ public class LexicalAnalysis {
             } else {
                 toolkit.debug(31);
                 current_token.processLongestMatch();
-
-                System.out.println("There exists SHARED longest match: " + current_token.getThereExistsSharedLongestMatch());
-                System.out.println("There exists UNIQUE longest match: " + current_token.getThereExistsUniqueLongestMatch());
+                toolkit.output("SHARED longest match: " + current_token.getThereExistsSharedLongestMatch() + ", UNIQUE longest match: " + current_token.getThereExistsUniqueLongestMatch());
                 String longest_full_match_name = current_token.getLongestMatchName();
                 int[] longest_full_match_indices = current_token.getPossibilities().get(longest_full_match_name);
-                System.out.println("Longest Match name: " + longest_full_match_name);
-                System.out.println("Longest Match indices: " + Arrays.toString(longest_full_match_indices));
+                toolkit.output("Longest Match name: " + longest_full_match_name + ", Longest Match indices: " + Arrays.toString(longest_full_match_indices));
                
-                System.out.println("src.length - 1, " + (src.length - 1));
-                System.out.println("current_token.getEndPos() - 1 " + (current_token.getEndPos() - 1));
+                toolkit.output("src.length - 1, " + (src.length - 1));
+                toolkit.output("current_token.getEndPos() - 1 " + (current_token.getEndPos() - 1));
 
 
                 // Check to see if of the remaining possibilites, are all completely without any match whatsoever?
@@ -809,12 +734,9 @@ public class LexicalAnalysis {
         byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
         toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(file_source_bytearr)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         
-        //System.out.println(Arrays.toString(file_source_bytearr));
-        
         //for (byte b: file_source_bytearr) System.out.println(b);
         //System.exit(0);
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
-        
         
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
@@ -822,10 +744,11 @@ public class LexicalAnalysis {
         }
         
         return token_stream;
-
+        
         //return new ArrayList<Token>();
     }
-
+    
+    //System.out.println(Arrays.toString(file_source_bytearr));
     //public ArrayList Lex () {
 
     //}
@@ -910,3 +833,46 @@ public class LexicalAnalysis {
         open_comment_token.setAttribute("/*");
         **/
         //token_stream.
+
+               /**
+        // One possibility remaining -> emit it
+        if (token.getPossibilities().size() == 1) {
+            //token.updateTokenWithRemainingNameAndIndices();
+
+            System.out.println("Token Indices Length: " + (token.getEndPos() - token.getStartPos())); 
+            System.out.println("window_bytearr length: " + window_bytearr.length);
+            
+            // If tokens that are not of either keyword or symbol and they are matched with one char
+            // May be able to combine this if statement with the one above using &&, if this really is the only case where this occurs, which this approach suggest because I believe it to be the case
+            if (ungrouped_tks_of_length_one.contains(token.getFinalRemainingPossibilityName()) && (token.getFinalRemainingPossibilityName() == "IDENTIFIER")) { 
+                token.setName(token.getFinalRemainingPossibilityName());
+                
+                // This is highly important because the next token is generated with the previous token's end index as both its start and end pos -- generateToken recursively increments the endPos, expanding the window, algorithmically 
+                //token.setEndPos(token.getStartPos() + 1); // Being one character, the first indice at start_pos is already valid but the end position needs to be adjusted to start_pos + 1
+                // OOPS ^ Huge headache caused by this
+                
+                token.setEndPos(token.getEndPos() - 1);
+                // start = endPos - 2
+                // endPos = endPos - 1
+
+                token.setAttribute( new String ( Arrays.copyOfRange(window_bytearr, 0, 1)));
+
+                return token_stream; 
+
+                
+
+            }
+
+            // Creates a copy of the byte window using the length of the token match, starting at 0, so receives the correct value and not whatever is currently in the byte window
+            // Fixed the issue over matching that I talked about in class
+            //String tk_value = new String(Arrays.copyOfRange(window_bytearr, 0, (token.getEndPos() - token.getStartPos())));  
+            //token.setAttribute(tk_value);
+        }
+
+
+
+
+
+
+        //Map<String, int[]> lexemes_possibilities_before_checking = new HashMap<>(token.getPossibilities());
+        **/

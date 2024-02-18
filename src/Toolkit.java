@@ -292,4 +292,16 @@ public class Toolkit {
         return modified_sub_arr;
     }
 
+
+    public void printRemainingBytes(byte[] src, int index) {
+        for (int i = 0; i <= src.length - 1; i++) {
+            byte b = src[i];
+            if (i >= index) {
+                System.out.print(b + ", ");
+            }
+           
+        } 
+    }
+
+
 }
