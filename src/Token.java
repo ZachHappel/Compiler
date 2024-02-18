@@ -36,6 +36,9 @@ public class Token {
 
     public int symbol_semi_matches; 
     public int keyword_semi_matches;
+
+    public boolean has_matched_assginment; 
+
     
     public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{
         add("IDENTIFIER");
@@ -79,6 +82,7 @@ public class Token {
     }
 
     
+    
 
     public String getName() { return this.name; }
     public String getAttribute() { return this.attribute; }
@@ -101,8 +105,9 @@ public class Token {
     public boolean getRemainingPossibilitiesAreImpossible() { return this.remaining_possibilities_are_impossible;}
     public int getSymbolSemiMatchesAmount( ) { return this.symbol_semi_matches;}
     public int getKeywordSemiMatchesAmount( ) { return this.keyword_semi_matches; }
+    public boolean getHasMatchedAssignment () { return this.has_matched_assginment;  }
 
-
+    
     public void setName(String i) { this.name = i; }
     public void setAttribute(String i) { this.attribute = i; }
     public void setStartPos(int i) { this.start_pos = i; }
@@ -117,17 +122,24 @@ public class Token {
     public void setRemainingPossibilitiesAreImpossible(boolean i) { this.remaining_possibilities_are_impossible = i;}
     public void setSymbolSemiMatchesAmount( int i ) { this.symbol_semi_matches = i; }
     public void setKeywordSemiMatchesAmount( int i ) { this.keyword_semi_matches = i; }
+    public void setHasMatchedAssignment (boolean i) { this.has_matched_assginment = i; }
+    
 
+    public int[] getIndices() {
+        return new int[]{this.start_pos, this.end_pos};
+    }
+
+    
     public void removePossiblity(String lexeme_name) {
         this.LexemePossibilities.remove(lexeme_name);
     }
-
+    
     public void updatePossibility(String lexeme_name, int[] indices) {
-
+        
         System.out.println("Update Possibilities - name: " + lexeme_name);
         System.out.println("Update Possibilities - indices: " + Arrays.toString(indices));
         System.out.println("LexemePossibilities.get(lexeme_name)[0]: " + (LexemePossibilities.get(lexeme_name) == null));
-
+        
         if (ungrouped_tks_of_length_one.contains(lexeme_name)) {
 
             int[] current_indices = this.LexemePossibilities.get(lexeme_name);
@@ -238,10 +250,7 @@ public class Token {
         }
     }
 
-    public int[] getIndices() {
-        return new int[]{this.start_pos, this.end_pos};
-    }
-
+    
 
    
 

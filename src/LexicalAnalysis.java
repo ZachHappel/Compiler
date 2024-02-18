@@ -274,6 +274,7 @@ public class LexicalAnalysis {
                     // Valid thus far, and as such we add it to the HashMap 
                     String symbol_pattern = new String (symbols[j]); // Get String version of symbol that is split in bytearray (the arrays within the array)
                     String symbol_token_name = symbols_name_map.get(symbol_pattern);
+                    
                     //symbols_name_map. // Combine with "SYMBOL_" to create proper token name
                     
                     toolkit.output("Symbol Semi-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices) + ", matching: " + new String(window_bytearr));
@@ -281,24 +282,35 @@ public class LexicalAnalysis {
                     token.updatePossibility(symbol_token_name, indices); 
                     partial_match = true; 
 
+                    // If symbol pattern fully matches, for each byte, the window_bytearr
                     if (symbol_pattern.equals(new String (window_bytearr))) {
 
-                        if (symbol_pattern == "=" && (token.getPossibilities().size() != 1)) {
-                            toolkit.output("(WAITING: Need exactly ONE possibility to definitively, fully-match SYMBOL_ASSIGNMENT)");
-                            current_symbol_matches.put(symbol_token_name, indices);
-                            token.updatePossibility(symbol_token_name, indices); 
-                            // Cannot return now, as "=" is the starting point of another symbol
-                            break; // breaks to innermost loop
+                        // If previous pass with this token determined that assignment lexeme is possible
+                        if (token.getHasMatchedAssignment()) {
+                            System.out.println("Token Has Matched Assignment");
                         }
+
+                        // If the pattern is "=" and no previous pass has determined that the assignment lexeme is possible
+                        // This time, update has_matched_assignment with true, update the possibility so indices of SYMBOL_ASSIGNMENT possibility are accurate, and put the possibility in current_symbol_matches
+                        if (symbol_pattern.equals("=") && !token.getHasMatchedAssignment()) {
+                            System.out.println("Valid SYMBOL_ASSIGNMENT");
+                            token.setHasMatchedAssignment(true);
+                            token.updatePossibility(symbol_token_name, indices); 
+                            current_symbol_matches.put(symbol_token_name, indices);
+                         //   break; // Not return, because we need the remaining symbol pattern checks to happen still
+                        } else {
+                            toolkit.output("Symbol Full-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices));
+                            token.setName(symbol_token_name);
+                            token.setAttribute(new String (window_bytearr)); // Set value/attribute to String representation of byte window
+                        }
+
                         
-                        toolkit.output("Symbol Full-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices));
-                        token.setName(symbol_token_name);
-                        token.setAttribute(new String (window_bytearr)); // Set value/attribute to String representation of byte window
+                        
                         //NEED - Line Number
                         //Token in stream successfully updated and ready for new token to be added. 
                         //This will happen when performChecks returns token_stream to generateTokens which checks if name on most
                         //recent token has been set
-
+                        
                         // Can return now because in no case will a full keyword match interfere with another keyword
                         return current_symbol_matches;
                     }
@@ -307,6 +319,13 @@ public class LexicalAnalysis {
                 }
                     
             }
+
+            if (token.getHasMatchedAssignment() && current_symbol_matches.size() == 1) {
+                System.out.println("Making assignment");
+                int[] assignment_indices = token.getPossibilities().get("SYMBOL_ASSIGNMENT");
+                System.exit(0);
+            }
+
         }
 
         if (partial_match) token.removePossibilitiesOfSpecifiedType("SYMBOL", true);
@@ -316,6 +335,16 @@ public class LexicalAnalysis {
         // If it fails here on X keyword, it is not X keyword
     }
 
+
+    /*
+     * if (symbol_pattern == "=" && (token.getPossibilities().size() != 1)) {
+                            toolkit.output("(WAITING: Need exactly ONE possibility to definitively, fully-match SYMBOL_ASSIGNMENT)");
+                            current_symbol_matches.put(symbol_token_name, indices);
+                            token.updatePossibility(symbol_token_name, indices); 
+                            // Cannot return now, as "=" is the starting point of another symbol
+                            break; // breaks to innermost loop
+                        }
+     */
     
 
     public static void removeAllSymbolsFromPossibilities(Token token ) {
