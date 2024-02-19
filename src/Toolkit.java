@@ -102,8 +102,8 @@ public class Toolkit {
             int amount_of_extra_spaces = 25 - token_name_length ;
             // 
             String additional_spaces = createStringOfSpaces(amount_of_extra_spaces);
-            String indices_portion = "Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos(); 
-            System.out.println("| "+t.getName() + createStringOfSpaces(25 - token_name.length()) + "░|░░░Value/Attribute:░░░\"" + t.getAttribute()  + "\"" + createStringOfSpaces(30 - 21 - (t.getAttribute().length())) +  "|░" + indices_portion + createStringOfSpaces(52 - indices_portion.length()) + "░|");
+            String indices_portion = "Indices:░" + Arrays.toString(t.getIndices()) + ",░Start Pos:░" + t.getStartPos() + "░░End Pos:░" + t.getEndPos(); 
+            System.out.println("|░"+t.getName() + createStringOfSpaces(25 - token_name.length()) + "░|░░░Value/Attribute:░░░\"" + t.getAttribute()  + "\"" + createStringOfSpaces(30 - 21 - (t.getAttribute().length())) +  "|░" + indices_portion + createStringOfSpaces(52 - indices_portion.length()) + "░|");
         }
         System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
         System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
