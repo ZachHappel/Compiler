@@ -18,7 +18,7 @@ import java.util.ArrayList;
 public class Compiler {
     
     public static Toolkit Toolkit = new Toolkit();
-    public static LexicalAnalysis LexicalAnalysis = new LexicalAnalysis(); 
+    //public static LexicalAnalysis LexicalAnalysis = new LexicalAnalysis(); 
     
 
     public static byte[] getSourceFileData(String filepath) {
@@ -29,17 +29,9 @@ public class Compiler {
             InputStream input = new FileInputStream(filepath);
             byte[] source_data_bytearr = new byte[Math.toIntExact(file_size_in_bytes)]; 
             input.read(source_data_bytearr); // Read byte from input stream
-            
-            String source_data_string = new String(source_data_bytearr);
-            //char[] source_data_chararr = source_data_string.toCharArray();
-            
-            //String file_info = "|| File Size: " + file_size_in_bytes + " bytes || Remaining Space: " + input.available() + " bytes";
             String file_info = "  (File Size: " + file_size_in_bytes + " bytes)\n\n";
-            
             System.out.print(file_info);
-
             input.close();
-
             return source_data_bytearr; 
 
         } catch (IOException io_err) {
@@ -72,7 +64,14 @@ public class Compiler {
         byte[] file_source_bytearr = getSourceFileData(file_path); // Read input from src file
         ArrayList<byte[]> programs = Toolkit.subdivideSourceIntoPrograms(file_source_bytearr);
 
-        Toolkit.generateProgramOverview(programs.get(0), 0);
+        for (int p = 0; p <= programs.size() - 1; p++) {
+            byte[] program = programs.get(p);
+            Toolkit.generateProgramOverview(programs.get(p), p);
+            System.out.println("\nLexing Program " + (p + 1));
+            LexicalAnalysis.Lex(Toolkit, program);
+            
+        }
+
         
         //LexicalAnalysis.Lex(Toolkit, fileName);
         //LexicalAnalysis.Lex(Toolkit, fileName);

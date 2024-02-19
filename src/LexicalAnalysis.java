@@ -734,7 +734,31 @@ public class LexicalAnalysis {
         return token_stream;
     }
 
+    public static ArrayList<Token> Lex(Toolkit tk, byte[] program_src) {
+        toolkit = tk; 
+        //byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
+        toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(program_src)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
+        
 
+        //ArrayList<byte[]> programs = toolkit.subdivideSourceIntoPrograms(file_source_bytearr);
+        //toolkit.generateProgramOverview(programs.get(0), 0);
+        //System.exit(0);
+        //for (byte b: file_source_bytearr) System.out.println(b);
+        //System.exit(0);
+        ArrayList<Token> token_stream = generateTokens(program_src, new ArrayList<Token>()); // Create token stream
+        
+        token_stream = toolkit.removeCommentTokens(token_stream);
+
+        System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
+        for (Token t : token_stream) {
+            System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "] (Ln: " + t.getEndLineNumber() + ") " );
+        }
+
+        toolkit.printTokenStreamDetailed(token_stream);
+        
+        return token_stream;
+        
+    }
 
     public static ArrayList<Token> Lex(Toolkit tk, String filename) {
         toolkit = tk; 
