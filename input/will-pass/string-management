@@ -1,0 +1,19 @@
+/* This shows the string table at work */
+{
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+	print("alan")
+}$

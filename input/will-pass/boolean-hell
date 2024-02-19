@@ -1,0 +1,22 @@
+/* This test case is included because it completely messed
+- up my AST with boolean hell and keeping track of boolexpr
+- may it serve as a good benchmark for those who come after
+- CREDIT: TIEN */
+{
+int a
+a = 0
+boolean b
+b = false
+boolean c
+c = true
+while(((a!=9) == ("test" != "alan")) == ((5==5) != (b == c))) {
+print("a")
+string d
+d = "yes"
+print(d)
+{
+    int a
+    a = 5
+}
+}
+}$

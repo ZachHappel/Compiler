@@ -104,7 +104,7 @@ public class Toolkit {
     public void printTokenStream (ArrayList<Token> token_stream) {
 
         for (Token t : token_stream) {           
-            System.out.println(t.getName() + "| Value/Attribute: \"" + t.getAttribute() + "\", Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos());
+            if (this.is_verbose) System.out.println(t.getName() + "| Value/Attribute: \"" + t.getAttribute() + "\", Indices: " + Arrays.toString(t.getIndices()) + ", Start Pos: " + t.getStartPos() + ", End Pos: " + t.getEndPos());
         }
         //System.out.println(s.length());
     }
@@ -163,11 +163,9 @@ public class Toolkit {
         for (int i = 0; i <= token_stream.size() - 1; i ++) { 
             String tk_name = (token_stream.get(i)).getName(); 
             if ( tk_name == "SYMBOL_OPENCOMMENT" || tk_name == "SYMBOL_CLOSECOMMENT") {
-                System.out.println("Comment Token: " + tk_name);
                 count = count + 1;
             }
-        }
-        System.out.println("Count of Comment Symbols: " + count);
+        } //System.out.println("Count of Comment Symbols: " + count);
         return count;
     }
 
@@ -350,7 +348,7 @@ public class Toolkit {
         for (int i = 0; i <= src.length - 1; i++) {
             byte b = src[i];
             if (i >= index) {
-                System.out.print(b + ", ");
+                if (this.is_verbose) System.out.print(b + ", ");
             }
            
         } 

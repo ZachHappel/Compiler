@@ -1,0 +1,23 @@
+/* ID Logic
+IDs compare
+Nested IDs check the ID not the value (they return true/false)
+Prints: equal not equal a is a is true but a is not true
+*/
+{
+	int a
+	int b
+	int c
+	a = 7
+	b = a
+	if (a == b) {
+		print("equal")
+	}
+	print(" ")
+	if (b != c) {
+		print("not equal")
+	}
+	print(" ")
+	if (a != (a == a)) {
+		print("a is a is true but a is not true")
+	}
+}$

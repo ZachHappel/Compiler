@@ -139,18 +139,15 @@ public class Token {
     
     public void updatePossibility(String lexeme_name, int[] indices) {
         
-        System.out.println("Update Possibilities - name: " + lexeme_name);
-        System.out.println("Update Possibilities - indices: " + Arrays.toString(indices));
-        System.out.println("LexemePossibilities.get(lexeme_name)[0]: " + (LexemePossibilities.get(lexeme_name) == null));
+        //System.out.println("Update Possibilities - name: " + lexeme_name);
+        //System.out.println("Update Possibilities - indices: " + Arrays.toString(indices));
+        //System.out.println("LexemePossibilities.get(lexeme_name)[0]: " + (LexemePossibilities.get(lexeme_name) == null));
         
         if (ungrouped_tks_of_length_one.contains(lexeme_name)) {
 
             int[] current_indices = this.LexemePossibilities.get(lexeme_name);
             int ci_0 = current_indices[0];
-            System.out.println("ABCS: " + Arrays.toString(current_indices)); 
-            System.out.println("ABCS 2: " + Arrays.toString(current_indices)); 
             if (ci_0 < 0) {
-                System.out.println("Unset, setting...");
                 this.LexemePossibilities.put(lexeme_name, indices);
             } 
             return;
@@ -187,13 +184,13 @@ public class Token {
         if (is_verbose) System.out.println("(?) Current Token Name: " + this.getName() + " / Amount of Lexeme Possibilities: " + (this.getPossibilities()).size() + " / Current Window Size: " + (this.getEndPos() - this.getStartPos()) + "/ Token Stream Length:" + ts.size());
     }
 
-    public void printRemainingPossibilities(Token token) {
+    public void printRemainingPossibilities(Token token, boolean is_verbose) {
         //Map<String, int[]> remaining = new
 
         for (Map.Entry<String, int[]> entry : this.LexemePossibilities.entrySet()) {
             String name = entry.getKey();
             int[] i = entry.getValue();
-            System.out.println("Name: " + name + " Indices: " + i + " Length of match: " + (i[1] - i[0]));    
+            if (is_verbose) System.out.println("Name: " + name + " Indices: " + i + " Length of match: " + (i[1] - i[0]));    
 
         }
     }
@@ -245,11 +242,11 @@ public class Token {
     }
 
 
-    public void printRemainingPossibilities(boolean with_indices) {
-        System.out.println("\n(...) Remaining Probabilities");
+    public void printRemainingPossibilities(boolean with_indices, boolean is_verbose) {
+        if (is_verbose) System.out.println("\n(...) Remaining Probabilities");
         for (Map.Entry<String, int[]> entry : (this.LexemePossibilities).entrySet()) {
-            if (with_indices) System.out.println(entry.getKey() + ", " + Arrays.toString(entry.getValue()));
-            else System.out.println(entry.getKey());
+            if (with_indices && is_verbose) System.out.println(entry.getKey() + ", " + Arrays.toString(entry.getValue()));
+            else if (is_verbose) System.out.println(entry.getKey());
         }
     }
 

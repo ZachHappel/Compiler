@@ -1,0 +1,7 @@
+/* Boolean Logic */
+/* Prints success */
+{
+	if (true == (true == (true == (true == (true == (true == (true == (true == (true != (false == true)))))))))) {
+		print("success")
+	}
+}$

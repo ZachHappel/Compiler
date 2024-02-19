@@ -1,0 +1,19 @@
+/*
+Demonstrates compiler's ability to generate code that properly handles variable addition
+Credit: Tien
+*/
+{
+int a
+a = 1
+int b
+b = 1
+b = 1 + a
+while (2 + a != 3 + b) {
+a = 1 + a
+print("int a is ")
+print(a)
+print(" ")
+}
+print("int b is ")
+print(b)
+}$

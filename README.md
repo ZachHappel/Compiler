@@ -16,3 +16,8 @@ For example, to use the program to compile source code found within "test.txt" o
 This compiler executes in verbose mode by default. To run it in terse mode, append the '-t' flag: 
 
 ```java Compiler easyprogram -t```
+
+For evaluation purposes, it is HIGHLY ADVISABLE that you choose to run the compiler in terse mode.
+
+
+Alternatively, if you want even-more verbose output, try using debug mode using '-d' flag. (Note: Not fully implemented. Currently only offers slightly more verbose output.) 
