@@ -1,3 +1,9 @@
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +23,8 @@ public class Toolkit {
         this.is_verbose = is_verbose; 
         this.is_debug_mode = is_debug_mode;
     }
+
+    
 
     
     public Map<Integer, String> debug_strings = new HashMap<Integer, String>(){{
@@ -80,6 +88,15 @@ public class Toolkit {
         if (how_many_spaces == 0) return "";
         for (int i = 0; i <= how_many_spaces -1; i++) {
             string_of_spaces = string_of_spaces + "░";
+        }
+        return string_of_spaces;
+    }
+
+    public String createStringOfActualSpaces(int how_many_spaces) {
+        String string_of_spaces = "";
+        if (how_many_spaces == 0) return "";
+        for (int i = 0; i <= how_many_spaces -1; i++) {
+            string_of_spaces = string_of_spaces + " ";
         }
         return string_of_spaces;
     }
@@ -347,6 +364,88 @@ public class Toolkit {
             }
         }
         return ts;
+    }
+
+    public void printByteArrayLimitLineLength(byte[] src, int line_length) {
+
+        String current_line = "[";
+        for (int i = 0; i <= src.length - 1; i ++) {
+            byte b = src[i];
+            int current_line_length = current_line.length(); 
+            String byte_string = b + "";
+            //String b_string = new String(Arrays.toString(new byte[]{b}));
+            
+            String formatted_byte_string = (i == src.length - 1) ? byte_string + " ]" : byte_string + ", ";
+            //System.out.println("b_string");
+            //System.out.println(b_string);
+           
+            
+            if ( (current_line_length + formatted_byte_string.length() < line_length)) {
+                current_line = current_line + formatted_byte_string; 
+                
+                if (i == src.length - 1) {
+                    System.out.println(current_line.substring(0, current_line.length() - 1) + createStringOfActualSpaces(line_length - current_line.length() - 1 ) + "]");
+                }
+            } else {
+                System.out.println(current_line);
+                current_line = " "; 
+                current_line = current_line + formatted_byte_string;
+            }
+        }
+
+    }
+
+
+    public void generateProgramOverview (byte[] src, int program_index) {
+        //System.out.println("\n----------------------------\n|-----Compiling Program----|\n----------------------------\n| Program " + program_index + "\n| Length: " + src.length );
+        System.out.println("----\nProgram " + program_index + " Overview");
+        System.out.println("\nByte Representation: \n" );
+        printByteArrayLimitLineLength(src, 80);
+        //System.out.println("\nByte Represenation: \n" + Arrays.toString(src));
+        System.out.println("\nCharacter Representation: \n\n" + new String(src)+ "\n----");
+    }
+
+    public ArrayList<byte[]> subdivideSourceIntoPrograms (byte[] src) {
+        int program_amount = 0;
+        ArrayList<String> program_info_strings = new ArrayList<String>();
+        ArrayList<byte[]> programs = new ArrayList<>();
+        int curr_program_start = 0;
+        int curr_program_end = 0;
+        for (int i = 0; i <= src.length - 1; i++ ) {
+            byte b = src[i];
+            if (b == 36) {
+                byte[] new_program = Arrays.copyOfRange(src, curr_program_start, i+1);
+                program_info_strings.add(" Indices: [" + curr_program_start + ", " + i+1 + "]");
+                program_amount++;
+                curr_program_end = i+1;
+                curr_program_start = curr_program_end;
+                programs.add(new_program);
+            }
+        }
+        //System.out.println("End of program found: " + b + " Index of: " + i + " | Indices: [" + curr_program_start + ", " + i+1 + "]" );
+
+        int count = 1;
+        for (byte[] p : programs) {
+            //System.out.println("\n----------------------------\nProgram " + count + ") Length: " + p.length);
+            String all_bytes = "";
+            String all_bytes_chars = "";
+            for (byte b : p) {
+                all_bytes = all_bytes + b;
+                all_bytes_chars = all_bytes_chars + (char) b;
+            }
+            //System.out.println("All Bytes: " + all_bytes);
+            //System.out.println("All Bytes Chars: " + all_bytes_chars);
+            
+            count++;
+            //System.out.println("---------------------------");
+            //System.out.println
+        }
+
+        System.out.println("Programs:");
+        
+        for (int j = 0; j <= program_info_strings.size() - 1; j++) System.out.println( "[" + (j+1) + "] " + program_info_strings.get(j));
+        System.out.println("\n(Total: " + program_amount + ")\n");
+        return programs;
     }
 
 

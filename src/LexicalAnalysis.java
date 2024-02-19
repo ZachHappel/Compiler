@@ -18,6 +18,10 @@ import java.util.ArrayList;
 // space = 10
 public class LexicalAnalysis {
 
+    public LexicalAnalysis () {
+
+    }
+
     public static int[] indices; 
     public static Toolkit toolkit;
 
@@ -737,6 +741,10 @@ public class LexicalAnalysis {
         byte[] file_source_bytearr = getSourceFileData(filename); // Read input from src file
         toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(file_source_bytearr)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         
+
+        ArrayList<byte[]> programs = toolkit.subdivideSourceIntoPrograms(file_source_bytearr);
+        toolkit.generateProgramOverview(programs.get(0), 0);
+        System.exit(0);
         //for (byte b: file_source_bytearr) System.out.println(b);
         //System.exit(0);
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
