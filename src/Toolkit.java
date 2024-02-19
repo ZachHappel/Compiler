@@ -339,5 +339,15 @@ public class Toolkit {
         } 
     }
 
+    public ArrayList<Token> removeCommentTokens (ArrayList<Token> ts) {
+        ArrayList<Token> ts_local = new ArrayList<Token>(ts);
+        for (Token t: ts_local) {
+            if ( (t.getName()).contains("COMMENT") ) {
+                ts.remove(t);
+            }
+        }
+        return ts;
+    }
+
 
 }

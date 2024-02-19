@@ -741,6 +741,8 @@ public class LexicalAnalysis {
         //System.exit(0);
         ArrayList<Token> token_stream = generateTokens(file_source_bytearr, new ArrayList<Token>()); // Create token stream
         
+        token_stream = toolkit.removeCommentTokens(token_stream);
+
         System.out.println("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
         for (Token t : token_stream) {
             System.out.println("Token: [" + t.getName() + ", " + t.getAttribute() + "] (Ln: " + t.getEndLineNumber() + ") " );
