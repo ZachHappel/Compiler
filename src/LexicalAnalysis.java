@@ -305,6 +305,8 @@ public class LexicalAnalysis {
                             toolkit.output("Symbol Full-match: " + symbol_token_name + ", indices: " + Arrays.toString(indices));
                             token.setName(symbol_token_name);
                             token.setAttribute(new String (window_bytearr)); // Set value/attribute to String representation of byte window
+                            token.setStartPos(indices[0]);
+                            token.setEndPos(indices[1]);
                         }
 
                         
