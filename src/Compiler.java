@@ -67,8 +67,23 @@ public class Compiler {
         for (int p = 0; p <= programs.size() - 1; p++) {
             byte[] program = programs.get(p);
             Toolkit.generateProgramOverview(programs.get(p), p);
-            System.out.println("\nLexing Program " + (p + 1));
-            LexicalAnalysis.Lex(Toolkit, program);
+            //System.out.println("\nLexing Program " + (p + 1));
+            ArrayList<Object> lexical_analysis_output = LexicalAnalysis.Lex(Toolkit, program);
+            ArrayList<Token> token_stream = (ArrayList<Token>) lexical_analysis_output.get(0);
+            Boolean successful_lex = (Boolean) lexical_analysis_output.get(1);
+            String error_description = (String) lexical_analysis_output.get(2);
+            
+            if (successful_lex) {
+                System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - LEXICAL ANALYSIS COMPLETE. \n");
+            } else {
+                System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - ERROR OCCURRED DURING LEXICAL ANALYSIS");
+                System.out.println("(#) ERROR DESCRIPTION: \n\"" + error_description + "\""+"\n\n(#) INCOMPLETE TOKEN STREAM: ");
+
+            }
+
+            Toolkit.printTokenStreamDetailed(token_stream);
+
+            if (p != programs.size() - 1) System.out.println("\n Proceeding to next program...");
             
         }
 
