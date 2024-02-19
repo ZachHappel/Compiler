@@ -24,13 +24,10 @@ public class LexicalAnalysis {
 
     public static int[] indices; 
     public static Toolkit toolkit;
+    public static boolean error_occurred;
+    public static String error_description; 
 
-    public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{
-        add("IDENTIFIER");
-        add("CHARACTER");
-        add("DIGIT");
-        add("EOP");
-    }};
+    public static ArrayList<String> ungrouped_tks_of_length_one = new ArrayList<>(){{ add("IDENTIFIER"); add("CHARACTER"); add("DIGIT"); add("EOP"); }};
    
     public int getCurrentLine(int index) {
         int i;
@@ -69,18 +66,6 @@ public class LexicalAnalysis {
         
     }
 
-
-    public static ArrayList<Token> performChecksTest (byte[] src, ArrayList<Token> token_stream) {
-        Token test = new Token(0, 0);
-        test.setName("Hello");
-        test.setEndPos(1);
-        test.setAttribute(new String(Arrays.copyOfRange(src, test.getStartPos(), test.getEndPos())));
-        token_stream.add(test);
-
-        return token_stream; 
-    }
-
-
     public static byte[][] keywords = new byte[][] {
         "int".getBytes(), 
         "string".getBytes(), 
@@ -92,14 +77,16 @@ public class LexicalAnalysis {
         "if".getBytes(),
     };
 
+
+    // PerformChecks need to remove from Possibilities all keywords that are not determined here to be "semi-matches."
     public static Map<String, int[]> isOfKeyword (byte[] window_bytearr, Token token) {
         toolkit.output("\n(!) IS OF KEYWORD?");
         Map<String, int[]> current_keyword_matches = new HashMap<String, int[]>() {{}};
-        //ArrayList<String> current_keyword_matches = new ArrayList<String>();
         
         int[] indices = new int[]{token.getStartPos(), token.getEndPos()};
         int window_bytearr_size = window_bytearr.length; 
         int amount_of_keywords = keywords.length; 
+        
         toolkit.output("(...) Keyword Bytes vs Window Bytes: ");
         
         for (int j = 0; j <= amount_of_keywords - 1; j++ ) {
@@ -109,7 +96,7 @@ public class LexicalAnalysis {
                 byte byte_from_keyword = keyword[k];
                 byte byte_from_window =  window_bytearr[k];
                 String equality = (byte_from_keyword == byte_from_window) ? "==" : "!=";
-                //toolkit.output("Symbol Byte (" + byte_from_keyword + ") " + equality + " Window Byte (" + byte_from_window + ")");
+                toolkit.output("Symbol Byte (" + byte_from_keyword + ") " + equality + " Window Byte (" + byte_from_window + ")");
                 
                 if (byte_from_keyword != byte_from_window) {
                     break;
@@ -146,8 +133,6 @@ public class LexicalAnalysis {
         }
     
         return current_keyword_matches; 
-        // PerformChecks need to remove, from Possibilities, all keywords that are not retured from here as being semi-matches.
-        // If it fails here on X keyword, it is not X keyword
     }
 
 
@@ -316,9 +301,11 @@ public class LexicalAnalysis {
             }
         }
 
+
         if (partial_match) token.removePossibilitiesOfSpecifiedType("SYMBOL", true);
     
         return current_symbol_matches; 
+
     }
 
 
@@ -421,8 +408,10 @@ public class LexicalAnalysis {
         if ( (isWithinString) && !( (first_byte >= 97 && first_byte < 123 ) || (first_byte == 32 ) || (first_byte == 34) ) ) {
             // Purpose of this is to prevent multi-line string expressions. 
             // It wasn't until the lexer was completed that I realized that new-line, tabs, etc. should be error-invoking, whereas I just ignored those bytes
-            System.out.println("Encountered invalid character within String\n Error occurred with byte, " + first_byte);
-            System.exit(0); // Error handling needed
+            error_occurred = true;
+            error_description = "Encountered invalid character within String\n Error occurred with byte, " + first_byte;
+            //System.out.println(error_description);
+            //System.exit(0); // Error handling needed
         }
 
 
@@ -538,7 +527,9 @@ public class LexicalAnalysis {
                     if (isWithinString) {
                         toolkit.debug(19);
                         System.out.println("Throw error here! Digit in string");
-                        System.exit(0);
+                        error_occurred = true;
+                        error_description = "Invalid character in SYMBOL_STRINGEXPR";
+                        //System.exit(0);
                     }
 
                     toolkit.debug(20);
@@ -708,19 +699,30 @@ public class LexicalAnalysis {
         return token_stream;
     }
 
-    public static ArrayList<Token> Lex(Toolkit tk, byte[] program_src) {
+    public static ArrayList<Object> Lex(Toolkit tk, byte[] program_src) {
+        
+    
+        // Forgive me. This is the only time I use a non-type-safe approach
+        // Index 0: ArrayList<Token>, token_stream | Boolean, Index 1: successful_lex | String, Index 2: error_description
+        error_description = "";
+        error_occurred = false;
+        ArrayList<Object> lexical_output = new ArrayList<Object>(); 
+
         toolkit = tk; 
         toolkit.setIndices(toolkit.GetIndicesOfLineFeeds(program_src)); // Pass byte arr to GetIndicesOfLineFeed to get indices, update toolkit object its value
         ArrayList<Token> token_stream = generateTokens(program_src, new ArrayList<Token>()); // Create token stream
         token_stream = toolkit.removeCommentTokens(token_stream);
         
-        toolkit.output("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
-        for (Token t : token_stream) {
-            toolkit.output("Token: [" + t.getName() + ", " + t.getAttribute() + "] (Ln: " + t.getEndLineNumber() + ") " );
-        }
-
-        toolkit.printTokenStreamDetailed(token_stream);
-        return token_stream;
+        
+        //if (!error_occurred) 
+        //toolkit.output("\n\n(#) LEXICAL ANALYSIS COMPLETE. \nToken Stream: ");
+        //for (Token t : token_stream) { toolkit.output("Token: [" + t.getName() + ", " + t.getAttribute() + "] (Ln: " + t.getEndLineNumber() + ") " );
+        //}
+        
+        lexical_output.add(token_stream); // token_stream
+        lexical_output.add(error_occurred ? false : true); // successful lex: if error occurred, add "false", otherwise add "false"
+        lexical_output.add(error_occurred ? error_description : ""); // error_descripton: if error_occurred -> add error_description, otherwise add ""
+        return lexical_output;
     }
 
 

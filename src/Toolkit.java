@@ -396,11 +396,15 @@ public class Toolkit {
 
     public void generateProgramOverview (byte[] src, int program_index) {
         //System.out.println("\n----------------------------\n|-----Compiling Program----|\n----------------------------\n| Program " + program_index + "\n| Length: " + src.length );
-        System.out.println("\n------------------\nProgram " + (program_index + 1) + " Overview");
-        System.out.println("\nByte Representation: \n" );
+        System.out.println("" + //
+        "\n----------------------------------------------------------------------------------------------------------------------\n" +//
+        "----------------------------------------------------------------------------------------------------------------------\n" + //
+        "------------------------------------------------------ PROGRAM " + (program_index + 1) + " -----------------------------------------------------\n" + //
+        "----------------------------------------------------------------------------------------------------------------------\n\nOVERVIEW");
+        System.out.println("\nByte Representation:" );
         printByteArrayLimitLineLength(src, 80);
         //System.out.println("\nByte Represenation: \n" + Arrays.toString(src));
-        System.out.println("\nCharacter Representation: \n\n" + new String(src)+ "\n\n------------------");
+        System.out.println("\nCharacter Representation:\n" + new String(src)+ "\n\n------------------");
     }
 
     public ArrayList<byte[]> subdivideSourceIntoPrograms (byte[] src) {
