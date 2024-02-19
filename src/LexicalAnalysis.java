@@ -711,6 +711,7 @@ public class LexicalAnalysis {
 
                 //String tk_value_cleaned = Arrays.toString(toolkit.removeSpecialCharactersExceptSpaces(tk_value.getBytes()));
 
+                if (longest_full_match_name == "IDENTIFIER") tk_value = toolkit.cleanIdentifierAttributeString(src, longest_full_match_indices[0], longest_full_match_indices[1]);
                 current_token.setAttribute(tk_value);
 
                 if (longest_full_match_indices[1] <= src.length - 1) {

@@ -320,6 +320,14 @@ public class Toolkit {
         return modified_sub_arr;
     }
 
+    public String cleanIdentifierAttributeString (byte[] src, int start, int end) {
+        String cleaned_string = "";
+        for (int i = start; i <= end - 1; i++) {
+            byte b = src[i];
+            if (b >= 97 || b < 123) cleaned_string = Character.toString((char) b); 
+        } return cleaned_string; 
+    }
+
 
     public void printRemainingBytes(byte[] src, int index) {
         for (int i = 0; i <= src.length - 1; i++) {
