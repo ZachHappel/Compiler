@@ -1,0 +1,21 @@
+/* Prints a while a != 5 */
+/* Prints 223458meow */
+{
+	string s
+	int a
+	a = 1
+	{
+		s = "meow"
+		int a
+		a = 2
+		print(a)
+	}
+	{
+	    while (a != 5) {
+	       a = 1 + a
+	        print(a)
+	    }
+	    print(3 + a)
+	    print(s)
+	}
+}$
