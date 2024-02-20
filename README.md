@@ -1,9 +1,28 @@
 # Compiler
-Compiler written in Java. BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
+Compiler written in Java.
+
+BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
 
 
-Navigate to /src and type in the command: 
-```./findAndCompileAllJavaFiles.sh```
+## Setup
+
+
+- Navigate to `/src`
+
+- Compile all files:
+  - If using Linux/Unix, ```chmod +x ./findAndCompileAllJavaFiles.sh```
+
+  - ```./findAndCompileAllJavaFiles.sh```
+
+
+## Usage
+
+Use the Java "Compiler" class, along with an input file and optional flags, to compile a source program
+
+To use the program to compile source code found within "test.txt" or "easyprogram":
+
+```java Compiler test.txt```
+```java Compiler easyprogram```
 
 There are tests available within /input
 
@@ -21,3 +40,6 @@ For evaluation purposes, it is HIGHLY ADVISABLE that you choose to run the compi
 
 
 Alternatively, if you want even-more verbose output, try using debug mode using '-d' flag. (Note: Not fully implemented. Currently only offers slightly more verbose output.) 
+
+Minimum Requirements:
+- Java 21
