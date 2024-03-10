@@ -33,12 +33,28 @@ public class Parse {
         }
     }
 
+
+    /**
+     * Potential Error Checking Approach:
+     * if (open_block.getSuccess()) {
+            Production statement_list = parseStatementList();
+            Terminal close_block = match("KEYWORD_CLOSEBLOCK", token_pointer);
+        } else {
+            System.out.println("Error - No Open Block");
+        }
+     * 
+     * Messy and possibly avoidable, although avoidance strategy may provide less useful error messages
+     */
     public void parseBlock(Production program) {
         
         Production block = new Production("Block");
-        Terminal open_block = match("KEYWORD_OPENBLOCK", token_pointer);
-        Production statement_list = parseStatementList();
-        match("KEYWORD_CLOSEBLOCK", token_pointer);
+        Terminal open_block = match("KEYWORD_OPENBLOCK", token_pointer); token_pointer++; 
+        if (open_block.getSuccess()) {
+            Production statement_list = parseStatementList();
+            Terminal close_block = match("KEYWORD_CLOSEBLOCK", token_pointer);
+        } else {
+            System.out.println("Error - No Open Block");
+        }
 
     }
 
