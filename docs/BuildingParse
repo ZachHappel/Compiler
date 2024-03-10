@@ -55,12 +55,15 @@ parseStatementList() {
     // create statement list
     statementListNew = new StatementListl; 
     statement = parseStatement();
-    statement.set()
+    statementListNew.setChild(statement)
 
 
 
     if (parsedStatment) {
-        parseStatementList() // recursion, thereby creates another statement, which could be E or something and another statementList
+        childStatementList = new parseStatementList() // recursion, thereby creates another statement, which could be or something and another statementList
+
+        statementListNew.addChild(childStatementList)
     }
 
 }
+
