@@ -1,6 +1,4 @@
-
 import java.util.ArrayList;
-
 
 public class Parse {
 
@@ -16,10 +14,16 @@ public class Parse {
 
     public Terminal match (String seq, int token_pointer_local) {
         Terminal t = new Terminal(seq);
+        
+        
         if (token_stream.get(token_pointer_local).getName() == seq) {
             t.setSuccess(true);
+            t.setToken(token_stream.get(token_pointer_local));
+            t.setTokenName(seq);
+            t.setTokenAttribute(token_stream.get(token_pointer_local).getAttribute());
         }
-        return new Terminal("");
+        return t;
+        
     }
 
     public void parseProgram () {
@@ -49,12 +53,13 @@ public class Parse {
         
         Production block = new Production("Block");
         Terminal open_block = match("KEYWORD_OPENBLOCK", token_pointer); token_pointer++; 
-        if (open_block.getSuccess()) {
-            Production statement_list = parseStatementList();
-            Terminal close_block = match("KEYWORD_CLOSEBLOCK", token_pointer);
-        } else {
-            System.out.println("Error - No Open Block");
+        Production statement_list = parseStatementList();
+        Terminal close_block = match("KEYWORD_CLOSEBLOCK", token_pointer);
+        
+        if (open_block.getSuccess() && statement_list.getSuccess() && close_block.getSuccess()) {
+            //block.add
         }
+        
 
     }
 
