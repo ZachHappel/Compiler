@@ -75,6 +75,9 @@ public class Compiler {
             
             if (successful_lex) {
                 System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - LEXICAL ANALYSIS COMPLETE. \n");
+                Parse.ParseTokens(token_stream, Toolkit);
+                
+
             } else {
                 System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - ERROR OCCURRED DURING LEXICAL ANALYSIS");
                 System.out.println("(#) ERROR DESCRIPTION: \n\"" + error_description + "\""+"\n\n(#) INCOMPLETE TOKEN STREAM: ");

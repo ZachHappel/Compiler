@@ -137,6 +137,26 @@ parseStringExpression () {
     match(SYMBOL_STRINGEXPRBOUNDARY)
 }
 
+parseCharacterList () {
+    String token_name = token.getName()
+
+    if (name is char or space) {
+        parseCharacter()
+    }
+
+    else if (E) {
+        // Nothing gets added as children, empty charList
+    }
+}
+
+parseCharacter() {
+    if (character)
+        match(CHARACTER)
+    if (space)
+        match(SPACE)
+        
+}
+
 parseBooleanExpression () {
     String tokenName = token.getName();
 
