@@ -1,0 +1,66 @@
+parseProgram()
+
+parseBlock()
+
+parseStatementList() {
+}
+
+parseStatement()
+
+parseAssignmentStatement()
+
+parseVarDecl()
+
+parseWhileStatement()
+
+parseIfStatement()
+
+parseExpression()
+
+parseIntExpression()
+
+parseStringExpression()
+
+parseBooleanExpression()
+
+parseId()
+
+parseChar()
+
+parseCharList()
+
+match()
+
+---
+
+ArrayList token_stream
+
+parseProgram (  token_stream ) {
+
+    parseBlock()
+    match($)
+
+}
+
+
+parseBlock () {
+    match({)
+    parseStatementList()
+    match(})
+}
+
+
+parseStatementList() {
+
+    // create statement list
+    statementListNew = new StatementListl; 
+    statement = parseStatement();
+    statement.set()
+
+
+
+    if (parsedStatment) {
+        parseStatementList() // recursion, thereby creates another statement, which could be E or something and another statementList
+    }
+
+}
