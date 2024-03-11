@@ -45,6 +45,7 @@ public class Compiler {
     // Args: filename, optional flag "-s"
     public static void main(String[] args) {
         
+        
        
         if (args.length > 2 || args.length == 0) Toolkit.endProgram("Invalid amount of arguments.\n (REQUIRED) Argument One: filename \n (OPTIONAL) Flags: '-t' for terse mode.");
         if (args.length == 2 && args[1].equals("-t")) {
@@ -75,7 +76,9 @@ public class Compiler {
             
             if (successful_lex) {
                 System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - LEXICAL ANALYSIS COMPLETE. \n");
-                Parse.ParseTokens(token_stream, Toolkit);
+                Toolkit.printTokenStreamDetailed(token_stream);
+                Parse parse = new Parse(); 
+                parse.ParseTokens(token_stream, Toolkit);
                 
 
             } else {
@@ -84,7 +87,6 @@ public class Compiler {
 
             }
 
-            Toolkit.printTokenStreamDetailed(token_stream);
 
             if (p != programs.size() - 1) System.out.println("\n Proceeding to next program...");
             
