@@ -28,6 +28,10 @@ public class Parse {
         return t;
     }
 
+    public String getCurrentTokenName() {
+        return (token_stream.get(token_pointer)).getName(); 
+    }
+
     public void parseProgram () {
         System.out.println("@parseProgram, token_pointer: " + token_pointer);
 
@@ -55,7 +59,7 @@ public class Parse {
      */
     public void parseBlock(NonTerminal program) {
         System.out.println("@parseBlock, token_pointer: " + token_pointer);
-        NonTerminal block = new NonTerminal("Block");
+        NonTerminal block = new NonTerminal("BLOCK");
         
         Terminal open_block = match("SYMBOL_OPENBLOCK", token_pointer); token_pointer++; 
         NonTerminal new_statement_list = new NonTerminal("STATEMENT_LIST");
@@ -63,6 +67,7 @@ public class Parse {
         Terminal close_block = match("SYMBOL_CLOSEBLOCK", token_pointer); token_pointer++;
         System.out.println("After close block");
         if (open_block.getSuccess() && new_statement_list.getSuccess() && close_block.getSuccess()) {
+            System.out.println("Full Block Match: SYMBOL_OPENBLOCK, STATEMENTLIST, SYMBOL_CLOSEBLOCK" );
             block.addChild(open_block); // Terminal
             block.addChild(new_statement_list); // NonTerminal
             block.addChild(close_block); // Terminal
@@ -114,7 +119,7 @@ public class Parse {
         parsePrintStatement(statement);
         parseAssignmentStatement(statement);
         parseVariableDeclarationStatement(statement);
-        //parseWhileStatement
+        parseWhileStatement(statement);
         //parseIfStatement
 
         if (statement.getSuccess()) {
@@ -175,7 +180,7 @@ public class Parse {
     public void parseVariableDeclarationStatement (NonTerminal statement) {
         System.out.println("@parseVariableDeclarationStatement, token_pointer: " + token_pointer);
         int starting_token_pointer = token_pointer;
-        NonTerminal variable_declaration_statement = new NonTerminal("VARIABLE_DECLARATION");
+        NonTerminal variable_declaration_statement = new NonTerminal("VARDECL_STATEMENT");
         String token_name = (token_stream.get(token_pointer)).getName();
         
         if (token_name.equals("KEYWORD_INT") || token_name.equals("KEYWORD_STRING") || token_name.equals("KEWYORD_BOOLEAN")) {
@@ -194,6 +199,37 @@ public class Parse {
         
     }
 
+    public void parseWhileStatement (NonTerminal statement) {
+        System.out.println("@parseWhileStatement, token_pointer: " + token_pointer);
+        int starting_token_pointer = token_pointer;
+        NonTerminal while_statement = new NonTerminal("WHILE_STATEMENT");
+        String token_name = (token_stream.get(token_pointer)).getName();
+        
+        if (token_name.equals("KEYWORD_WHILE")) {
+            Terminal keyword_while = match(token_name, token_pointer); if (keyword_while.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
+            
+            // For expression, if after parseBooleanExpression -> getSuccess() == true, the child will be the boolean expression
+            NonTerminal expression = new NonTerminal("BOOLEAN_EXPRESSION"); 
+            parseBooleanExpression(expression); 
+            expression = expression.getSuccess() ? (NonTerminal) expression.getChild(0) : expression; // Boolean expression
+            
+            // For nt, if after parseBlock -> getSuccess() == true, the child will be BLOCK
+            NonTerminal nt = new NonTerminal("BLOCK"); 
+            parseBlock(nt);
+            nt = nt.getSuccess() ? (NonTerminal) nt.getChild(0) : nt; 
+
+            if (expression.getSuccess() && nt.getSuccess()) {
+                while_statement.addChild(keyword_while);
+                while_statement.addChild(expression);
+                while_statement.addChild(nt); 
+                while_statement.setSuccess(true);
+                statement.addChild(while_statement);
+                statement.setSuccess(true); // Success, full while statement
+            }
+        }
+
+    }
+
     // Creates NonTerminal "EXPRESSION" and returns it
     public NonTerminal parseExpression () {
         System.out.println("@parseExpression, token_pointer: " + token_pointer);
@@ -203,6 +239,7 @@ public class Parse {
         //IntExpression
         //StringExpression
         //BooleanExpression
+        parseBooleanExpression(expression);
         parseIdentifierExpresison(expression);
 
 
@@ -221,6 +258,51 @@ public class Parse {
 
         return expression;
     }
+
+    public void parseBooleanExpression (NonTerminal expression) {
+        System.out.println("@parseBooleanExpression, token_pointer: " + token_pointer);
+        int starting_token_pointer = token_pointer;
+        NonTerminal boolean_expression = new NonTerminal("BOOLEAN_EXPRESSION");
+        
+        if (getCurrentTokenName().equals("SYMBOL_OPENPAREN")) {
+            Terminal keyword_openparen = match("SYMBOL_OPENPAREN", token_pointer); if (keyword_openparen.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return; } 
+            NonTerminal expression_first = parseExpression();
+            
+            if (getCurrentTokenName().equals("SYMBOL_EQUIVALENCE") || getCurrentTokenName().equals("SYMBOL_INEQUIVALENCE") ) {
+                Terminal symbol_boolop = match(getCurrentTokenName(), token_pointer); if (symbol_boolop.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return; } 
+                NonTerminal expression_second = parseExpression();
+
+                if (getCurrentTokenName().equals("SYMBOL_CLOSEPAREN")) {
+                    Terminal keyword_closeparen = match(getCurrentTokenName(), token_pointer); if (keyword_closeparen.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return; } 
+                    
+                    if (expression_first.getSuccess() && expression_second.getSuccess()) {
+                        boolean_expression.addChild(keyword_openparen);
+                        boolean_expression.addChild(expression_first);
+                        boolean_expression.addChild(symbol_boolop);
+                        boolean_expression.addChild(expression_second);
+                        boolean_expression.addChild(keyword_closeparen);
+                        boolean_expression.setSuccess(true);
+                        expression.addChild(boolean_expression);
+                        expression.setSuccess(true);
+                        return; // Success, boolean_expression is child of NonTerminal object "expression" passed to the func
+                    }
+                }
+            }
+        } 
+        
+        // true / false
+        else if ( getCurrentTokenName().equals("KEYWORD_TRUE") || getCurrentTokenName().equals("KEYWORD_FALSE") ) {
+            Terminal keyword_boolval = match(getCurrentTokenName(), token_pointer); if (keyword_boolval.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return; } 
+            boolean_expression.addChild(keyword_boolval);
+            boolean_expression.setSuccess(true);
+            expression.addChild(boolean_expression);
+            expression.setSuccess(true);
+            return; 
+        }
+
+        return; // success = false
+    }
+
 
     public void parseIdentifierExpresison (NonTerminal expression) {
         System.out.println("@parseIdentifierExpression, token_pointer: " + token_pointer);
@@ -305,7 +387,7 @@ public class Parse {
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
             Production c = p.getChild(i);
             String spaces = stringOfSpaces(index);
-            System.out.println(spaces + index + ". " + c.getName() + " " + ( (c.getClass().getSimpleName()).equals("Terminal") ? "[" + ( (Terminal) c).getTokenAttribute() + "]": ""));
+            System.out.println(spaces + index + ". " + c.getName() + " " + ( (c.getClass().getSimpleName()).equals("Terminal") ? " - [" + ( (Terminal) c).getTokenAttribute() + "]": ""));
             recursivePrint(c, index + 1);
         }
 
