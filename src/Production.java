@@ -16,6 +16,7 @@ public class Production {
     public Boolean getSuccess () {return this.success;}
     public ArrayList<Production> getChildren () {return this.children;}
     public Production getParent () {return this.getParent();}
+    public Production getChild(int index) {return children.get(index);}
 
     public void setSuccess (Boolean success) {this.success = success;}
 
