@@ -21,7 +21,7 @@ public class Parse {
             t.setToken(token_stream.get(token_pointer_local));
             t.setTokenName(seq);
             t.setTokenAttribute(token_stream.get(token_pointer_local).getAttribute());
-            System.out.println("Matched: " + seq);
+            System.out.println("!!! Matched: " + seq);
             return t;
         }
         System.out.println("-- Match Failed");
@@ -29,7 +29,7 @@ public class Parse {
     }
 
     public void parseProgram () {
-        System.out.println("@parseProgram");
+        System.out.println("@parseProgram, token_pointer: " + token_pointer);
 
         NonTerminal program = new NonTerminal("Program");
         parseBlock(program);
@@ -54,7 +54,7 @@ public class Parse {
      * Messy and possibly avoidable, although avoidance strategy may provide less useful error messages
      */
     public void parseBlock(NonTerminal program) {
-        System.out.println("@parseBlock");
+        System.out.println("@parseBlock, token_pointer: " + token_pointer);
         NonTerminal block = new NonTerminal("Block");
         
         Terminal open_block = match("SYMBOL_OPENBLOCK", token_pointer); token_pointer++; 
@@ -75,7 +75,7 @@ public class Parse {
     }
 
     public  NonTerminal parseStatementList(NonTerminal statement_list) {
-        System.out.println("@parseStatementList");
+        System.out.println("@parseStatementList, token_pointer: " + token_pointer);
         // Builds off of STATEMENT_LIST
         //Production statement_list = new Production("STATEMENT_LIST");
         
@@ -108,10 +108,15 @@ public class Parse {
 
      // Creates NonTerminal "STATEMENT" and returns it
     public  NonTerminal parseStatement () {
-        System.out.println("@parseStatement");
+        System.out.println("@parseStatement, token_pointer: " + token_pointer);
         NonTerminal statement = new NonTerminal("STATEMENT");
-        parsePrintStatement(statement);
         
+        parsePrintStatement(statement);
+        parseAssignmentStatement(statement);
+        //parseVarDeclStatement
+        //parseWhileStatement
+        //parseIfStatement
+
         if (statement.getSuccess()) {
             System.out.println("@parseStat finished: " + statement.getChild(0).getName()); 
         }
@@ -123,7 +128,7 @@ public class Parse {
 
     // Modifies the parameter being passed to it
     public  void parsePrintStatement (NonTerminal statement) {
-        System.out.println("@parsePrintStatement");
+        System.out.println("@parsePrintStatement, token_pointer: " + token_pointer);
         int starting_token_pointer = token_pointer;
         NonTerminal print_statement = new NonTerminal("PRINT_STATEMENT"); // Added as child if all prove to be successful
 
@@ -148,12 +153,37 @@ public class Parse {
 
     }
 
+    public void parseAssignmentStatement (NonTerminal statement) {
+        System.out.println("@parseAssignmentStatement, token_pointer: " + token_pointer);
+        int starting_token_pointer = token_pointer;
+        NonTerminal assignment_statement = new NonTerminal("ASSIGNMENT_STATEMENT");
+
+        Terminal identifier = match("IDENTIFIER", token_pointer); if (identifier.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
+        Terminal symbol_assignment = match("SYMBOL_ASSIGNMENT", token_pointer); if (symbol_assignment.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
+        NonTerminal expression = parseExpression(); 
+
+        if (identifier.getSuccess() && symbol_assignment.getSuccess() && expression.getSuccess()) {
+            System.out.println("NonTerminal: Assignment Statement Recognized");
+            assignment_statement.addChild(identifier);
+            assignment_statement.addChild(symbol_assignment);
+            assignment_statement.addChild(expression);
+            statement.addChild(assignment_statement);
+            statement.setSuccess(true);
+        }
+    }
+
     // Creates NonTerminal "EXPRESSION" and returns it
-    public  NonTerminal parseExpression () {
-        System.out.println("@parseExpression");
+    public NonTerminal parseExpression () {
+        System.out.println("@parseExpression, token_pointer: " + token_pointer);
         NonTerminal expression = new NonTerminal("EXPRESSION");  
         
         parseStringExpression(expression); //Should be checking to see if done here
+        //IntExpression
+        //StringExpression
+        //BooleanExpression
+        parseIdentifierExpresison(expression);
+
+
 
         System.out.println(".... (location, after expression checks) ....");
         if (expression.getSuccess()) {
@@ -169,10 +199,22 @@ public class Parse {
 
         return expression;
     }
-    
 
-    public  void parseStringExpression (NonTerminal expression) {
-        System.out.println("@parseStringExpression");
+    public void parseIdentifierExpresison (NonTerminal expression) {
+        System.out.println("@parseIdentifierExpression, token_pointer: " + token_pointer);
+        Token token = token_stream.get(token_pointer);
+        if (token.getName().equals("IDENTIFIER")) {
+            Terminal identifier = match("IDENTIFIER", token_pointer); token_pointer++; 
+            if (identifier.getSuccess()) {
+                expression.addChild(identifier);
+                expression.setSuccess(true);
+                return;
+            }
+        }
+    }    
+
+    public void parseStringExpression (NonTerminal expression) {
+        System.out.println("@parseStringExpression, token_pointer: " + token_pointer);
 
         int starting_token_pointer = token_pointer;
 
@@ -200,7 +242,7 @@ public class Parse {
     // Accepts CharacterList nonterminal
     // Returns CharacterList nonterminal
     public  NonTerminal parseCharacterList (NonTerminal cl) {
-        System.out.println("@parseCharacterList");
+        System.out.println("@parseCharacterList, token_pointer: " + token_pointer);
         
         int starting_token_pointer = token_pointer;
         String first_token_name = token_stream.get(token_pointer).getName(); 
