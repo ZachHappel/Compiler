@@ -71,7 +71,9 @@ public class Parse {
             block.addChild(open_block); // Terminal
             block.addChild(new_statement_list); // NonTerminal
             block.addChild(close_block); // Terminal
+            block.setSuccess(true);
             program.addChild(block);
+            program.setSuccess(true);
         } else {
             System.out.println("Error matching block");
         }
@@ -117,15 +119,36 @@ public class Parse {
         NonTerminal statement = new NonTerminal("STATEMENT");
         
         parsePrintStatement(statement);
+        if (statement.getSuccess()) {
+            System.out.println("@parseStatement finished: " + statement.getChild(0).getName()); 
+            return statement;
+        }
+
         parseAssignmentStatement(statement);
+        if (statement.getSuccess()) {
+            System.out.println("@parseStatement finished: " + statement.getChild(0).getName()); 
+            return statement;
+        }
+
         parseVariableDeclarationStatement(statement);
+        if (statement.getSuccess()) {
+            System.out.println("@parseStatement finished: " + statement.getChild(0).getName()); 
+            return statement;
+        }
+
         parseWhileStatement(statement);
+        if (statement.getSuccess()) {
+            System.out.println("@parseStatement finished: " + statement.getChild(0).getName()); 
+            return statement;
+        }
         //parseIfStatement
 
         if (statement.getSuccess()) {
-            System.out.println("@parseStat finished: " + statement.getChild(0).getName()); 
+            System.out.println("@parseStatement finished: " + statement.getChild(0).getName()); 
+            return statement;
         }
 
+        System.out.println("@parseStatement - Failed");
         return statement;
 
     }
