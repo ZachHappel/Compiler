@@ -6,9 +6,8 @@ public class NonTerminal extends Production {
     
 
 
-    public NonTerminal () {
-
+    public NonTerminal (String name) {
+        super(name);
     }
-
 
 }
