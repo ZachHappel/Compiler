@@ -113,7 +113,7 @@ public class Parse {
         
         parsePrintStatement(statement);
         parseAssignmentStatement(statement);
-        //parseVarDeclStatement
+        parseVariableDeclarationStatement(statement);
         //parseWhileStatement
         //parseIfStatement
 
@@ -172,6 +172,28 @@ public class Parse {
         }
     }
 
+    public void parseVariableDeclarationStatement (NonTerminal statement) {
+        System.out.println("@parseVariableDeclarationStatement, token_pointer: " + token_pointer);
+        int starting_token_pointer = token_pointer;
+        NonTerminal variable_declaration_statement = new NonTerminal("VARIABLE_DECLARATION");
+        String token_name = (token_stream.get(token_pointer)).getName();
+        
+        if (token_name.equals("KEYWORD_INT") || token_name.equals("KEYWORD_STRING") || token_name.equals("KEWYORD_BOOLEAN")) {
+            Terminal type = match(token_name, token_pointer); if (type.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
+            
+            if ((token_stream.get(token_pointer).getName()).equals("IDENTIFIER")) {
+                Terminal identifier = match("IDENTIFIER", token_pointer); if (identifier.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
+            
+                variable_declaration_statement.addChild(type);
+                variable_declaration_statement.addChild(identifier);
+                statement.addChild(variable_declaration_statement);
+                statement.setSuccess(true);
+                return;
+            }
+        }
+        
+    }
+
     // Creates NonTerminal "EXPRESSION" and returns it
     public NonTerminal parseExpression () {
         System.out.println("@parseExpression, token_pointer: " + token_pointer);
@@ -204,7 +226,7 @@ public class Parse {
         System.out.println("@parseIdentifierExpression, token_pointer: " + token_pointer);
         Token token = token_stream.get(token_pointer);
         if (token.getName().equals("IDENTIFIER")) {
-            Terminal identifier = match("IDENTIFIER", token_pointer); token_pointer++; 
+            Terminal identifier = match("IDENTIFIER", token_pointer); token_pointer++; // Assured
             if (identifier.getSuccess()) {
                 expression.addChild(identifier);
                 expression.setSuccess(true);
