@@ -398,10 +398,10 @@ public class Parse {
     }
 
 
-    public String stringOfSpaces (int amount) {
+    public String stringOfCharacters(int amount, String character) {
         String s = "";
         for (int j = 0; j <= amount-1; j++) {
-            s = s + "  ";
+            s = s + character;
         } return s;
     }
 
@@ -409,8 +409,11 @@ public class Parse {
         //System.out.println("Rec: " + p.getChildren().size());
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
             Production c = p.getChild(i);
-            String spaces = stringOfSpaces(index);
-            System.out.println(spaces + index + ". " + c.getName() + " " + ( (c.getClass().getSimpleName()).equals("Terminal") ? " - [" + ( (Terminal) c).getTokenAttribute() + "]": ""));
+            String spaces = stringOfCharacters(index * 2, " ");
+            String x = String.valueOf(index); 
+
+            //System.out.println(spaces + index + ". " + c.getName() + " " + ( (c.getClass().getSimpleName()).equals("Terminal") ? "\n" + stringOfSpaces(index) + stringOfSpaces((x + ". " ).length() / 2) + stringOfDashes(  ( ((x + ". " + c.getName()).length()) / 2) - (" -> [" + ( (Terminal) c).getTokenAttribute() + "]").length()  ) + " -> [" + ( (Terminal) c).getTokenAttribute() + "]": ""));
+            System.out.println(spaces + index + "   [" + c.getName() + "] " + ( (c.getClass().getSimpleName()).equals("Terminal") ? "\n" + spaces + stringOfCharacters((x + ". " ).length(), " ") + " " + stringOfCharacters(  ( ( ((x + ". " + c.getName()).length() - 2)) - ("--- < " + ( (Terminal) c).getTokenAttribute() + " >").length() ), "-") + "--- < " + ( (Terminal) c).getTokenAttribute() + " >": ""));
             recursivePrint(c, index + 1);
         }
 
