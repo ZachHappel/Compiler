@@ -3,8 +3,8 @@ import java.util.ArrayList;
 public class Production {
     
     public String name;
-    public Boolean success;
-    public ArrayList<Production> children;
+    public Boolean success = false;
+    public ArrayList<Production> children = new ArrayList<Production>();
     public Production parent;
 
     

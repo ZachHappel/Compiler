@@ -5,29 +5,30 @@ public class Parse {
     // TODO: Add error handling? How to decide when it failed?
 
     //ArrayList<Token> token_stream;
-    public static ArrayList<Production> derivation = new ArrayList<>();
-    public static ArrayList<Token> token_stream;
-    public static Toolkit toolkit;
+    public  ArrayList<Production> derivation = new ArrayList<>();
+    public  ArrayList<Token> token_stream;
+    public  Toolkit toolkit;
     public int token_pointer = 0;
 
     public Parse () { }
 
     public Terminal match (String seq, int token_pointer_local) {
         Terminal t = new Terminal(seq);
-        
-        
-        if (token_stream.get(token_pointer_local).getName() == seq) {
+        System.out.println("@match - Attempting to match pattern: " + seq + " || Got: " + token_stream.get(token_pointer_local).getName());
+        if (token_stream.get(token_pointer_local).getName().equals(seq)) {
             t.setSuccess(true); // Important
             t.setToken(token_stream.get(token_pointer_local));
             t.setTokenName(seq);
             t.setTokenAttribute(token_stream.get(token_pointer_local).getAttribute());
+            System.out.println("Matched: " + seq);
             return t;
         }
-
+        System.out.println("-- Match Failed");
         return t;
     }
 
-    public void parseProgram () {
+    public  void parseProgram () {
+        System.out.println("@parseProgram");
         NonTerminal program = new NonTerminal("Program");
         parseBlock(program);
         Terminal eop = match("EOP", token_pointer);
@@ -51,17 +52,19 @@ public class Parse {
      * Messy and possibly avoidable, although avoidance strategy may provide less useful error messages
      */
     public void parseBlock(NonTerminal program) {
-        
+        System.out.println("@parseBlock");
         NonTerminal block = new NonTerminal("Block");
-        Terminal open_block = match("KEYWORD_OPENBLOCK", token_pointer); token_pointer++; 
+        
+        Terminal open_block = match("SYMBOL_OPENBLOCK", token_pointer); token_pointer++; 
         NonTerminal new_statement_list = new NonTerminal("STATEMENT_LIST");
         parseStatementList(new_statement_list);
-        Terminal close_block = match("KEYWORD_CLOSEBLOCK", token_pointer); token_pointer++;
+        Terminal close_block = match("SYMBOL_CLOSEBLOCK", token_pointer); token_pointer++;
         
         if (open_block.getSuccess() && new_statement_list.getSuccess() && close_block.getSuccess()) {
-            block.addChild(open_block);
-            block.addChild(new_statement_list);
-            block.addChild(close_block);
+            block.addChild(open_block); // Terminal
+            block.addChild(new_statement_list); // NonTerminal
+            block.addChild(close_block); // Terminal
+            program.addChild(block);
         } else {
             System.out.println("Error matching block");
         }
@@ -69,7 +72,8 @@ public class Parse {
 
     }
 
-    public NonTerminal parseStatementList(NonTerminal statement_list) {
+    public  NonTerminal parseStatementList(NonTerminal statement_list) {
+        System.out.println("@parseStatementList");
         // Builds off of STATEMENT_LIST
         //Production statement_list = new Production("STATEMENT_LIST");
         
@@ -99,7 +103,8 @@ public class Parse {
      */
 
      // Creates NonTerminal "STATEMENT" and returns it
-    public NonTerminal parseStatement () {
+    public  NonTerminal parseStatement () {
+        System.out.println("@parseStatement");
         NonTerminal statement = new NonTerminal("STATEMENT");
         parsePrintStatement(statement);
         
@@ -113,7 +118,8 @@ public class Parse {
 
 
     // Modifies the parameter being passed to it
-    public void parsePrintStatement (NonTerminal statement) {
+    public  void parsePrintStatement (NonTerminal statement) {
+        System.out.println("@parsePrintStatement");
         int starting_token_pointer = token_pointer;
        // NonTerminal print_statement = new NonTerminal("PRINT_STATEMENT");
 
@@ -132,7 +138,8 @@ public class Parse {
     }
 
     // Creates NonTerminal "EXPRESSION" and returns it
-    public NonTerminal parseExpression () {
+    public  NonTerminal parseExpression () {
+        System.out.println("@parseExpression");
         NonTerminal expression = new NonTerminal("EXPRESSION");  
         
         parseStringExpression(expression); 
@@ -151,7 +158,9 @@ public class Parse {
     }
     
 
-    public void parseStringExpression (NonTerminal expression) {
+    public  void parseStringExpression (NonTerminal expression) {
+        System.out.println("@parseStringExpression");
+
         int starting_token_pointer = token_pointer;
 
         NonTerminal string_expression = new NonTerminal("STRING_EXPRESSION");
@@ -175,7 +184,9 @@ public class Parse {
 
     // Accepts CharacterList nonterminal
     // Returns CharacterList nonterminal
-    public NonTerminal parseCharacterList (NonTerminal cl) {
+    public  NonTerminal parseCharacterList (NonTerminal cl) {
+        System.out.println("@parseCharacterList");
+        
         int starting_token_pointer = token_pointer;
         String first_token_name = token_stream.get(token_pointer).getName(); 
 
@@ -203,10 +214,11 @@ public class Parse {
     }
 
 
-    public static ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) {
-        
+    public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) {
+        System.out.println("Parse Tokens: \n\n");
         token_stream = ts; 
         toolkit = tk; 
+        parseProgram();
 
         return derivation;
 
