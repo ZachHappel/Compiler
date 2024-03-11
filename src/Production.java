@@ -18,6 +18,8 @@ public class Production {
     public Production getParent () {return this.getParent();}
     public Production getChild(int index) {return children.get(index);}
 
+
+    public void setName(String name) { this.name = name;}
     public void setSuccess (Boolean success) {this.success = success;}
 
     public void addChild (Production child) { this.children.add(child); }
