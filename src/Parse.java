@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 
+
 public class Parse {
 
     // TODO: Add error handling? How to decide when it failed?
@@ -27,8 +28,9 @@ public class Parse {
         return t;
     }
 
-    public  void parseProgram () {
+    public void parseProgram () {
         System.out.println("@parseProgram");
+
         NonTerminal program = new NonTerminal("Program");
         parseBlock(program);
         Terminal eop = match("EOP", token_pointer);
@@ -59,7 +61,7 @@ public class Parse {
         NonTerminal new_statement_list = new NonTerminal("STATEMENT_LIST");
         parseStatementList(new_statement_list);
         Terminal close_block = match("SYMBOL_CLOSEBLOCK", token_pointer); token_pointer++;
-        
+        System.out.println("After close block");
         if (open_block.getSuccess() && new_statement_list.getSuccess() && close_block.getSuccess()) {
             block.addChild(open_block); // Terminal
             block.addChild(new_statement_list); // NonTerminal
@@ -79,8 +81,10 @@ public class Parse {
         
         NonTerminal statement = parseStatement();
         if (statement.getSuccess()) {
+            System.out.println("First Statement Success");
             statement_list.addChild(statement);
-            statement_list.addChild(new Production("STATEMENT_LIST"));
+            statement_list.setSuccess(true);
+            statement_list.addChild(new NonTerminal("STATEMENT_LIST"));
             parseStatementList((NonTerminal) statement_list.getChild(1));
             return statement_list; 
             //NonTerminal child_statement_list = new NonTerminal("STATEMENT_LIST");
@@ -109,7 +113,7 @@ public class Parse {
         parsePrintStatement(statement);
         
         if (statement.getSuccess()) {
-            System.out.println("NonTerminal: Statement Recognized, " + statement.getChild(0).getName()); 
+            System.out.println("@parseStat finished: " + statement.getChild(0).getName()); 
         }
 
         return statement;
@@ -121,7 +125,7 @@ public class Parse {
     public  void parsePrintStatement (NonTerminal statement) {
         System.out.println("@parsePrintStatement");
         int starting_token_pointer = token_pointer;
-       // NonTerminal print_statement = new NonTerminal("PRINT_STATEMENT");
+        NonTerminal print_statement = new NonTerminal("PRINT_STATEMENT"); // Added as child if all prove to be successful
 
         Terminal keyword_print = match("KEYWORD_PRINT", token_pointer); if (keyword_print.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
         
@@ -132,7 +136,14 @@ public class Parse {
         Terminal symbol_closeparen = match("SYMBOL_CLOSEPAREN", token_pointer); if (symbol_closeparen.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
 
         if (keyword_print.getSuccess() && symbol_openparen.getSuccess() && expression.getSuccess() && symbol_closeparen.getSuccess()) {
+            
             System.out.println("NonTerminal: Print Statement Recognized");
+            print_statement.addChild(keyword_print);
+            print_statement.addChild(symbol_openparen);
+            print_statement.addChild(expression);
+            print_statement.addChild(symbol_closeparen);
+            statement.addChild(print_statement);
+            statement.setSuccess(true);
         }
 
     }
@@ -142,7 +153,9 @@ public class Parse {
         System.out.println("@parseExpression");
         NonTerminal expression = new NonTerminal("EXPRESSION");  
         
-        parseStringExpression(expression); 
+        parseStringExpression(expression); //Should be checking to see if done here
+
+        System.out.println(".... (location, after expression checks) ....");
         if (expression.getSuccess()) {
             System.out.println("NonTerminal: Expression Recognized, " + expression.getChild(0).getName());
             return expression;
@@ -170,11 +183,13 @@ public class Parse {
         Terminal keyword_closing_stringexprboundary = match("SYMBOL_STRINGEXPRBOUNDARY", token_pointer); if (keyword_closing_stringexprboundary.getSuccess()) token_pointer++; else {token_pointer = starting_token_pointer; return;} 
 
         if (keyword_opening_stringexprboundary.getSuccess() && character_list.getSuccess() && keyword_closing_stringexprboundary.getSuccess()) {
+            System.out.println("> Matched STRING_EXPRESSION");
             string_expression.addChild(keyword_opening_stringexprboundary);     
             string_expression.addChild(character_list);
             string_expression.addChild(keyword_closing_stringexprboundary);
             string_expression.setSuccess(true);
             expression.addChild(string_expression); 
+            expression.setSuccess(true);
             return; 
             //return expression;
         } else {
@@ -208,10 +223,29 @@ public class Parse {
                 return cl; // Return current state of cl
             } 
         }
-
+        cl.setSuccess(true); // Maybe?
         System.out.println("Returning Character List with Success = False");
         return cl; // cl would 
     }
+
+
+    public String stringOfSpaces (int amount) {
+        String s = "";
+        for (int j = 0; j <= amount-1; j++) {
+            s = s + "  ";
+        } return s;
+    }
+
+    public void recursivePrint (Production p, int index) {
+        //System.out.println("Rec: " + p.getChildren().size());
+        for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
+            Production c = p.getChild(i);
+            String spaces = stringOfSpaces(index);
+            System.out.println(spaces + index + ". " + c.getName() + " " + ( (c.getClass().getSimpleName()).equals("Terminal") ? "[" + ( (Terminal) c).getTokenAttribute() + "]": ""));
+            recursivePrint(c, index + 1);
+        }
+
+    };
 
 
     public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) {
@@ -219,6 +253,11 @@ public class Parse {
         token_stream = ts; 
         toolkit = tk; 
         parseProgram();
+        System.out.println("Derivation: " );
+        for (Production i : derivation) {
+            System.out.println("Type: " + i.getName());
+            recursivePrint(i, 1);
+        }
 
         return derivation;
 
