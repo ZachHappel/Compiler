@@ -13,7 +13,7 @@ public class Production {
     }
 
     public String getName () {return this.name;}
-    public Boolean getSuccess () {return this.success;}
+    public Boolean success () {return this.success;}
     public ArrayList<Production> getChildren () {return this.children;}
     public Production getParent () {return this.getParent();}
     public Production getChild(int index) {return children.get(index);}
