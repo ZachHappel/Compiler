@@ -25,4 +25,5 @@ public class Production {
     public void addChild (Production child) { this.children.add(child); }
     public void addParent (Production parent) { this.parent = parent;}
 
+    public void removeChild (int index) { this.children.remove(index);}
 }

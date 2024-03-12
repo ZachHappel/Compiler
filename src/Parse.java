@@ -64,7 +64,12 @@ public class Parse {
     public  Toolkit toolkit;
     public int token_pointer = 0;
 
+    public int charListCounter = 0;
+    public int charListFailState = 1000000;
+    public boolean characterListHasBeenRemoved = false;
+
     public Parse () { }
+
 
 
     // Returns Terminal of sequence provided if there is a match
@@ -168,7 +173,7 @@ public class Parse {
     /**
      * = PrintStatement
     ::== AssignmentStatement
-    ::== VarDecl
+    ::== VarDeclStatement
     ::== WhileStatement
     ::== IfStatement
     ::== Block
@@ -186,7 +191,7 @@ public class Parse {
         parseAssignmentStatement(statement); if (statement.success()) {System.out.println(">@ParseStatement Statement Matched: " + statement.getChild(0).getName() + "\n"); return statement;}
         parseVariableDeclarationStatement(statement); if (statement.success()) {System.out.println(">@ParseStatement Statement Matched: " + statement.getChild(0).getName() + "\n"); return statement;}
         parseWhileStatement(statement); if (statement.success()) {System.out.println(">@ParseStatement Statement Matched: " + statement.getChild(0).getName() + "\n"); return statement;}
-    
+        parseIfStatement(statement); if (statement.success()) {System.out.println(">@ParseStatement Statement Matched: " + statement.getChild(0).getName() + "\n"); return statement;}
 
         System.out.println(">@ParseStatement - Failed\n");
         return statement;
@@ -298,32 +303,61 @@ public class Parse {
     public void parseWhileStatement (NonTerminal statement) {
         System.out.println("@parseWhileStatement, token_pointer: " + token_pointer + " token_name: " + token_stream.get(token_pointer).getName());
         int starting_token_pointer = token_pointer;
-        NonTerminal while_statement = new NonTerminal("WHILE_STATEMENT");
-        String token_name = (token_stream.get(token_pointer)).getName();
+        NonTerminal while_statement = new NonTerminal("WhileStatement");
         
-        if (token_name.equals("KEYWORD_WHILE")) {
-            Terminal keyword_while = match(token_name, token_pointer); if (keyword_while.success()) { { token_pointer++; } } else {token_pointer = starting_token_pointer; return;} 
+        
+        if (tokenName().equals("KEYWORD_WHILE")) {
+            Terminal keyword_while = match(tokenName(), token_pointer); if (keyword_while.success()) { { token_pointer++; } } else {token_pointer = starting_token_pointer; return;} 
             
             // For expression, if after parseBooleanExpression -> success() == true, the child will be the boolean expression
-            NonTerminal expression = new NonTerminal("BOOLEAN_EXPRESSION"); 
-            parseBooleanExpression(expression); 
-            expression = expression.success() ? (NonTerminal) expression.getChild(0) : expression; // Boolean expression
+            NonTerminal boolexpr = new NonTerminal("zzz"); 
+            parseBooleanExpression(boolexpr); 
+            boolexpr = boolexpr.success() ? (NonTerminal) boolexpr.getChild(0) : boolexpr; // Boolean expression
             
             // For nt, if after parseBlock -> success() == true, the child will be BLOCK
-            NonTerminal nt = new NonTerminal("BLOCK"); 
-            parseBlock(nt);
-            nt = nt.success() ? (NonTerminal) nt.getChild(0) : nt; 
+            NonTerminal block = new NonTerminal("xxx"); 
+            parseBlock(block);
+            block = block.success() ? (NonTerminal) block.getChild(0) : block; 
 
-            if (expression.success() && nt.success()) {
+            if (boolexpr.success() && block.success()) {
                 while_statement.addChild(keyword_while);
-                while_statement.addChild(expression);
-                while_statement.addChild(nt); 
+                while_statement.addChild(boolexpr);
+                while_statement.addChild(block); 
                 while_statement.setSuccess(true);
                 statement.addChild(while_statement);
                 statement.setSuccess(true); // Success, full while statement
+                return;
             }
         }
 
+    }
+
+    public void parseIfStatement (NonTerminal statement) {
+        System.out.println("@parseIfStatement, token_pointer: " + token_pointer + " token_name: " + token_stream.get(token_pointer).getName());
+        int starting_token_pointer = token_pointer;
+        
+        if (tokenName().equals("KEYWORD_IF")) {
+            Terminal keyword_if = match(tokenName(), token_pointer); if (keyword_if.success()) { token_pointer++; } else {token_pointer = starting_token_pointer; return; } 
+            NonTerminal boolexpr = new NonTerminal("b"); 
+            parseBooleanExpression(boolexpr); 
+            boolexpr = boolexpr.success() ? (NonTerminal) boolexpr.getChild(0) : boolexpr; // Boolean expression
+            
+            // For nt, if after parseBlock -> success() == true, the child will be BLOCK
+            NonTerminal block = new NonTerminal(""); 
+            parseBlock(block);
+            block = block.success() ? (NonTerminal) block.getChild(0) : block; 
+            
+            NonTerminal if_statement = new NonTerminal("IF_STATEMENT");
+            if (boolexpr.success() && block.success()) {
+                if_statement.addChild(keyword_if);
+                if_statement.addChild(boolexpr);
+                if_statement.addChild(block); 
+                if_statement.setSuccess(true);
+                statement.addChild(if_statement);
+                statement.setSuccess(true); // Success, full if statement
+                return;
+            }   
+        }
     }
 
     
@@ -331,7 +365,7 @@ public class Parse {
     public void parseBooleanExpression (NonTerminal expression) {
         System.out.println("@parseBooleanExpression, token_pointer: " + token_pointer + " token_name: " + token_stream.get(token_pointer).getName());
         int starting_token_pointer = token_pointer;
-        NonTerminal boolean_expression = new NonTerminal("BOOLEAN_EXPRESSION");
+        NonTerminal boolean_expression = new NonTerminal("BooleanExpression");
         
         // ( Expr boolop Expr )
         // T, NT, NT, NT, T
@@ -343,8 +377,8 @@ public class Parse {
             if (tokenName().equals("SYMBOL_EQUIVALENCE") || tokenName().equals("SYMBOL_INEQUIVALENCE") ) {
                 
                 NonTerminal boolop = new NonTerminal("BoolOp");
-                Terminal boolop_terminal = match(tokenName(), token_pointer); if (boolop_terminal.success()) { token_pointer++; } else {token_pointer = starting_token_pointer; return; } 
-                boolop.addChild(boolop_terminal);
+                Terminal boolop_terminal = match(tokenName(), token_pointer); if (boolop_terminal.success()) { boolop.addChild(boolop_terminal); token_pointer++; } else {token_pointer = starting_token_pointer; return; } 
+                
 
                 NonTerminal expression_second = parseExpression();
 
@@ -448,7 +482,7 @@ public class Parse {
         // " CharList "
         // T, NT, T 
         Terminal keyword_opening_stringexprboundary = match("SYMBOL_STRINGEXPRBOUNDARY", token_pointer); if (keyword_opening_stringexprboundary.success()) { token_pointer++; } else {token_pointer = starting_token_pointer; return;} 
-        NonTerminal character_list = parseCharacterList(new NonTerminal("CharacterList"));
+        NonTerminal character_list = parseCharacterList(new NonTerminal("CharacterList")); charListCounter = 0; charListFailState = 1000000; characterListHasBeenRemoved = false; 
         Terminal keyword_closing_stringexprboundary = match("SYMBOL_STRINGEXPRBOUNDARY", token_pointer); if (keyword_closing_stringexprboundary.success()) { token_pointer++; } else {token_pointer = starting_token_pointer; return;} 
 
         if (keyword_opening_stringexprboundary.success() && character_list.success() && keyword_closing_stringexprboundary.success()) {
@@ -466,16 +500,45 @@ public class Parse {
 
     // Accepts CharacterList nonterminal
     // Returns CharacterList nonterminal
+    
     public NonTerminal parseCharacterList (NonTerminal cl) {
         System.out.println("@parseCharacterList, token_pointer: " + token_pointer + " token_name: " + token_stream.get(token_pointer).getName());
         
         int starting_token_pointer = token_pointer;
         String first_token_name = token_stream.get(token_pointer).getName(); 
-
+        charListCounter++;
+        
         if (first_token_name == "SPACE" || first_token_name == "CHARACTER") {
             
-            Terminal space_or_char = match(first_token_name, token_pointer); 
+            NonTerminal space_or_character = new NonTerminal( (tokenName().equals("CHARACTER") ? "Character" : "Space"));
+            Terminal space_or_character_terminal = match(first_token_name, token_pointer);  
+            if (space_or_character_terminal.success()) {
+                System.out.println("Char List Counter: " + charListCounter);
+                space_or_character.addChild(space_or_character_terminal);
+                space_or_character.setSuccess(true);
+                token_pointer++;
+                cl.addChild(space_or_character);
+                cl.addChild(new NonTerminal("CharacterList"));
+                parseCharacterList((NonTerminal) cl.getChild(1));
+                System.out.println("Char List Counter After Recursive Call: " + charListCounter);
+                System.out.println("Child 1: Name - " + cl.getChild(1).getName() + " Children Amount: " + (cl.getChild(1).getChildren()).size());
+                
+                if ( (charListCounter >= charListFailState) && !characterListHasBeenRemoved) {
+                    cl.removeChild(1);
+                    characterListHasBeenRemoved = true; 
+                }
+
+                cl.setSuccess(true);
+                return cl;
+            } 
             
+            else {
+                System.out.println("Space Or Char Failed, Count: " + charListCounter);
+                charListFailState = charListCounter;
+                token_pointer = starting_token_pointer;
+                return cl;
+            } 
+            /**
             if (space_or_char.success()) {
                 { token_pointer++; } // Increase pointer
                 cl.addChild(space_or_char); // Add matched terminal to cl's children
@@ -488,10 +551,11 @@ public class Parse {
                 token_pointer = starting_token_pointer; 
                 cl.setSuccess(false);
                 return cl; // Return current state of cl
-            } 
+            } **/
         }
         cl.setSuccess(true); // Maybe?
-        System.out.println("Returning Character List with Success = False");
+        charListFailState = charListCounter;
+        System.out.println("Returning Character List with Success = False, CLC: " + charListCounter);
         return cl; // cl would 
     }
 
@@ -507,6 +571,7 @@ public class Parse {
     public void recursivePrintOld (Production p, int index) {
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
             Production c = p.getChild(i);
+            //System.out.println("P: " + p.getName());
             String spaces = stringOfCharacters(index * 2, " ");
             String x = String.valueOf(index); 
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
