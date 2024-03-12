@@ -69,13 +69,10 @@ public class Parse {
         Terminal close_block = match("SYMBOL_CLOSEBLOCK", token_pointer); if (close_block.success()) incrementPointer(); else restorePointer();
         
         NonTerminal block = new NonTerminal("BLOCK");
-        block.addChild(open_block); // Terminal
-        block.addChild(new_statement_list); // NonTerminal
-        block.addChild(close_block); // Terminal
-        block.setSuccess(true);
-        nt.addChild(block);
-        nt.setSuccess(true);
+        block.addChild(open_block); block.addChild(new_statement_list); block.addChild(close_block); block.addParent(nt); block.setSuccess(true);
+        nt.addChild(block); nt.setSuccess(true);
         System.out.println("INFO - [Block] Recognized" );
+        return;
     }
 
     // Returns NonTerminal 
@@ -95,15 +92,15 @@ public class Parse {
         if (statement.success()) {
             //System.out.println("First Statement Success - Creating New StatementList");
             System.out.println("INFO - [Statement] Recognized - Production: Statement ~" + statement.getName());
+            statement.addParent(statement_list);
             statement_list.addChild(statement);
             statement_list.setSuccess(true);
             statement_list.addChild(new NonTerminal("StatementList"));
             parseStatementList((NonTerminal) statement_list.getChild(1));
-            //System.out.println("Recursive StatementList Kid Amount: " + ((statement_list.getChild(1)).getChildren()).size());
             System.out.println("INFO - [StatementList] Recognized - Production: Statement, StatementList");
             return statement_list; 
+            //System.out.println("Recursive StatementList Kid Amount: " + ((statement_list.getChild(1)).getChildren()).size());
         }
-
         
         System.out.println("Added: Empty Statement List\n");
         return new NonTerminal("StatementList"); // If EMPTY (E)
@@ -146,13 +143,8 @@ public class Parse {
         Terminal symbol_closeparen = match("SYMBOL_CLOSEPAREN", token_pointer); if (symbol_closeparen.success()) { incrementPointer(); } else {restorePointer(); return;} 
         
         NonTerminal print_statement = new NonTerminal("PrintStatement"); // Added as child if all prove to be successful
-        print_statement.addChild(keyword_print);
-        print_statement.addChild(symbol_openparen);
-        print_statement.addChild(expression);
-        print_statement.addChild(symbol_closeparen);
-        
-        statement.addChild(print_statement);
-        statement.setSuccess(true);
+        print_statement.addChild(keyword_print); print_statement.addChild(symbol_openparen); print_statement.addChild(expression); print_statement.addChild(symbol_closeparen); print_statement.addParent(statement);
+        statement.addChild(print_statement); statement.setSuccess(true);
         System.out.println("INFO - [PrintStatement] Recognized - Production: KEYWORD_PRINT, SYMBOL_OPENPAREN, EXPRESSION, SYMBOL_CLOSEPAREN");
         return;
     }
@@ -165,14 +157,15 @@ public class Parse {
         if (!tokenName().equals("IDENTIFIER")) return; // Cannot be assignment statement
 
         NonTerminal identifier = new NonTerminal("Identifier");
-        Terminal identifier_terminal = match("IDENTIFIER", token_pointer); if (identifier_terminal.success()) { { identifier.addChild(identifier_terminal); identifier.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
-        Terminal symbol_assignment = match("SYMBOL_ASSIGNMENT", token_pointer); if (symbol_assignment.success()) { { incrementPointer(); } } else {restorePointer(); return;} 
+        Terminal identifier_terminal = match("IDENTIFIER", token_pointer); if (identifier_terminal.success()) { { identifier_terminal.addParent(identifier); identifier.addChild(identifier_terminal); identifier.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
+        Terminal symbol_assignment = match("SYMBOL_ASSIGNMENT", token_pointer); if (symbol_assignment.success()) {  incrementPointer(); } else {restorePointer(); return;} 
         NonTerminal expression = parseExpression(); if (!expression.success()) { restorePointer(); return; } 
         
         NonTerminal assignment_statement = new NonTerminal("AssignmentStatement");
         assignment_statement.addChild(identifier);
         assignment_statement.addChild(symbol_assignment);
         assignment_statement.addChild(expression);
+        assignment_statement.addParent(statement);
         statement.addChild(assignment_statement);
         statement.setSuccess(true);
         System.out.println("INFO - [AssignmentStatement] Recognized - Production: IDENTIFIER, SYMBOL_ASSIGNMENT, EXPRESSION");
@@ -190,14 +183,15 @@ public class Parse {
         
         if (type.contains(tokenName())) {
             NonTerminal type = new NonTerminal("Type");
-            Terminal type_terminal = match(token_name, token_pointer); if (type_terminal.success()) { { type.addChild(type_terminal); type.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
+            Terminal type_terminal = match(token_name, token_pointer); if (type_terminal.success()) { { type_terminal.addParent(type); type.addChild(type_terminal); type.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
 
             if (tokenName().equals("IDENTIFIER")) {
                 NonTerminal identifier = new NonTerminal("Identifier"); 
-                Terminal identifier_terminal = match("IDENTIFIER", token_pointer); if (identifier_terminal.success()) { { identifier.addChild(identifier_terminal); identifier.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
+                Terminal identifier_terminal = match("IDENTIFIER", token_pointer); if (identifier_terminal.success()) { { identifier_terminal.addParent(identifier); identifier.addChild(identifier_terminal); identifier.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
                 
                 variable_declaration_statement.addChild(type);
                 variable_declaration_statement.addChild(identifier);
+                variable_declaration_statement.addParent(statement);
                 statement.addChild(variable_declaration_statement);
                 statement.setSuccess(true);
                 System.out.println("INFO - [VarDeclStatement] Recognized - Production: TYPE, IDENTIFIER");
@@ -230,6 +224,7 @@ public class Parse {
                 while_statement.addChild(keyword_while);
                 while_statement.addChild(boolexpr);
                 while_statement.addChild(block); 
+                while_statement.addParent(statement);
                 while_statement.setSuccess(true);
                 statement.addChild(while_statement);
                 statement.setSuccess(true); // Success, full while statement
@@ -260,6 +255,7 @@ public class Parse {
                 if_statement.addChild(keyword_if);
                 if_statement.addChild(boolexpr);
                 if_statement.addChild(block); 
+                if_statement.addParent(statement);
                 if_statement.setSuccess(true);
                 statement.addChild(if_statement);
                 statement.setSuccess(true); // Success, full if statement
@@ -282,7 +278,7 @@ public class Parse {
             if (tokenName().equals("SYMBOL_EQUIVALENCE") || tokenName().equals("SYMBOL_INEQUIVALENCE") ) {
                 
                 NonTerminal boolop = new NonTerminal("BoolOp");
-                Terminal boolop_terminal = match(tokenName(), token_pointer); if (boolop_terminal.success()) { boolop.addChild(boolop_terminal); incrementPointer(); } else {restorePointer(); return; } 
+                Terminal boolop_terminal = match(tokenName(), token_pointer); if (boolop_terminal.success()) { boolop_terminal.addParent(boolop); boolop.addChild(boolop_terminal); incrementPointer(); } else {restorePointer(); return; } 
                 
 
                 NonTerminal expression_second = parseExpression();
@@ -296,6 +292,7 @@ public class Parse {
                         boolean_expression.addChild(boolop);
                         boolean_expression.addChild(expression_second);
                         boolean_expression.addChild(keyword_closeparen);
+                        boolean_expression.addParent(expression);
                         boolean_expression.setSuccess(true);
                         expression.addChild(boolean_expression);
                         expression.setSuccess(true);
@@ -308,8 +305,10 @@ public class Parse {
 
         else if ( tokenName().equals("KEYWORD_TRUE") || tokenName().equals("KEYWORD_FALSE") ) {
             NonTerminal boolval = new NonTerminal("BooleanValue");
-            Terminal boolval_terminal = match(tokenName(), token_pointer); if (boolval_terminal.success()) {  boolval.addChild(boolval_terminal); boolval.setSuccess(true); incrementPointer(); } else {restorePointer(); return; } 
-            boolean_expression.addChild(boolval); boolean_expression.setSuccess(true);
+            Terminal boolval_terminal = match(tokenName(), token_pointer); if (boolval_terminal.success()) {  boolval_terminal.addParent(boolval); boolval.addChild(boolval_terminal); boolval.addParent(boolean_expression); boolval.setSuccess(true); incrementPointer(); } else {restorePointer(); return; } 
+            boolean_expression.addChild(boolval); 
+            boolean_expression.setSuccess(true);
+            boolean_expression.addParent(expression);
             expression.addChild(boolean_expression); expression.setSuccess(true);
             System.out.println("INFO - [BooleanExpression] Recognized - Production: BOOLVAL");
             return; 
@@ -324,30 +323,33 @@ public class Parse {
 
         if (tokenName().equals("DIGIT")) {
             NonTerminal digit = new NonTerminal("Digit");
-            Terminal digit_terminal = match("DIGIT", token_pointer); if (digit_terminal.success()) { digit.addChild(digit_terminal); digit.setSuccess(true); incrementPointer(); } else {restorePointer(); return; } 
+            Terminal digit_terminal = match("DIGIT", token_pointer); if (digit_terminal.success()) { digit_terminal.addParent(digit); digit.addChild(digit_terminal); digit.setSuccess(true); incrementPointer(); } else {restorePointer(); return; } 
             
             if (tokenName().equals("SYMBOL_INTOP")) {    
                 NonTerminal intop = new NonTerminal("INTOP");
-                Terminal intop_terminal = match("SYMBOL_INTOP", token_pointer); if (intop_terminal.success()) { intop.addChild(intop_terminal); intop.setSuccess(true); incrementPointer(); } else {restorePointer(); return; }
-                NonTerminal child_expression = parseExpression();
+                Terminal intop_terminal = match("SYMBOL_INTOP", token_pointer); if (intop_terminal.success()) { intop_terminal.addParent(intop); intop.addChild(intop_terminal); intop.setSuccess(true); incrementPointer(); } else {restorePointer(); return; }
+                NonTerminal child_expression = parseExpression(); if (!child_expression.success()) return; // error
 
-                if (child_expression.success()) {
-                    int_expression.addChild(digit);
-                    int_expression.addChild(intop); // Non-Terminal, child terminal 
-                    int_expression.addChild(child_expression);
-                    int_expression.setSuccess(true);
-                    expression.addChild(int_expression);
-                    expression.setSuccess(true);
-                    System.out.println("INFO - [IntExpression] Recognized - Production: DIGIT, INTOP, EXPRESSION");
-                    return;
-                }
+                int_expression.addChild(digit); int_expression.addChild(intop); int_expression.addChild(child_expression); 
+                int_expression.addParent(expression); 
+                int_expression.setSuccess(true);
+                
+                expression.addChild(int_expression); 
+                expression.setSuccess(true);
+                
+                System.out.println("INFO - [IntExpression] Recognized - Production: DIGIT, INTOP, EXPRESSION");
+                return;
+                
 
             } else {
                 // Single digit IntExpr
-                int_expression.addChild(digit);
+                int_expression.addChild(digit); 
+                int_expression.addParent(expression); 
                 int_expression.setSuccess(true);
-                expression.addChild(int_expression);
+                
+                expression.addChild(int_expression); 
                 expression.setSuccess(true);
+                
                 System.out.println("INFO - [IntExpression] Recognized - Production: DIGIT");
                 return;
             }
@@ -359,13 +361,12 @@ public class Parse {
         stashPointer();
         if (tokenName().equals("IDENTIFIER")) {
             NonTerminal identifier = new NonTerminal("IDENTIFIER"); 
-            Terminal identifier_terminal = match("IDENTIFIER", token_pointer); if (identifier_terminal.success()) { identifier.addChild(identifier_terminal); identifier.setSuccess(true); incrementPointer(); } else {restorePointer(); return;} 
-            if (identifier.success()) {
-                expression.addChild(identifier);
-                expression.setSuccess(true);
-                System.out.println("INFO - [IdentifierExpression] Recognized - Production: IDENTIFIER");
-                return;
-            }
+            Terminal identifier_terminal = match("IDENTIFIER", token_pointer); if (identifier_terminal.success()) { identifier_terminal.addParent(identifier); identifier.addChild(identifier_terminal); identifier.addParent(expression); identifier.setSuccess(true); incrementPointer(); } else {restorePointer(); return;} 
+
+            expression.addChild(identifier);
+            expression.setSuccess(true);
+            System.out.println("INFO - [IdentifierExpression] Recognized - Production: IDENTIFIER");
+            return;
         }
     }    
 
@@ -381,6 +382,7 @@ public class Parse {
         string_expression.addChild(keyword_opening_stringexprboundary);     
         string_expression.addChild(character_list);
         string_expression.addChild(keyword_closing_stringexprboundary);
+        string_expression.addParent(expression);
         string_expression.setSuccess(true);
         expression.addChild(string_expression); 
         expression.setSuccess(true);
@@ -401,7 +403,8 @@ public class Parse {
             
             if (space_or_character_terminal.success()) {
                 //toolkit.debugoutput("Char List Counter: " + charListCounter);
-                space_or_character.addChild(space_or_character_terminal); space_or_character.setSuccess(true); incrementPointer();
+                space_or_character_terminal.addParent(space_or_character);
+                space_or_character.addChild(space_or_character_terminal); space_or_character.addParent(character_list); space_or_character.setSuccess(true); incrementPointer();
                 character_list.addChild(space_or_character);
                 character_list.addChild(new NonTerminal("CharacterList"));
                 parseCharacterList((NonTerminal) character_list.getChild(1));
