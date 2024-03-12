@@ -78,7 +78,16 @@ public class Compiler {
                 System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - LEXICAL ANALYSIS COMPLETE. \n");
                 Toolkit.printTokenStreamDetailed(token_stream);
                 Parse parse = new Parse(); 
-                parse.ParseTokens(token_stream, Toolkit);
+                
+                try {
+                    
+                    parse.ParseTokens(token_stream, Toolkit);
+
+                } catch (ParsingException e) {
+                    //throw(e);
+                    //System.out.println(e.getMessage());
+                    System.err.println(e.getMessage());
+                }
                 
 
             } else {

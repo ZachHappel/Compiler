@@ -30,7 +30,7 @@ public class Parse {
     public void incrementPointer() {token_pointer = token_pointer + 1;}
 
     // Returns Terminal of sequence provided if there is a match
-    public Terminal match (String seq, int token_pointer_local) {
+    public Terminal match (String seq, int token_pointer_local) throws ParsingException {
         Terminal t = new Terminal(seq);
         //System.out.println("@match - Attempting to match pattern: " + seq + " || Got: " + token_stream.get(token_pointer_local).getName());
         if (token_stream.get(token_pointer_local).getName().equals(seq)) {
@@ -46,8 +46,9 @@ public class Parse {
     }
 
     public String tokenName() { return (token_stream.get(token_pointer)).getName();  }
+    public Token currentToken() { return token_stream.get(token_pointer);  }
 
-    public void parseProgram () {
+    public void parseProgram () throws ParsingException {
         System.out.println("INFO - Parsing Program...");
         NonTerminal program = new NonTerminal("Program");
         parseBlock(program);
@@ -62,7 +63,7 @@ public class Parse {
     }
 
     // Modifies NonTerminal which it is passed 
-    public void parseBlock(NonTerminal nt) {
+    public void parseBlock(NonTerminal nt) throws ParsingException {
         System.out.println("INFO - Parsing Block...");
         stashPointer();
         Terminal open_block = match("SYMBOL_OPENBLOCK", token_pointer); if (open_block.success()) incrementPointer(); else restorePointer();
@@ -80,7 +81,7 @@ public class Parse {
     }
 
     // Returns NonTerminal 
-    public NonTerminal parseStatementList(NonTerminal statement_list) {
+    public NonTerminal parseStatementList(NonTerminal statement_list) throws ParsingException {
         System.out.println("INFO - Parsing StatementList");
       
         // In the case of Block, we want empty to return as valid // Empty StatementList 
@@ -111,7 +112,7 @@ public class Parse {
 
 
     // Returns NonTerminal "STATEMENT" // Parse Statement Methods:  All modify the NonTerminal "expression" which they are passed
-    public NonTerminal parseStatement () {
+    public NonTerminal parseStatement () throws ParsingException {
         System.out.println("INFO - Parsing Statement...");
         NonTerminal statement = new NonTerminal("Statement");
         parsePrintStatement(statement); if (statement.success()) return statement;  // Access via "Statement Matched: " + statement.getChild(0).getName()
@@ -124,20 +125,22 @@ public class Parse {
     }
 
     // Returns NonTerminal "EXPRESSION" // Parse Expression Methods: All modify the NonTerminal "expression" which they are passed
-    public NonTerminal parseExpression () {
+    public NonTerminal parseExpression () throws ParsingException {
         System.out.println("INFO - Parsing Expression...");
         NonTerminal expression = new NonTerminal("Expression");  
+        System.out.println("ParseExpr Success:" + expression.success());
         parseIntExpression(expression); if (expression.success()) { return expression; }
         parseStringExpression(expression); if (expression.success()) { return expression;}
         parseBooleanExpression(expression); if (expression.success()) { return expression; }
         parseIdentifierExpresison(expression); if (expression.success()) { return expression; }
+        System.out.println("ParseExpr Success:" + expression.success());
         //toolkit.debugoutput("@parseExpression - Failed");
         return expression;
     }
 
 
     // Modified NonTerminal passed to it
-    public void parsePrintStatement (NonTerminal statement) {
+    public void parsePrintStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing PrintStatement...");
         stashPointer();
         
@@ -155,7 +158,7 @@ public class Parse {
 
 
     // Modifies NonTerminal 
-    public void parseAssignmentStatement (NonTerminal statement) {
+    public void parseAssignmentStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing AssignmentStatement...");
 
         if (!tokenName().equals("IDENTIFIER")) return; // Cannot be assignment statement
@@ -178,7 +181,7 @@ public class Parse {
 
 
     // Modifies NonTerminal
-    public void parseVariableDeclarationStatement (NonTerminal statement) {
+    public void parseVariableDeclarationStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing VarDeclStatement...");
         stashPointer();
         
@@ -205,7 +208,7 @@ public class Parse {
     }
 
     // Modifies NonTerminal
-    public void parseWhileStatement (NonTerminal statement) {
+    public void parseWhileStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing WhileStatement...");
         
         stashPointer();
@@ -238,7 +241,7 @@ public class Parse {
         }
     }
 
-    public void parseIfStatement (NonTerminal statement) {
+    public void parseIfStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing IfStatement...");
         stashPointer();
         
@@ -270,14 +273,18 @@ public class Parse {
     }
 
     
-    public void parseBooleanExpression (NonTerminal expression) {
+    public void parseBooleanExpression (NonTerminal expression) throws ParsingException {
         System.out.println("INFO - Parsing BooleanExpression...");
         stashPointer();
         NonTerminal boolean_expression = new NonTerminal("BooleanExpression");
+        String expected_production = "SYMBOL_OPENPAREN, EXPRESSION, BOOLOP, EXPRESSION, SYMBOL_CLOSEPAREN (OR) BOOLVAL"; String location = "Parse BooleanExpression";
         
-        if (tokenName().equals("SYMBOL_OPENPAREN")) {
-            Terminal keyword_openparen = match("SYMBOL_OPENPAREN", token_pointer); if (keyword_openparen.success()) { incrementPointer(); } else {restorePointer(); return; } 
-            NonTerminal expression_first = parseExpression();
+        if (tokenName().equals("SYMBOL_OPENPAREN")) { 
+            
+
+            Terminal keyword_openparen = match("SYMBOL_OPENPAREN", token_pointer); incrementPointer(); //if (keyword_openparen.success()) { incrementPointer(); } else {restorePointer(); return; } 
+            
+            NonTerminal expression_first = parseExpression(); if (!expression.success()) throw new ParsingException(location, "Improper Sequence", expected_production, "[SYMBOL_OPENPAREN, ?, ... ]", currentToken());
 
             if (tokenName().equals("SYMBOL_EQUIVALENCE") || tokenName().equals("SYMBOL_INEQUIVALENCE") ) {
                 
@@ -285,7 +292,7 @@ public class Parse {
                 Terminal boolop_terminal = match(tokenName(), token_pointer); if (boolop_terminal.success()) { boolop_terminal.addParent(boolop); boolop.addChild(boolop_terminal); incrementPointer(); } else {restorePointer(); return; } 
                 
 
-                NonTerminal expression_second = parseExpression();
+                NonTerminal expression_second = parseExpression(); 
 
                 if (tokenName().equals("SYMBOL_CLOSEPAREN")) {
                     Terminal keyword_closeparen = match(tokenName(), token_pointer); if (keyword_closeparen.success()) { incrementPointer(); } else {restorePointer(); return; } 
@@ -300,14 +307,14 @@ public class Parse {
                         boolean_expression.setSuccess(true);
                         expression.addChild(boolean_expression);
                         expression.setSuccess(true);
-                        System.out.println("INFO - [BooleanExpression] Recognized - Production: KEYWORD_OPENPAREN, EXPRESSION, BOOLOP, EXPRESSION, KEYWORD_CLOSEPAREN");
+                        System.out.println("INFO - [BooleanExpression] Recognized - Production: ");
                         return; // Success, boolean_expression is child of NonTerminal object "expression" passed to the func
                     }
-                }
-            }
+                } else throw new ParsingException(location, "Improper Sequence", expected_production, "[SYMBOL_OPENPAREN, EXPRESSION, BoolOp, EXPRESSION, ? ]", currentToken());
+            } else throw new ParsingException(location, "Improper Sequence", expected_production, "[SYMBOL_OPENPAREN, EXPRESSION, ?, ... ]", currentToken());
         } 
 
-        else if ( tokenName().equals("KEYWORD_TRUE") || tokenName().equals("KEYWORD_FALSE") ) {
+        if ( tokenName().equals("KEYWORD_TRUE") || tokenName().equals("KEYWORD_FALSE") ) {
             NonTerminal boolval = new NonTerminal("BooleanValue");
             Terminal boolval_terminal = match(tokenName(), token_pointer); if (boolval_terminal.success()) {  boolval_terminal.addParent(boolval); boolval.addChild(boolval_terminal); boolval.addParent(boolean_expression); boolval.setSuccess(true); incrementPointer(); } else {restorePointer(); return; } 
             boolean_expression.addChild(boolval); 
@@ -317,10 +324,11 @@ public class Parse {
             System.out.println("INFO - [BooleanExpression] Recognized - Production: BOOLVAL");
             return; 
         }
+        
         return; // success = false
     }
 
-    public void parseIntExpression (NonTerminal expression) {
+    public void parseIntExpression (NonTerminal expression) throws ParsingException {
         System.out.println("INFO - Parsing IntExpression...");
         stashPointer();
         NonTerminal int_expression = new NonTerminal("IntExpression");
@@ -360,7 +368,7 @@ public class Parse {
         } 
     }
 
-    public void parseIdentifierExpresison (NonTerminal expression) {
+    public void parseIdentifierExpresison (NonTerminal expression) throws ParsingException {
         System.out.println("INFO - Parsing IdentifierExpression..."); 
         stashPointer();
         if (tokenName().equals("IDENTIFIER")) {
@@ -374,7 +382,7 @@ public class Parse {
         }
     }    
 
-    public void parseStringExpression (NonTerminal expression) {
+    public void parseStringExpression (NonTerminal expression) throws ParsingException {
         System.out.println("INFO - Parsing StringExpression...");
         stashPointer();
         
@@ -396,7 +404,7 @@ public class Parse {
     }
 
     // Accepts CharacterList nonterminal, Returns CharacterList nonterminal
-    public NonTerminal parseCharacterList (NonTerminal character_list) {
+    public NonTerminal parseCharacterList (NonTerminal character_list) throws ParsingException {
         System.out.println("INFO - Parsing CharacterList...");
         stashPointer();
         charListCounter++;
@@ -507,7 +515,7 @@ public class Parse {
 
     
 
-    public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) {
+    public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) throws ParsingException {
         /*we back */
         System.out.println("Parse Tokens: \n\n");
         token_stream = ts; 
