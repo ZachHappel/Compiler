@@ -281,7 +281,7 @@ public class Parse {
         NonTerminal variable_declaration_statement = new NonTerminal("VarDeclStatement");
         String token_name = (token_stream.get(token_pointer)).getName();
         
-        if (token_name.equals("KEYWORD_INT") || token_name.equals("KEYWORD_STRING") || token_name.equals("KEWYORD_BOOLEAN")) {
+        if (token_name.equals("KEYWORD_INT") || token_name.equals("KEYWORD_STRING") || token_name.equals("KEYWORD_BOOLEAN")) {
             NonTerminal type = new NonTerminal("Type");
             Terminal type_terminal = match(token_name, token_pointer); if (type_terminal.success()) { { type.addChild(type_terminal); type.setSuccess(true); token_pointer++; } } else {token_pointer = starting_token_pointer; return;} 
 
@@ -404,7 +404,7 @@ public class Parse {
         // NT
         // T
         else if ( tokenName().equals("KEYWORD_TRUE") || tokenName().equals("KEYWORD_FALSE") ) {
-            NonTerminal boolval = new NonTerminal("Boolean Value");
+            NonTerminal boolval = new NonTerminal("BooleanValue");
             Terminal boolval_terminal = match(tokenName(), token_pointer); if (boolval_terminal.success()) {  boolval.addChild(boolval_terminal); boolval.setSuccess(true); token_pointer++; } else {token_pointer = starting_token_pointer; return; } 
            
 
