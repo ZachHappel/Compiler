@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Parse {
 
@@ -51,6 +53,9 @@ public class Parse {
         parseBlock(program);
         Terminal eop = match("EOP", token_pointer);
         if (eop.success()) { 
+            //(derivation.get(0)).addChild(program);
+            //(derivation.get(0)).addChild(eop);
+
             derivation.add(program); 
             derivation.add(eop); 
         }
@@ -462,13 +467,45 @@ public class Parse {
 
     };
 
+    Map<Integer, ArrayList<String>> tiers = new HashMap<>();
+
+    public int index_of_max_width_level = 0;
+    public int max_level_width = 0;
+    public void printLevelsOfTree (Production p, int index) {
+        System.out.println("\nName: " + p.getName()); 
+        if ( max_level_width < p.getChildren().size() ) index_of_max_width_level = index;
+        max_level_width = max_level_width < p.getChildren().size() ? p.getChildren().size() : max_level_width;
+        for ( int i = 0; i <= p.getChildren().size() - 1; i++ ) {
+            Production child = p.getChild(i);
+            System.out.print(index + " " + child.getName() + ", "); 
+            if (!tiers.containsKey(index)) {
+                tiers.put(index, new ArrayList<String>() {{add(child.getName());}}); // Insert array list of it does not exist alraedy
+            } else {
+                ArrayList<String> current_entries = tiers.get(index);
+                current_entries.add(child.getName());
+                tiers.put(index, current_entries);
+            }
+            //tiers.put(index, (tiers.get(index)).add( child.getName() + " "));
+            printLevelsOfTree(child, index + 1);
+        }
+    }
+
     public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) {
         System.out.println("Parse Tokens: \n\n");
         token_stream = ts; 
         toolkit = tk; 
         parseProgram();
+        //derivation.add(new NonTerminal("Test"));
         System.out.println("Derivation: " );
         for (Production i : derivation) { System.out.println("Type: " + i.getName()); recursivePrintOld(i, 1); }
+
+        printLevelsOfTree(derivation.get(0), 0); 
+
+        /**
+        for (Map.Entry<Integer, ArrayList<String>> entry : tiers.entrySet())  
+            System.out.println("Key = " + entry.getKey() + 
+                             ", Value = " + entry.getValue());
+    **/
         return derivation;
     }
 }
