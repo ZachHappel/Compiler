@@ -65,9 +65,8 @@ public class Parse {
     public void parseBlock(NonTerminal nt) {
         System.out.println("INFO - Parsing Block...");
         stashPointer();
-        
         Terminal open_block = match("SYMBOL_OPENBLOCK", token_pointer); if (open_block.success()) incrementPointer(); else restorePointer();
-        
+       
         NonTerminal new_statement_list = new NonTerminal("StatementList"); 
         parseStatementList(new_statement_list); if (!new_statement_list.success()) return; 
         
@@ -86,7 +85,6 @@ public class Parse {
       
         // In the case of Block, we want empty to return as valid // Empty StatementList 
         if (tokenName().equals("SYMBOL_CLOSEBLOCK")) {
-            
             statement_list.setSuccess(true); 
             System.out.println("INFO - [StatementList] Recognized - Production: ε");
             return statement_list;   
@@ -121,6 +119,7 @@ public class Parse {
         parseVariableDeclarationStatement(statement); if (statement.success()) return statement;
         parseWhileStatement(statement); if (statement.success()) return statement;
         parseIfStatement(statement); if (statement.success()) return statement;
+        if (tokenName().equals("SYMBOL_OPENBLOCK")) {parseBlock(statement); if (statement.success()) return statement;}
         return statement;
     }
 
@@ -479,16 +478,34 @@ public class Parse {
             Production child = p.getChild(i);
             System.out.print(index + " " + child.getName() + ", "); 
             if (!tiers.containsKey(index)) {
-                tiers.put(index, new ArrayList<String>() {{add(child.getName());}}); // Insert array list of it does not exist alraedy
+                if (child.getClass().getSimpleName().equals("NonTerminal")) {
+                    NonTerminal nt_child = (NonTerminal) child; 
+                    tiers.put(index, new ArrayList<String>() {{add( "[" + nt_child.getName() + "]" );}});
+                } else {
+                    Terminal t_child = (Terminal) child;
+                    tiers.put(index, new ArrayList<String>() {{add( "<" + t_child.getTokenAttribute() + ">" );}});
+                }
+                //tiers.put(index, new ArrayList<String>() {{add( (child.getClass().getSimpleName()).equals("NonTerminal") ? "[" + child.getName() + "]" : "<" + (Terminal) child.getTokenAttribute() + ">");}}); // Insert array list of it does not exist alraedy
             } else {
                 ArrayList<String> current_entries = tiers.get(index);
-                current_entries.add(child.getName());
+
+                if (child.getClass().getSimpleName().equals("NonTerminal")) {
+                    NonTerminal nt_child = (NonTerminal) child; 
+                    current_entries.add("[" + nt_child.getName() + "]" );
+                } else {
+                    Terminal t_child = (Terminal) child;
+                    current_entries.add("<" + t_child.getTokenAttribute() + ">");
+                }
+                //current_entries.add( (child.getClass().getSimpleName()).equals("NonTerminal") ? "<" + child.getName() + ">" : "[" + child.getName() + "]");
                 tiers.put(index, current_entries);
             }
             //tiers.put(index, (tiers.get(index)).add( child.getName() + " "));
             printLevelsOfTree(child, index + 1);
         }
     }
+
+
+    
 
     public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) {
         System.out.println("Parse Tokens: \n\n");
@@ -497,15 +514,17 @@ public class Parse {
         parseProgram();
         //derivation.add(new NonTerminal("Test"));
         System.out.println("Derivation: " );
-        for (Production i : derivation) { System.out.println("Type: " + i.getName()); recursivePrintOld(i, 1); }
+        for (Production i : derivation) {
+             System.out.println("Type: " + i.getName()); recursivePrintOld(i, 1); 
+        }
 
-        printLevelsOfTree(derivation.get(0), 0); 
+        //printLevelsOfTree(derivation.get(0), 0); 
 
-        /**
-        for (Map.Entry<Integer, ArrayList<String>> entry : tiers.entrySet())  
-            System.out.println("Key = " + entry.getKey() + 
-                             ", Value = " + entry.getValue());
-    **/
+        
+        for (Map.Entry<Integer, ArrayList<String>> entry : tiers.entrySet()) System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
+    
+        //printFullWidthTree(tiers, index_of_max_width_level);
+        
         return derivation;
     }
 }
@@ -577,3 +596,33 @@ digit
 
  */
 
+/**
+ * public int getWidestLevelWidth() {
+        int max = 0;
+        for (Map.Entry<Integer, ArrayList<String>> entry : tiers.entrySet()) {
+            if ( (entry.getValue()).size() > max ) max = (entry.getValue()).size();
+            //System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
+        }
+        return max;
+    }
+
+    public void printFullWidthTree(Map<Integer, ArrayList<String>> tiers, int maxLevelWidth) {
+        int tree_width = getWidestLevelWidth() * getWidestLevelWidth(); 
+        for (int level = 0; level < tiers.size(); level++) {
+            ArrayList<String> nodes = tiers.get(level);
+
+            int space_between_nodes = (tree_width - nodes.size()) / (nodes.size() + 1);
+    
+            System.out.print(" ".repeat(space_between_nodes));
+    
+            // Print nodes and spaces
+            for (String node_name : nodes) {
+                System.out.print(node_name);
+                // Print the spaces between nodes
+                System.out.print(" ".repeat(space_between_nodes));
+            }
+            System.out.println(); // Move to the next line after each level
+            System.out.println(); // Move to the next line after each level
+        }
+    }
+ */
