@@ -36,7 +36,7 @@ public class Parse {
             t.setToken(token_stream.get(token_pointer_local));
             t.setTokenName(seq);
             t.setTokenAttribute(token_stream.get(token_pointer_local).getAttribute());
-            System.out.println("INFO - MATCHED: " + seq);
+            System.out.println("INFO - MATCHED: <" + seq + ">");
             return t;
         }
         //System.out.println("@match Match Failed\n");
@@ -46,7 +46,7 @@ public class Parse {
     public String tokenName() { return (token_stream.get(token_pointer)).getName();  }
 
     public void parseProgram () {
-        System.out.println("INFO - Parsing Program");
+        System.out.println("INFO - Parsing Program...");
         NonTerminal program = new NonTerminal("Program");
         parseBlock(program);
         Terminal eop = match("EOP", token_pointer);
@@ -58,7 +58,7 @@ public class Parse {
 
     // Modifies NonTerminal which it is passed 
     public void parseBlock(NonTerminal nt) {
-        System.out.println("INFO - Parsing Block");
+        System.out.println("INFO - Parsing Block...");
         stashPointer();
         
         Terminal open_block = match("SYMBOL_OPENBLOCK", token_pointer); if (open_block.success()) incrementPointer(); else restorePointer();
@@ -83,7 +83,12 @@ public class Parse {
         System.out.println("INFO - Parsing StatementList");
       
         // In the case of Block, we want empty to return as valid // Empty StatementList 
-        if (tokenName().equals("SYMBOL_CLOSEBLOCK")) {  statement_list.setSuccess(true); return statement_list;   }
+        if (tokenName().equals("SYMBOL_CLOSEBLOCK")) {
+            
+            statement_list.setSuccess(true); 
+            System.out.println("INFO - [StatementList] Recognized - Production: ε");
+            return statement_list;   
+        }
 
         NonTerminal statement = parseStatement();
         
@@ -145,6 +150,7 @@ public class Parse {
         print_statement.addChild(symbol_openparen);
         print_statement.addChild(expression);
         print_statement.addChild(symbol_closeparen);
+        
         statement.addChild(print_statement);
         statement.setSuccess(true);
         System.out.println("INFO - [PrintStatement] Recognized - Production: KEYWORD_PRINT, SYMBOL_OPENPAREN, EXPRESSION, SYMBOL_CLOSEPAREN");
