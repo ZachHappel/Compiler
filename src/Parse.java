@@ -143,11 +143,21 @@ public class Parse {
     public void parsePrintStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing PrintStatement...");
         stashPointer();
+        String expected_production = "KEYWORD_PRINT, SYMBOL_OPENPAREN, EXPRESSION, SYMBOL_CLOSEPAREN"; String location = "Parse PrintStatement";
+
+        Terminal keyword_print = match("KEYWORD_PRINT", token_pointer);  if (keyword_print.success()) { incrementPointer(); }   else {restorePointer(); return;} 
+
+
+        Terminal symbol_openparen = match("SYMBOL_OPENPAREN", token_pointer); 
+        if (symbol_openparen.success()) { incrementPointer(); } 
+        else throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_PRINT, ?, ... ]", currentToken()); 
         
-        Terminal keyword_print = match("KEYWORD_PRINT", token_pointer); if (keyword_print.success()) { incrementPointer(); } else {restorePointer(); return;} 
-        Terminal symbol_openparen = match("SYMBOL_OPENPAREN", token_pointer); if (symbol_openparen.success()) { incrementPointer(); } else {restorePointer(); return;} 
-        NonTerminal expression = parseExpression(); if (!expression.success()) { restorePointer(); return; } 
-        Terminal symbol_closeparen = match("SYMBOL_CLOSEPAREN", token_pointer); if (symbol_closeparen.success()) { incrementPointer(); } else {restorePointer(); return;} 
+        NonTerminal expression = parseExpression(); 
+        if (!expression.success()) throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_PRINT, SYMBOL_OPENPAREN, ... ]", currentToken()); 
+
+
+        Terminal symbol_closeparen = match("SYMBOL_CLOSEPAREN", token_pointer); if (symbol_closeparen.success()) { incrementPointer(); } 
+        else throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_PRINT, SYMBOL_OPENPAREN, EXPRESSION, ... ]", currentToken()); 
         
         NonTerminal print_statement = new NonTerminal("PrintStatement"); // Added as child if all prove to be successful
         print_statement.addChild(keyword_print); print_statement.addChild(symbol_openparen); print_statement.addChild(expression); print_statement.addChild(symbol_closeparen); print_statement.addParent(statement);
@@ -186,11 +196,11 @@ public class Parse {
         stashPointer();
         
         NonTerminal variable_declaration_statement = new NonTerminal("VarDeclStatement");
-        String token_name = (token_stream.get(token_pointer)).getName();
+        String expected_production = "Type, Identifier"; String location = "Parse VariableDeclarationStatement";
         
         if (type.contains(tokenName())) {
             NonTerminal type = new NonTerminal("Type");
-            Terminal type_terminal = match(token_name, token_pointer); if (type_terminal.success()) { { type_terminal.addParent(type); type.addChild(type_terminal); type.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
+            Terminal type_terminal = match(tokenName(), token_pointer); if (type_terminal.success()) { { type_terminal.addParent(type); type.addChild(type_terminal); type.setSuccess(true); incrementPointer(); } } else {restorePointer(); return;} 
 
             if (tokenName().equals("IDENTIFIER")) {
                 NonTerminal identifier = new NonTerminal("Identifier"); 
@@ -203,7 +213,7 @@ public class Parse {
                 statement.setSuccess(true);
                 System.out.println("INFO - [VarDeclStatement] Recognized - Production: TYPE, IDENTIFIER");
                 return;
-            }
+            } else throw new ParsingException(location, "Improper Sequence", expected_production, "[Type, ?]", currentToken());
         }
     }
 
@@ -213,18 +223,19 @@ public class Parse {
         
         stashPointer();
         NonTerminal while_statement = new NonTerminal("WhileStatement");
+        String expected_production = "KEYWORD_WHILE, BOOLEXPR, BLOCK"; String location = "Parse WhileStatement";
         
         if (tokenName().equals("KEYWORD_WHILE")) {
             Terminal keyword_while = match(tokenName(), token_pointer); if (keyword_while.success()) { incrementPointer(); } else { restorePointer(); return;} 
             
             // For expression, if after parseBooleanExpression -> success() == true, the child will be the boolean expression
             NonTerminal boolexpr = new NonTerminal("");  
-            parseBooleanExpression(boolexpr);
+            parseBooleanExpression(boolexpr); if (!boolexpr.success()) throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_WHILE, ?, ... ]", currentToken());
             boolexpr = boolexpr.success() ? (NonTerminal) boolexpr.getChild(0) : boolexpr; // Boolean expression
             
             // For block, if after parseBlock -> success() == true, the child will be BLOCK
             NonTerminal block = new NonTerminal(""); 
-            parseBlock(block);
+            parseBlock(block); if (!block.success()) throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_WHILE, BOOLEXPR, ... ]", currentToken());
             block = block.success() ? (NonTerminal) block.getChild(0) : block; 
 
             if (boolexpr.success() && block.success()) {
@@ -244,19 +255,21 @@ public class Parse {
     public void parseIfStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing IfStatement...");
         stashPointer();
-        
+
+        NonTerminal if_statement = new NonTerminal("IfStatement");
+        String expected_production = "KEYWORD_IF, BOOLEXPR, BLOCK"; String location = "Parse IfStatement";
+
         if (tokenName().equals("KEYWORD_IF")) {
             Terminal keyword_if = match(tokenName(), token_pointer); if (keyword_if.success()) { incrementPointer(); } else {restorePointer(); return; } 
             
             NonTerminal boolexpr = new NonTerminal("");  
-            parseBooleanExpression(boolexpr); 
+            parseBooleanExpression(boolexpr); if (!boolexpr.success()) throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_IF, ?, ... ]", currentToken());
             boolexpr = boolexpr.success() ? (NonTerminal) boolexpr.getChild(0) : boolexpr; // Boolean expression
             
             NonTerminal block = new NonTerminal("");  
-            parseBlock(block);
+            parseBlock(block); if (!block.success()) throw new ParsingException(location, "Improper Sequence", expected_production, "[KEYWORD_IF, BOOLEXPR, ... ]", currentToken());
             block = block.success() ? (NonTerminal) block.getChild(0) : block; 
             
-            NonTerminal if_statement = new NonTerminal("IfStatement");
             
             if (boolexpr.success() && block.success()) {
                 if_statement.addChild(keyword_if);
@@ -390,6 +403,7 @@ public class Parse {
         Terminal keyword_opening_stringexprboundary = match("SYMBOL_STRINGEXPRBOUNDARY", token_pointer); if (keyword_opening_stringexprboundary.success()) incrementPointer(); else {restorePointer(); return;} 
         NonTerminal character_list = parseCharacterList(new NonTerminal("CharacterList")); if (!character_list.success()) { return;} else {charListCounter = 0; charListFailState = 1000000; characterListHasBeenRemoved = false; }
         Terminal keyword_closing_stringexprboundary = match("SYMBOL_STRINGEXPRBOUNDARY", token_pointer); if (keyword_closing_stringexprboundary.success()) incrementPointer(); else {restorePointer(); return;} 
+        // Error handling of unmatched StringExprBoundarries is done via Lex already 
 
         string_expression.addChild(keyword_opening_stringexprboundary);     
         string_expression.addChild(character_list);

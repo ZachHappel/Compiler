@@ -1,0 +1,11 @@
+/** Should Fail */
+{
+    if (true) {
+
+    }
+}$
+
+{
+    if (true == )
+
+}$
