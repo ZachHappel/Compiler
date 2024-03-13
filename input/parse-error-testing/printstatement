@@ -15,4 +15,5 @@ int x
 {
     print ( "" )
     int x
+    print ( "" )
 }$

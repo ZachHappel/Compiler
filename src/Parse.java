@@ -50,16 +50,22 @@ public class Parse {
 
     public void parseProgram () throws ParsingException {
         System.out.println("INFO - Parsing Program...");
+        String expected_production = "BLOCK, EOP"; String location = "Parse Program";
+
         NonTerminal program = new NonTerminal("Program");
-        parseBlock(program);
+        //NonTerminal block = new NonTerminal("BLOCK");
+        parseBlock(program); //if (program.success()) {program.addChild(block); block.addParent(program);}
         Terminal eop = match("EOP", token_pointer);
         if (eop.success()) { 
+            program.addChild(eop);
+            eop.addParent(program);
             //(derivation.get(0)).addChild(program);
             //(derivation.get(0)).addChild(eop);
 
-            derivation.add(program); 
-            derivation.add(eop); 
-        }
+            //derivation.add(program); 
+            //derivation.add(eop); 
+            derivation.add(program);
+        } else throw new ParsingException(location, "Improper Sequence", expected_production, "[BLOCK, ? ]", currentToken()); 
     }
 
     // Modifies NonTerminal which it is passed 
@@ -128,12 +134,12 @@ public class Parse {
     public NonTerminal parseExpression () throws ParsingException {
         System.out.println("INFO - Parsing Expression...");
         NonTerminal expression = new NonTerminal("Expression");  
-        System.out.println("ParseExpr Success:" + expression.success());
+        
         parseIntExpression(expression); if (expression.success()) { return expression; }
         parseStringExpression(expression); if (expression.success()) { return expression;}
         parseBooleanExpression(expression); if (expression.success()) { return expression; }
         parseIdentifierExpresison(expression); if (expression.success()) { return expression; }
-        System.out.println("ParseExpr Success:" + expression.success());
+        
         //toolkit.debugoutput("@parseExpression - Failed");
         return expression;
     }
@@ -168,6 +174,7 @@ public class Parse {
 
 
     // Modifies NonTerminal 
+    // TODO: SHOULD THERE BE ERROR HANDLING FOR IDENTIFIER?? 
     public void parseAssignmentStatement (NonTerminal statement) throws ParsingException {
         System.out.println("INFO - Parsing AssignmentStatement...");
 
@@ -464,90 +471,38 @@ public class Parse {
 
     public String stringOfCharacters(int amount, String character) { String s = ""; for (int j = 0; j <= amount-1; j++) { s = s + character; } return s; }
 
-    public void recursivePrintOld (Production p, int index) {
+    public void recursivePrint (Production p, int index) {
+
+        if (index == 0 && p.getName().equals("Program")) {
+            System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
+            index++;
+        }
+
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
             Production c = p.getChild(i);
             String spaces = stringOfCharacters(index * 2, " ");
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
+            
             if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "] "); } 
             else { System.out.println(spaces + index + stringOfCharacters(2, " ") + " < " + ((Terminal) c).getTokenAttribute() + " >"); }
-            recursivePrintOld(c, index + 1);
+            recursivePrint(c, index + 1);
         }
     }
-
-    public void recursivePrintImproved (Production p, int index) {
-        for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
-            Production c = p.getChild(i);
-            String spaces = stringOfCharacters(index * 2, " ");
-            String x = String.valueOf(index); 
-            Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
-            if (!is_terminal) { System.out.println(spaces + index + "   [" + c.getName() + "] " + ( (c.getClass().getSimpleName()).equals("Terminal") ? "\n" + spaces + stringOfCharacters((x + ". " ).length(), " ") + " " + stringOfCharacters(  ( ( ((x + ". " + c.getName()).length() - 2)) - ("--- < " + ( (Terminal) c).getTokenAttribute() + " >").length() ), "-") + "--- < " + ( (Terminal) c).getTokenAttribute() + " >": "")); }
-            else { System.out.println(spaces + stringOfCharacters((x + ". " ).length(), " ") + " " + stringOfCharacters(  ( ( ((x + ". " + c.getName()).length() - 2)) - ("--- < " + ( (Terminal) c).getTokenAttribute() + " >").length() ), "-") + "--- < " + ( (Terminal) c).getTokenAttribute() + " >");}
-            recursivePrintImproved(c, index + 1);
-        }
-
-    };
-
-    Map<Integer, ArrayList<String>> tiers = new HashMap<>();
-
-    public int index_of_max_width_level = 0;
-    public int max_level_width = 0;
-    public void printLevelsOfTree (Production p, int index) {
-        System.out.println("\nName: " + p.getName()); 
-        if ( max_level_width < p.getChildren().size() ) index_of_max_width_level = index;
-        max_level_width = max_level_width < p.getChildren().size() ? p.getChildren().size() : max_level_width;
-        for ( int i = 0; i <= p.getChildren().size() - 1; i++ ) {
-            Production child = p.getChild(i);
-            System.out.print(index + " " + child.getName() + ", "); 
-            if (!tiers.containsKey(index)) {
-                if (child.getClass().getSimpleName().equals("NonTerminal")) {
-                    NonTerminal nt_child = (NonTerminal) child; 
-                    tiers.put(index, new ArrayList<String>() {{add( "[" + nt_child.getName() + "]" );}});
-                } else {
-                    Terminal t_child = (Terminal) child;
-                    tiers.put(index, new ArrayList<String>() {{add( "<" + t_child.getTokenAttribute() + ">" );}});
-                }
-                //tiers.put(index, new ArrayList<String>() {{add( (child.getClass().getSimpleName()).equals("NonTerminal") ? "[" + child.getName() + "]" : "<" + (Terminal) child.getTokenAttribute() + ">");}}); // Insert array list of it does not exist alraedy
-            } else {
-                ArrayList<String> current_entries = tiers.get(index);
-
-                if (child.getClass().getSimpleName().equals("NonTerminal")) {
-                    NonTerminal nt_child = (NonTerminal) child; 
-                    current_entries.add("[" + nt_child.getName() + "]" );
-                } else {
-                    Terminal t_child = (Terminal) child;
-                    current_entries.add("<" + t_child.getTokenAttribute() + ">");
-                }
-                //current_entries.add( (child.getClass().getSimpleName()).equals("NonTerminal") ? "<" + child.getName() + ">" : "[" + child.getName() + "]");
-                tiers.put(index, current_entries);
-            }
-            //tiers.put(index, (tiers.get(index)).add( child.getName() + " "));
-            printLevelsOfTree(child, index + 1);
-        }
-    }
-
-
-    
 
     public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) throws ParsingException {
-        /*we back */
+
         System.out.println("Parse Tokens: \n\n");
         token_stream = ts; 
         toolkit = tk; 
         parseProgram();
-        //derivation.add(new NonTerminal("Test"));
-        System.out.println("Derivation: " );
-        for (Production i : derivation) {
-             System.out.println("Type: " + i.getName()); recursivePrintOld(i, 1); 
-        }
+       
+        System.out.println("\n\nCST: " );
 
-        //printLevelsOfTree(derivation.get(0), 0); 
+        recursivePrint(derivation.get(0), 0);
 
-        
-        for (Map.Entry<Integer, ArrayList<String>> entry : tiers.entrySet()) System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
-    
-        //printFullWidthTree(tiers, index_of_max_width_level);
-        
+        TreeDraw treeDraw = new TreeDraw(); 
+        treeDraw.draw(derivation);
+
         return derivation;
     }
 }

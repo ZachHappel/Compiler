@@ -6,10 +6,16 @@ public class Production {
     public Boolean success = false;
     public ArrayList<Production> children = new ArrayList<Production>();
     public Production parent;
+    public String prodKind;
 
     
     public Production (String name) {
         this.name = name; 
+    }
+
+    public Production (String name, String prodKind) {
+        this.name = name; 
+        this.prodKind = prodKind;
     }
 
     public String getName () {return this.name;}
@@ -17,7 +23,7 @@ public class Production {
     public ArrayList<Production> getChildren () {return this.children;}
     public Production getParent () {return this.getParent();}
     public Production getChild(int index) {return children.get(index);}
-
+    public String getProdKind() { return this.prodKind; }
 
     public void setName(String name) { this.name = name;}
     public void setSuccess (Boolean success) {this.success = success;}
@@ -26,4 +32,6 @@ public class Production {
     public void addParent (Production parent) { this.parent = parent;}
 
     public void removeChild (int index) { this.children.remove(index);}
+
+
 }

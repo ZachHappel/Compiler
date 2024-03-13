@@ -4,9 +4,10 @@ public class Terminal extends Production {
     public Token token;
     public String token_name;
     public String token_attribute;
+    public String prodKind = "Terminal";
 
     public Terminal (String name) {
-        super(name);
+        super(name, "Terminal");
     }
 
     public void setToken (Token t) {this.token = t;};
