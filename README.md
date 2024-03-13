@@ -1,4 +1,4 @@
-# Compiler
+# Compiler (NOTE: See *parse* branch)
 Compiler written in Java.
 
 BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
