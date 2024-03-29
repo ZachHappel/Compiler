@@ -1,0 +1,22 @@
+// Creating an AST from the CST
+
+PreReq Knowledge:
+Lex/Parse prevent issue of incomplete BoolExpr, so there will always be a valid bool expr at this point.
+    BoolExprs are simple in our grammar,
+        Limited to (Expr boolop Expr) or boolval
+
+        When we go to perform semantic analysis, we ignore open and close paren, and add according to....
+
+        If WhileStatement, we add WhileStatment, then check children...
+            - Should be
+
+
+Each block is a new scope
+
+We need assignment statements, if statements, while statements, vardecl statements, print statements 
+
+BooleanExprs when within statments are defined as IfEqual IsNotEqual
+
+Groupings:
+Assignments
+While Statements

@@ -81,7 +81,10 @@ public class Compiler {
                 
                 try {
                     
-                    parse.ParseTokens(token_stream, Toolkit);
+                    ArrayList<Production> derivation = parse.ParseTokens(token_stream, Toolkit);
+
+                    SemanticAnalysis sa = new SemanticAnalysis();
+                    sa.performSemanticAnalysis(derivation, Toolkit);
 
                 } catch (ParsingException e) {
                     //throw(e);
