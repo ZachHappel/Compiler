@@ -108,6 +108,23 @@ public class SemanticAnalysis {
 
     
 
+    public String extractStringFromStringExpression (NonTerminal str_expr) {
+        String str = ""; 
+        System.out.println("Str Expr Children: " + getChildrenNames(str_expr));
+        if (str_expr.getChildren().size() == 2) {
+            NonTerminal character_nt = (NonTerminal) str_expr.getChild(0); // Character NT
+            NonTerminal starting_character_list = (NonTerminal) str_expr.getChild(1); // CharacterList NT
+            String letter = ( (Terminal) character_nt.getChild(0)).getTokenAttribute(); // Attribute value w/in Character's token
+            System.out.println("Letter: " + letter);
+            str = str + letter;  // Add letter to string
+            str = str + extractStringFromStringExpression(starting_character_list); // Add recursive result to the string
+        } else if (str_expr.getChildren().size() == 1) {
+            str = str + ((Terminal) ((NonTerminal) str_expr.getChild(0)).getChild(0)).getTokenAttribute(); // Get last letter
+        }
+
+        return str; 
+
+    }
     
     
     public void recursiveDescent (Production p, int index) {
@@ -133,16 +150,51 @@ public class SemanticAnalysis {
                 
                 if (valid_terminals.contains(terminal.getName())) {
                     current_parent.addChild(terminal);
+                    
+                    //current_parent = terminal;
+
                     // could cause issues for top scope... being that the terminal would already be there 
                 }
 
                 //System.out.println("Terminal: " + c.getName()); 
             } else {
                 NonTerminal nonterminal = (NonTerminal) c;
-                String nonterminal_name = nonterminal.getName();
+                String nonterminal_name = nonterminal.getName();  System.out.println("Non Terminal Name: " + nonterminal_name);
                 
+
                 if ( nonterminal_name.equals("WhileStatment")) {
 
+                }
+
+                if (nonterminal_name.equals("PrintStatement")) {
+                    current_parent.addASTChild(nonterminal); // Add PrintStatemnt to current_parents AST children
+                    
+                    if ((nonterminal.getChild(2).getName()).equals("Expression")) {
+                        NonTerminal expression = (NonTerminal) nonterminal.children.get(2); // PrintStatement's Expressione();
+                        NonTerminal expression_child = (NonTerminal) expression.getChild(0);
+                        String expression_child_name = expression_child.getName(); 
+                        System.out.println("PrintStatement Expression's Child: " + expression_child_name); 
+                        
+
+                        if (expression_child_name.equals("StringExpression")) {
+                            String string_expr_string = extractStringFromStringExpression((NonTerminal) expression_child.getChild(1));  // Pass first CharacterList
+                            Terminal token_for_string_expression = new Terminal(string_expr_string); 
+                            expression.addASTChild(token_for_string_expression); // Add Terminal for StringExpression String to expression's AST children
+                            System.out.println("String: " + string_expr_string);
+                            
+                        } else if (expression_child_name.equals("BooleanExpression")) {
+                            expression.addASTChild(expression_child.getChild(0));
+                            System.out.println( "BooleanExpr: " + ((Terminal) (expression_child.getChild(0).getChild(0))).getTokenAttribute());
+                            Terminal bool_val = (Terminal) (expression_child.getChild(0).getChild(0)); 
+                            
+                           // System.exit(0);
+
+                        } else if (expression_child_name.equals("IntExpression")) {
+
+                        } else if (expression_child_name.equals("Identifier")) {
+
+                        }
+                    }
                 }
 
                 NonTerminalsList.add((NonTerminal) c);

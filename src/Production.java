@@ -21,6 +21,8 @@ public class Production implements Cloneable {
         this.prodKind = prodKind;
     }
 
+    
+
     /*
     public static Production copy( Production original ) {
         Production new_prod = new Production(original.getName());
