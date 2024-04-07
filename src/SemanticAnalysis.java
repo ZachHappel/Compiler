@@ -42,6 +42,8 @@ public class SemanticAnalysis {
         add("KEYWORD_TRUE");
         add("KEYWORD_FALSE");
         add("KEYWORD_INT");
+        add("KEYWORD_BOOLEAN");
+        add("KEYWORD_STRING");
         add("IDENTIFIER");
         add("DIGIT");
         //add("KEYWORD_")
@@ -84,6 +86,7 @@ public class SemanticAnalysis {
         add("Character");
         add("Digit");
         add("BoolOp");
+        add("IDENTIFIER");
         //add("BLOCK");
     }};
     
@@ -258,8 +261,12 @@ public class SemanticAnalysis {
                                 NonTerminal IsNotEqual = new NonTerminal("IsNotEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
                                 
                                 current_parent.addASTChild(IsNotEqual);
+                                Production previous_parent = current_parent; System.out.println("Saved Parent Name: " + previous_parent.getName());
+                                current_parent = IsNotEqual; // Update IsEqual to new parent
+                                recursiveDescent(nonterminal, index);
+
+                                current_parent = previous_parent; System.out.println("Reset Parent Name: " + previous_parent.getName());
                                 System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
-                                current_parent = IsNotEqual; 
                                 
                                 //recursiveDescent(nonterminal, index + 1); // Continue Recursion
                             }
