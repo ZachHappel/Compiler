@@ -279,29 +279,20 @@ public class SemanticAnalysis {
                     else if (nonterminal_name.equals("IntExpression")) {
                         System.out.println("INT EXPR: ");
                         if (nonterminal.getChildren().size() == 3) {
-                            // Digit, INTOP, Expression
-                            // Manually add Digit to Addition AST children, recursion on child index 2 (Expression), then reset parent
-                            if (nonterminal.getChild(1).getName().equals("INTOP")) {
-                                NonTerminal Addition = new NonTerminal("ADDITION");
-                                
-                                current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
-                                Production previous_parent = current_parent; // Store current parent 
-                                System.out.println("Saved Parent Name: " + previous_parent.getName());
-                                current_parent = Addition; // Update current parent to Addition
-                                recursiveDescent(nonterminal, index); // Recurse over Expression, child at index 2
-                                current_parent = previous_parent;
-                                System.out.println("Reset Parent Name: " + previous_parent.getName());
-                                System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
+                            NonTerminal Addition = new NonTerminal("ADDITION");
+                            current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
+                            Production previous_parent = current_parent; // Store current parent 
+                            System.out.println("Saved Parent Name: " + previous_parent.getName());
+                            current_parent = Addition; // Update current parent to Addition
+                            recursiveDescent(nonterminal, index); // Recurse over Expression, child at index 2
+                            current_parent = previous_parent;
+                            System.out.println("Reset Parent Name: " + previous_parent.getName());
+                            System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
 
-                                
-
-                                
-                            } else {/** ERROR */}
                             //String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); // SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE
                         } else {
                             Terminal digit = (Terminal) nonterminal.getChild(0).getChild(0);
                             current_parent.addASTChild(digit);
-
                         }
                     }
 
