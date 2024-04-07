@@ -48,7 +48,7 @@ public class SemanticAnalysis {
         add("DIGIT");
         //add("KEYWORD_")
     }};
-
+    
     public ArrayList<String> invalid_terminals = new ArrayList<String>(){{
         //add("KEYWORD_PRINT");
         add("SYMBOL_OPENBLOCK");
@@ -58,6 +58,7 @@ public class SemanticAnalysis {
         add("SYMBOL_STRINGEXPRBOUNDARY");
         add("SYMBOL_EQUIVALENCE");
         add("SYMBOL_INEQUIVALENCE");
+        add("SYMBOL_INTOP");
         
     }};
 
@@ -80,13 +81,13 @@ public class SemanticAnalysis {
         add("Type");
         add("Identifier");
         add("Expression");
-        add("IntExpression");
         add("BooleanValue");
         add("CharacterList");
         add("Character");
         add("Digit");
         add("BoolOp");
         add("IDENTIFIER");
+        add("INTOP");
         //add("BLOCK");
     }};
     
@@ -108,7 +109,7 @@ public class SemanticAnalysis {
         add("WhileStatement"); // While 
         add("IfStatement");  // If
         add("BooleanExpression"); // IfEqual or IfNotEqual
-
+        add("IntExpression");
         //add("StringExpression");
         //add("CharacterList");
     }};
@@ -170,6 +171,7 @@ public class SemanticAnalysis {
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
             Production c = p.getChild(i);
             String spaces = stringOfCharacters(index * 2, " ");
+            System.out.println("Type Checking: " + c.getClass() + "CST Children: " + (c.getClass().getSimpleName().equals("NonTerminal") ? getChildrenNames((NonTerminal) c) : "Not NonTerminal, Cannot Get Children"));
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
 
             if (is_terminal) {
@@ -178,10 +180,10 @@ public class SemanticAnalysis {
                 Terminal terminal = (Terminal) c; 
                 //System.out.println("Terminal: " + c.getName()); 
                 if (valid_terminals.contains(terminal.getName())) {
-                    System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
+                    System.out.println("\n\n*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
                 } else {
-                    System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
+                    System.out.println("\n\n*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
                     //System.out.println("Skipping Invalid Terminal: " + terminal.getName()); 
                 }
 
@@ -193,7 +195,7 @@ public class SemanticAnalysis {
                 NonTerminal nonterminal = (NonTerminal) c;
                 String nonterminal_name = nonterminal.getName();  
                 Production prev_parent = current_parent; 
-                System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
+                System.out.println("\n\n*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
                 NonTerminalsList.add((NonTerminal) c);
                 
                 
@@ -259,18 +261,47 @@ public class SemanticAnalysis {
                             } else if (bool_op_value.equals("SYMBOL_INEQUIVALENCE")) {
                                 System.out.println("Adding NonTerminal: IsNotEqual to Parent: " + current_parent.getName());
                                 NonTerminal IsNotEqual = new NonTerminal("IsNotEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
-                                
                                 current_parent.addASTChild(IsNotEqual);
-                                Production previous_parent = current_parent; System.out.println("Saved Parent Name: " + previous_parent.getName());
+                                Production previous_parent = current_parent; 
+                                System.out.println("Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsNotEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
-
-                                current_parent = previous_parent; System.out.println("Reset Parent Name: " + previous_parent.getName());
+                                current_parent = previous_parent; 
+                                System.out.println("Reset Parent Name: " + previous_parent.getName());
                                 System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
                                 
                                 //recursiveDescent(nonterminal, index + 1); // Continue Recursion
                             }
                             
+                        }
+                    }
+
+                    else if (nonterminal_name.equals("IntExpression")) {
+                        System.out.println("INT EXPR: ");
+                        if (nonterminal.getChildren().size() == 3) {
+                            // Digit, INTOP, Expression
+                            // Manually add Digit to Addition AST children, recursion on child index 2 (Expression), then reset parent
+                            if (nonterminal.getChild(1).getName().equals("INTOP")) {
+                                NonTerminal Addition = new NonTerminal("ADDITION");
+                                
+                                current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
+                                Production previous_parent = current_parent; // Store current parent 
+                                System.out.println("Saved Parent Name: " + previous_parent.getName());
+                                current_parent = Addition; // Update current parent to Addition
+                                recursiveDescent(nonterminal, index); // Recurse over Expression, child at index 2
+                                current_parent = previous_parent;
+                                System.out.println("Reset Parent Name: " + previous_parent.getName());
+                                System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
+
+                                
+
+                                
+                            } else {/** ERROR */}
+                            //String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); // SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE
+                        } else {
+                            Terminal digit = (Terminal) nonterminal.getChild(0).getChild(0);
+                            current_parent.addASTChild(digit);
+
                         }
                     }
 
