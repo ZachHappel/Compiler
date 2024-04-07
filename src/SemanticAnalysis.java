@@ -164,28 +164,26 @@ public class SemanticAnalysis {
 
         //Production = 
         if (index == 0 && p.getName().equals("Program")) {
-            System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
+                                                                                        System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
             index++;
         }
 
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
             Production c = p.getChild(i);
             String spaces = stringOfCharacters(index * 2, " ");
-            System.out.println("Type Checking: " + c.getClass() + "CST Children: " + (c.getClass().getSimpleName().equals("NonTerminal") ? getChildrenNames((NonTerminal) c) : "Not NonTerminal, Cannot Get Children"));
+            System.out.println("\n\n[index: " + index + "]\n**** Type Checking: " + c.getClass() + ", CST Children: " + (c.getClass().getSimpleName().equals("NonTerminal") ? getChildrenNames((NonTerminal) c) : "Not NonTerminal, Cannot Get Children"));
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
 
             if (is_terminal) {
-                TerminalsList.add(c.getName());
+               TerminalsList.add(c.getName());
 
                 Terminal terminal = (Terminal) c; 
                 //System.out.println("Terminal: " + c.getName()); 
                 if (valid_terminals.contains(terminal.getName())) {
-                    System.out.println("\n\n*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
+                    System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
-                } else {
-                    System.out.println("\n\n*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
-                    //System.out.println("Skipping Invalid Terminal: " + terminal.getName()); 
-                }
+                
+                } else System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
 
                 
             } 
@@ -195,43 +193,36 @@ public class SemanticAnalysis {
                 NonTerminal nonterminal = (NonTerminal) c;
                 String nonterminal_name = nonterminal.getName();  
                 Production prev_parent = current_parent; 
-                System.out.println("\n\n*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
+                System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
                 NonTerminalsList.add((NonTerminal) c);
                 
                 
                 
                 if (VALID_NONTERMINALS.contains(nonterminal_name)) {
-                    //nonterminal.addASTParent(current_parent); // may not be needed
-                    System.out.println("Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
-                    current_parent.addASTChild(nonterminal);
                     
-                    System.out.println("a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
+                                                                                        System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
+                    current_parent.addASTChild(nonterminal);                            System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
                     current_parent = nonterminal; 
-                    recursiveDescent(nonterminal, index + 1); // recurse on non-term
-                    System.out.println("Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                    recursiveDescent(nonterminal, index + 1); /* recurse on non-term */ System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                     current_parent = prev_parent;
                     
                 } else if (ACTIONABLE_NONTERMINALS.contains(nonterminal_name)) {
                     
                     if (nonterminal_name.equals("WhileStatement")) {
-                        System.out.println("Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
-                        NonTerminal while_node = new NonTerminal("While");
-                        current_parent.addASTChild(while_node);
-                        System.out.println("b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
+                        
+                        NonTerminal while_node = new NonTerminal("While");              System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
+                        current_parent.addASTChild(while_node);                         System.out.println("* b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
                         current_parent = while_node;
-                        recursiveDescent(nonterminal, index);
-                        System.out.println("!!!!Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                        recursiveDescent(nonterminal, index);                           System.out.println("** Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                         current_parent = prev_parent;
                     } 
                     
                     else if (nonterminal_name.equals("IfStatement")) {
-                        System.out.println("Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
+                                                                                        System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         NonTerminal if_node = new NonTerminal("If");
-                        current_parent.addASTChild(if_node);
-                        System.out.println("c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
+                        current_parent.addASTChild(if_node);                            System.out.println("* c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
                         current_parent = if_node;
-                        recursiveDescent(nonterminal, index);
-                        System.out.println("Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                        recursiveDescent(nonterminal, index);                           System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                         current_parent = prev_parent;
                     }
                     
@@ -239,36 +230,36 @@ public class SemanticAnalysis {
                         // Determine if NonTerm node that should be made should be called IsEqual or IsNotEqual OR if just true/false terminal-- which is not actionable
                         //System.out.println("NonTerminal Name - BooleanExpression");
                         if ( (nonterminal.getChild(0).getName().equals("BooleanValue")) ) {
-                            System.out.println("BooleanExpression Type: VALUE - Letting recursion continue normally");
+                            System.out.println("** BooleanExpression Type: VALUE - Letting recursion continue normally");
                             recursiveDescent(nonterminal, index + 1); // Let the terminal get added normally
+                        
                         } else {
                             // get Boolop, get Terminal, what is its name
-                            String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); // SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE
-                            System.out.println("BooleanExpression Type: " + bool_op_value);
+                            String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); /* SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE */   System.out.println("** BooleanExpression Type: " + bool_op_value);
                             
                             if (bool_op_value.equals("SYMBOL_EQUIVALENCE")) {
-                                System.out.println("Adding NonTerminal: IsEqual to Parent: " + current_parent.getName());
-                                
+                                                                                        System.out.println("** Adding NonTerminal: IsEqual to Parent: " + current_parent.getName());
+
                                 NonTerminal IsEqual = new NonTerminal("IsEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
                                 current_parent.addASTChild(IsEqual);
-                                Production previous_parent = current_parent; System.out.println("Saved Parent Name: " + previous_parent.getName());
+                                Production previous_parent = current_parent;            System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
-                                current_parent = previous_parent; System.out.println("Reset Parent Name: " + previous_parent.getName());
-                                System.out.println("d Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
-                                //recursiveDescent(nonterminal, index + 1); // Continue Recursion
+                                current_parent = previous_parent;                       System.out.println("* Reset Parent Name: " + previous_parent.getName());
+                                                                                        System.out.println("* d Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
+                                
                                 
                             } else if (bool_op_value.equals("SYMBOL_INEQUIVALENCE")) {
-                                System.out.println("Adding NonTerminal: IsNotEqual to Parent: " + current_parent.getName());
+                                                                                        System.out.println("** Adding NonTerminal: IsNotEqual to Parent: " + current_parent.getName());
                                 NonTerminal IsNotEqual = new NonTerminal("IsNotEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
                                 current_parent.addASTChild(IsNotEqual);
                                 Production previous_parent = current_parent; 
-                                System.out.println("Saved Parent Name: " + previous_parent.getName());
+                                                                                        System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsNotEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
                                 current_parent = previous_parent; 
-                                System.out.println("Reset Parent Name: " + previous_parent.getName());
-                                System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
+                                                                                        System.out.println("* Reset Parent Name: " + previous_parent.getName());
+                                                                                        System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
                                 
                                 //recursiveDescent(nonterminal, index + 1); // Continue Recursion
                             }
@@ -277,19 +268,17 @@ public class SemanticAnalysis {
                     }
 
                     else if (nonterminal_name.equals("IntExpression")) {
-                        System.out.println("INT EXPR: ");
+                                                                                        System.out.println("** INT EXPR: ");
                         if (nonterminal.getChildren().size() == 3) {
-                            NonTerminal Addition = new NonTerminal("ADDITION");
+                            NonTerminal Addition = new NonTerminal("ADDITION");         System.out.println("** Adding NonTerminal: Addition to Parent: " + current_parent.getName());
                             current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
-                            Production previous_parent = current_parent; // Store current parent 
-                            System.out.println("Saved Parent Name: " + previous_parent.getName());
+                            Production previous_parent = current_parent; /* Store current parent */ System.out.println("* Saved Parent Name: " + previous_parent.getName());
                             current_parent = Addition; // Update current parent to Addition
                             recursiveDescent(nonterminal, index); // Recurse over Expression, child at index 2
                             current_parent = previous_parent;
-                            System.out.println("Reset Parent Name: " + previous_parent.getName());
-                            System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
+                                                                                        System.out.println("* Reset Parent Name: " + previous_parent.getName());
+                                                                                        System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
 
-                            //String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); // SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE
                         } else {
                             Terminal digit = (Terminal) nonterminal.getChild(0).getChild(0);
                             current_parent.addASTChild(digit);
@@ -297,52 +286,33 @@ public class SemanticAnalysis {
                     }
 
                     else if (nonterminal_name.equals("StringExpression"))  {
-                        System.out.println("STRING EXPR: ");
-                        // /System.exit(0);
-                        String string_expr_string = extractStringFromStringExpression((NonTerminal) nonterminal.getChild(1));  // Pass first CharacterList
+                                                                                        System.out.println("** STRING EXPR: ");
+
+                        String string_expr_string = extractStringFromStringExpression((NonTerminal) nonterminal.getChild(1));  /* Pass first CharacterList */ System.out.println("* String: " + string_expr_string);
                         Terminal terminal_for_string_expression = new Terminal("Character"); 
                         terminal_for_string_expression.setTokenName(nonterminal_name);
                         terminal_for_string_expression.setTokenAttribute(string_expr_string);
-                        Token char_string_token = new Token(0, 0);
-                        System.out.println("Adding Terminal FOR String Expression: " + terminal_for_string_expression.getName() + " to Parent: " + current_parent.getName());
+                        Token char_string_token = new Token(0, 0);                      System.out.println("** Adding Terminal FOR String Expression: " + terminal_for_string_expression.getName() + " to Parent: " + current_parent.getName());
                         //char_string.setName("CHARACTER");
                         //char_string.setAttribute(string_expr_string);
                         //terminal_for_string_expression.addChild(char_string_token);
                         
                         current_parent.addASTChild(terminal_for_string_expression); // Add Terminal for StringExpression String to expression's AST children
-                        System.out.println("String: " + string_expr_string);
+                        
                     }
 
                     
                 } else if ( invalid_nonterminals.contains(nonterminal_name)) {
-                    System.out.println("Invalid NonTerminal... recursion");
+                    System.out.println("** Invalid NonTerminal... recursion");
                     recursiveDescent(c, index + 1);
                 }
                 
                 else {
-
-                    System.out.println("Something went horribly wrong");
-                        //System.out.println("ERROR: NonTerminal not in ANY list: " + nonterminal_name); 
+                    System.out.println("** Something went horribly wrong");
                     System.exit(0);
-                    
-                    //recursiveDescent(nonterminal, index + 1); // may need to incorporate third param for scope later
                 }
-
-
-
-
-                
-
-               // NonTerminalsList.add((NonTerminal) c);
-
-                //if (nonter)
-                
-                
-                //System.out.println("NonTerminal: " + c.getName());
             }
-
-            System.out.println("HEllo");
-            //recursiveDescent(c, index + 1);
+            //System.out.println("HEllo");
         }
     }
 
