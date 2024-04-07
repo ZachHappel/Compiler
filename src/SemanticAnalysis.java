@@ -156,7 +156,7 @@ public class SemanticAnalysis {
        
         
        
-        if (index >= 15) System.exit(0);
+        
 
         //Production = 
         if (index == 0 && p.getName().equals("Program")) {
