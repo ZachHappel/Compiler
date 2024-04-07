@@ -47,6 +47,7 @@ public class Production implements Cloneable {
     
     public Production getASTParent () {return this.ast_parent;}
     public Production getASTChild(int index) {return ast_children.get(index);}
+    public ArrayList<Production> getASTChildren () {return this.ast_children;}
     public void addASTChild (Production child) { this.ast_children.add(child); }
     public void addASTParent (Production parent) { this.ast_parent = parent;}
     public void removeASTChild (int index) { this.ast_children.remove(index);}
