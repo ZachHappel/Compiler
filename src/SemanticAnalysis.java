@@ -20,7 +20,7 @@ public class SemanticAnalysis {
 
     ArrayList<Production> AST = new ArrayList<Production>();
     Production current_parent;
-    Production prev_parent; 
+    //Production prev_parent; 
 
     /**
      * There is a Character NonTerminal and there is a CHARACTER Terminal. The NonTerminal, Character, is always the parent to the Terminal, CHARACTER. Within the CHARACTER, is the value. 
@@ -189,20 +189,22 @@ public class SemanticAnalysis {
                 
                 NonTerminal nonterminal = (NonTerminal) c;
                 String nonterminal_name = nonterminal.getName();  
-                prev_parent = current_parent; 
+                Production prev_parent = current_parent; 
                 System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
                 NonTerminalsList.add((NonTerminal) c);
-
-
-
+                
+                
+                
                 if (VALID_NONTERMINALS.contains(nonterminal_name)) {
                     //nonterminal.addASTParent(current_parent); // may not be needed
                     System.out.println("Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                     current_parent.addASTChild(nonterminal);
                     
-                    System.out.println("Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
+                    System.out.println("a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
                     current_parent = nonterminal; 
                     recursiveDescent(nonterminal, index + 1); // recurse on non-term
+                    System.out.println("Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                    current_parent = prev_parent;
                     
                 } else if (ACTIONABLE_NONTERMINALS.contains(nonterminal_name)) {
                     
@@ -210,18 +212,22 @@ public class SemanticAnalysis {
                         System.out.println("Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         NonTerminal while_node = new NonTerminal("While");
                         current_parent.addASTChild(while_node);
-                        System.out.println("Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
+                        System.out.println("b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
                         current_parent = while_node;
                         recursiveDescent(nonterminal, index);
+                        System.out.println("!!!!Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                        current_parent = prev_parent;
                     } 
                     
                     else if (nonterminal_name.equals("IfStatement")) {
                         System.out.println("Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         NonTerminal if_node = new NonTerminal("If");
                         current_parent.addASTChild(if_node);
-                        System.out.println("Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
+                        System.out.println("c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
                         current_parent = if_node;
                         recursiveDescent(nonterminal, index);
+                        System.out.println("Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                        current_parent = prev_parent;
                     }
                     
                     else if (nonterminal_name.equals("BooleanExpression")) {
@@ -244,7 +250,7 @@ public class SemanticAnalysis {
                                 current_parent = IsEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
                                 current_parent = previous_parent; System.out.println("Reset Parent Name: " + previous_parent.getName());
-                                System.out.println("Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
+                                System.out.println("d Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
                                 //recursiveDescent(nonterminal, index + 1); // Continue Recursion
                                 
                             } else if (bool_op_value.equals("SYMBOL_INEQUIVALENCE")) {
@@ -252,8 +258,9 @@ public class SemanticAnalysis {
                                 NonTerminal IsNotEqual = new NonTerminal("IsNotEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
                                 
                                 current_parent.addASTChild(IsNotEqual);
-                                System.out.println("Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
+                                System.out.println("e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
                                 current_parent = IsNotEqual; 
+                                
                                 //recursiveDescent(nonterminal, index + 1); // Continue Recursion
                             }
                             
