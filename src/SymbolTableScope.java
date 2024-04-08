@@ -17,10 +17,28 @@ public class SymbolTableScope {
         this.name = name;
     }
 
+    public String getName () {
+        return this.name;
+    }
+
     public void setScopeParent (SymbolTableScope x) {this.parent = x;}
     public void addScopeChild (SymbolTableScope x) {this.children.add(x);}
     public ArrayList<SymbolTableScope> getScopeChildren () {return this.children;}
+    public boolean hasChildren () { return this.children.size() > 0 ? true : false; }
+    public SymbolTableScope getLastChild () { return this.children.get(children.size() - 1);}
 
+    public SymbolTableScope getScopeParent () {
+        if (parent == null) System.out.println("ERROR: Parent unset"); // Unchecked
+        return this.parent;
+
+    }
+
+    public boolean hasParent () {
+        if (!(parent == null)) return true;
+        else return false;
+    } 
+    
+    
 
     public void createAndInsertEntry (String id, String type, boolean is_initialized, boolean is_used) {
         SymbolTableEntry new_entry = new SymbolTableEntry(type, is_initialized, is_used);

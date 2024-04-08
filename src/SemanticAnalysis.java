@@ -24,7 +24,8 @@ public class SemanticAnalysis {
     public Production current_parent;
     public int block_index = 0;
     public ArrayList<String> block_indexes = new ArrayList<>(); 
-    public Map<String, Map<String, String>> symbol_table = new HashMap<>();
+    //public Map<String, Map<String, String>> symbol_table = new HashMap<>();
+    public SymbolTable symbol_table = new SymbolTable();
 
     //Production prev_parent; 
 
@@ -201,7 +202,12 @@ public class SemanticAnalysis {
                 Production prev_parent = current_parent; 
                 System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
 
-                if (nonterminal_name.equals("BLOCK")) block_index++;
+                if (nonterminal_name.equals("BLOCK")) {
+                    System.out.println("\n\n\nENTERING BLOCK\n\n");
+                    symbol_table.createNewScope();
+                }
+                block_index++;
+
 
                 NonTerminalsList.add((NonTerminal) c);
                 
@@ -319,6 +325,11 @@ public class SemanticAnalysis {
                 else {
                     System.out.println("** Something went horribly wrong");
                     System.exit(0);
+                }
+
+                if (nonterminal_name.equals("BLOCK")) {
+                    symbol_table.exitScope();
+                    System.out.println("\n\n\n EXIT BLOCK\n\n");
                 }
             }
             //System.out.println("HEllo");
