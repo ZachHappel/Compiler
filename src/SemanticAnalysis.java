@@ -14,12 +14,18 @@
         add("CharacterList");
  */
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SemanticAnalysis {
 
 
-    ArrayList<Production> AST = new ArrayList<Production>();
-    Production current_parent;
+    public ArrayList<Production> AST = new ArrayList<Production>();
+    public Production current_parent;
+    public int block_index = 0;
+    public ArrayList<String> block_indexes = new ArrayList<>(); 
+    public Map<String, Map<String, String>> symbol_table = new HashMap<>();
+
     //Production prev_parent; 
 
     /**
@@ -194,6 +200,9 @@ public class SemanticAnalysis {
                 String nonterminal_name = nonterminal.getName();  
                 Production prev_parent = current_parent; 
                 System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
+
+                if (nonterminal_name.equals("BLOCK")) block_index++;
+
                 NonTerminalsList.add((NonTerminal) c);
                 
                 
