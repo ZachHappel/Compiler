@@ -1,13 +1,14 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SymbolTable {
     
         //Scope       ID     {type, isInitialized, isUsed, etc.}
     //new Map<String,Map<String,SymbolTableEntry>>() {};
-    public Map<String, SymbolTableScope> table = new HashMap<>(); 
+    public Map<String, SymbolTableScope> table = new LinkedHashMap<>(); 
 
     //public String currentScopeName;
     public SymbolTableScope current_scope; 
@@ -35,12 +36,21 @@ public class SymbolTable {
 
 
     public boolean endsInLetter (String s) {
-        
+        String last_char = "" + s.charAt(s.length() - 1);
+        if (alpha.contains(last_char)) {
+            System.out.print(", Alpha contains: " + last_char + ", returning true");
+            return true;
+        } else {
+            System.out.println(", Alpha DOES NOT contains: " + last_char + ", returning false");
+            return false;
+        }
+        /**
+        System.out.println("Last letter: " + last_char);
         return (
             alpha.contains(s.charAt(s.length() - 1)) ?
             true :
             false
-        );
+        ); **/
     }
 
 
@@ -51,6 +61,7 @@ public class SymbolTable {
     public void createNewScope() {
         String new_scope_name = "";
         String current_scope_name = this.current_scope.getName();
+        System.out.println("Current Scopes: " + getScopeNames()); 
         System.out.println("Current Scope Name: " + current_scope_name);
 
 
@@ -60,21 +71,44 @@ public class SymbolTable {
             System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
             SymbolTableScope currents_parent = current_scope.getScopeParent();
             if (currents_parent.hasChildren()) {
-                System.out.print("current scope has children parent, ");
+                System.out.print("the current scope's parent has children, ''" + currents_parent.getAllChildrenNames() + "'', ");
+                System.out.print(", current scope's children, ''" + current_scope.getAllChildrenNames() + "'', ");
                 //Siblings exist
-                SymbolTableScope last_child = currents_parent.getLastChild();
-                String last_child_name = last_child.getName(); 
-                if ( endsInLetter(last_child_name) ) {
-                    System.out.println("ends in letter, ");
-                    int next_alpha_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1;
-                    new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next number to append
-                    System.out.println("i) New Scope Name: " + new_scope_name);
+                
+                if (current_scope.hasChildren()) {
+                    SymbolTableScope last_child = current_scope.getLastChild();
+                    String last_child_name = last_child.getName(); 
+                    System.out.print("last child name: " + last_child_name);
+                    if ( endsInLetter(last_child_name) ) {
+                        System.out.println(", ends in letter, ");
+                        int next_numbs_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
+                        new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_numbs_index); // Next number to append
+                        //new_scope_name = last_child_name + numbs.get(next_numbs_index); // Next number to append
+                        System.out.println("i) New Scope Name: " + new_scope_name);
+                    
+                    } else {
+                        System.out.println("~ends in number, ");
+                        String last_number = String.valueOf(last_child_name.charAt(last_child_name.length() - 1));
+                        int last_number_as_int = Integer.parseInt(last_number);  
+                        int next_alpha_index = numbs.indexOf(last_number_as_int) + 1;
+                        new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_alpha_index); // Next number to append
+                        //new_scope_name = last_child_name + alpha.get(next_alpha_index); // Next number to append
+                        System.out.println("ii) New Scope Name: " + new_scope_name);
+                    }
                 } else {
-                    System.out.println(", ends in number, ");
-                    int next_numbs_index = numbs.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
-                    new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_numbs_index); // Next number to append
-                    System.out.println("ii) New Scope Name: " + new_scope_name);
+                    System.out.println("Xxx"); 
+                    SymbolTableScope last_child = currents_parent.getLastChild();
+                    String last_child_name = last_child.getName(); 
+                    System.out.print("Xxx last child name: " + last_child_name);
+                    // Only will work if length of name > 1 
+                    if (endsInLetter(last_child_name)) {
+                        new_scope_name = last_child_name + numbs.get(0);
+                        
+                    } else {
+                        new_scope_name = last_child_name + alpha.get(0);
+                    }
                 }
+                
             } else {
                 // Only will work if length of name > 1 
                 if (endsInLetter(current_scope_name)) {
@@ -112,6 +146,17 @@ public class SymbolTable {
         
     }
 
+
+    public String getScopeNames () {
+        String scope_names = "";
+        
+        for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
+            //if ( (entry.getValue()).size() > max ) max = (entry.getValue()).size();
+            //System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
+            scope_names+= scope_n.getKey() + ", ";
+        }
+        return scope_names; 
+    }
 
 
 }
