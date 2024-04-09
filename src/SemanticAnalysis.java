@@ -362,7 +362,8 @@ public class SemanticAnalysis {
             Production c = p.getASTChild(i);
             String spaces = stringOfCharacters(index * 2, " ");
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
-            if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "] AST Children: " + getASTChildrenNames(c)); } 
+            //if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "] AST Children: " + getASTChildrenNames(c)); } 
+            if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "]"); } 
             else { System.out.println(spaces + index + stringOfCharacters(2, " ") + " < " + ((Terminal) c).getTokenAttribute() + " >"); }
             recursivePrint(c, index + 1);
         }
@@ -379,7 +380,8 @@ public class SemanticAnalysis {
         current_parent = ast_starting_block;
         recursiveDescent(derivation.get(0).getChild(0), 1);
         
-
+        System.out.println("Symbol Table Scopes: " + symbol_table.getScopeNames()) ;
+        System.out.println("\n\nAbstract Syntax Tree\n"); 
         recursivePrint(AST.get(0), 0);
         /**
         for (int x = 0; x <= TerminalsList.size() - 1; x++) {

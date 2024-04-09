@@ -81,8 +81,11 @@ public class SymbolTable {
                     System.out.print("last child name: " + last_child_name);
                     if ( endsInLetter(last_child_name) ) {
                         System.out.println(", ends in letter, ");
-                        int next_numbs_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
-                        new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_numbs_index); // Next number to append
+                        String last_letter = String.valueOf(last_child_name.charAt(last_child_name.length() - 1));
+                        //int last_number_as_int = Integer.parseInt(last_number);  
+                        int next_alpha_index = alpha.indexOf(last_letter) + 1;
+                        //int next_numbs_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
+                        new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next number to append
                         //new_scope_name = last_child_name + numbs.get(next_numbs_index); // Next number to append
                         System.out.println("i) New Scope Name: " + new_scope_name);
                     
