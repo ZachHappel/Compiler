@@ -51,22 +51,26 @@ public class SymbolTable {
     public void createNewScope() {
         String new_scope_name = "";
         String current_scope_name = this.current_scope.getName();
-
+        System.out.println("Current Scope Name: " + current_scope_name);
 
 
         // Need to remediate root scope not having parent 
         // Need to prevent integer overflow if more than 9 siblings and 26, depending on whether number or char
         if ( current_scope.hasParent() )  {
+            System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
             SymbolTableScope currents_parent = current_scope.getScopeParent();
             if (currents_parent.hasChildren()) {
+                System.out.print("current scope has children parent, ");
                 //Siblings exist
                 SymbolTableScope last_child = currents_parent.getLastChild();
                 String last_child_name = last_child.getName(); 
                 if ( endsInLetter(last_child_name) ) {
+                    System.out.println("ends in letter, ");
                     int next_alpha_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1;
                     new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next number to append
                     System.out.println("i) New Scope Name: " + new_scope_name);
                 } else {
+                    System.out.println(", ends in number, ");
                     int next_numbs_index = numbs.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
                     new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_numbs_index); // Next number to append
                     System.out.println("ii) New Scope Name: " + new_scope_name);
@@ -81,6 +85,7 @@ public class SymbolTable {
                 }
             }
         } else {
+            System.out.println("Current scope has no parent");
             new_scope_name = current_scope_name + alpha.get(0); // ROOT
         }
 
@@ -88,7 +93,7 @@ public class SymbolTable {
         //NOTE:  Are changes being recorded within the HashMap or do they need to be manually done? ?????
         SymbolTableScope new_scope = new SymbolTableScope(new_scope_name);
         
-        System.out.println("Current Scope Name: " + current_scope_name);
+        
         System.out.println("iii) New Scope Name: " + new_scope_name);
         new_scope.setScopeParent(current_scope); // Dive in
         current_scope.addScopeChild(new_scope);
@@ -110,3 +115,61 @@ public class SymbolTable {
 
 
 }
+
+
+
+/** 
+public void createNewScope() {
+    String new_scope_name = "";
+    String current_scope_name = this.current_scope.getName();
+    System.out.println("Current Scope Name: " + current_scope_name);
+
+
+    // Need to remediate root scope not having parent 
+    // Need to prevent integer overflow if more than 9 siblings and 26, depending on whether number or char
+    if ( current_scope.hasParent() )  {
+        System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
+        SymbolTableScope currents_parent = current_scope.getScopeParent();
+        if (currents_parent.hasChildren()) {
+            System.out.print("current scope has children parent, ");
+            //Siblings exist
+            SymbolTableScope last_child = currents_parent.getLastChild();
+            String last_child_name = last_child.getName(); 
+            if ( endsInLetter(last_child_name) ) {
+                System.out.println("ends in letter, ");
+                int next_alpha_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1;
+                new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next number to append
+                System.out.println("i) New Scope Name: " + new_scope_name);
+            } else {
+                System.out.println(", ends in number, ");
+                int next_numbs_index = numbs.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
+                new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_numbs_index); // Next number to append
+                System.out.println("ii) New Scope Name: " + new_scope_name);
+            }
+        } else {
+            // Only will work if length of name > 1 
+            if (endsInLetter(current_scope_name)) {
+                new_scope_name = current_scope_name.substring(0, current_scope_name.length() - 1) + numbs.get(0);
+                
+            } else {
+                new_scope_name = current_scope_name.substring(0, current_scope_name.length() - 1) + alpha.get(0);
+            }
+        }
+    } else {
+        System.out.println("Current scope has no parent");
+        new_scope_name = current_scope_name + alpha.get(0); // ROOT
+    }
+
+
+    //NOTE:  Are changes being recorded within the HashMap or do they need to be manually done? ?????
+    SymbolTableScope new_scope = new SymbolTableScope(new_scope_name);
+    
+    
+    System.out.println("iii) New Scope Name: " + new_scope_name);
+    new_scope.setScopeParent(current_scope); // Dive in
+    current_scope.addScopeChild(new_scope);
+    setCurrentScope(new_scope);
+    table.put(new_scope_name, new_scope);
+
+}
+**/
