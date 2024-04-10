@@ -286,10 +286,10 @@ public class SemanticAnalysis {
                         found_assignment_leftside = true;
                         
                     } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
-                        System.out.println("Its me ");
+                        System.out.println("Its me! ");
                         // does identifier exist in the table, if not error
                         // if so, is it same as left side type
-                        // get left side type 
+                        // get left side type  
                         // get current identifier type by looking it up
                         boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(found_assignment_identifier);
                         String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(found_assignment_identifier);
