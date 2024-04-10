@@ -226,7 +226,8 @@ public class SemanticAnalysis {
 
                 // Prevent anything other than DIGIT and SYMBOL_INTOP from appearing within Addition... We do not want anything other than DIGITs being summed
                 // Wait... need to check if IDENTIFIER, if of type -- then it is okay
-                if ( within_addition && 
+                
+                /**if ( within_addition && 
                     !( (
                         (terminal_name.equals("SYMBOL_INTOP")) || 
                         (terminal_name.equals("DIGIT")) 
@@ -237,7 +238,50 @@ public class SemanticAnalysis {
                     System.out.println("Term Name: " + terminal_name);
                     System.out.println("Unable to add anything but digits"); 
                     System.exit(0); // Err
+                }**/
+                /**
+                 *  if ( within_addition && 
+                    ( (
+                        (terminal_name.equals("SYMBOL_INTOP")) || 
+                        (terminal_name.equals("DIGIT")) || 
+                        (terminal_name.equals("IDENTIFIER"))
+                        
+                    )) ) {
+
+                        if (terminal_name.equals("IDENTIFIER")) {
+                            if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, "int")) {
+                                System.out.println("We are solid! CONTINUE");
+                            } else {
+                                System.out.println("Identifier, but not one that is compatible with addition");
+                                System.exit(0);
+                            }
+                        }
+
+                        System.out.println("Not Identifier, either intop or digit");
                 }
+                 */
+
+                if (within_addition) {
+
+                    if ((terminal_name.equals("SYMBOL_INTOP")) || 
+                        (terminal_name.equals("DIGIT")) || 
+                        (terminal_name.equals("IDENTIFIER"))) {
+                            if (terminal_name.equals("IDENTIFIER")) {
+                                if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, "int")) {
+                                    System.out.println("We are solid! CONTINUE");
+                                } else {
+                                    System.out.println("Identifier, but not one that is compatible with addition");
+                                    System.exit(0);
+                                }
+                            }
+                        }
+                    else {
+                        System.out.println("Not valid. Cannot use " + terminal_name + " within Addition");
+                        System.exit(0);
+                    }
+
+                }
+               
            
                 if (valid_terminals.contains(terminal_name)) {
                     
@@ -396,6 +440,8 @@ public class SemanticAnalysis {
                       //char_string.setName("CHARACTER");
                         //char_string.setAttribute(string_expr_string);
                         //terminal_for_string_expression.addChild(char_string_token);
+
+                    // "", "string", r=j should not work, where r and j are both strings
                     else if (nonterminal_name.equals("StringExpression"))  {
                                                                                         System.out.println("** STRING EXPR: ");
 
@@ -414,7 +460,7 @@ public class SemanticAnalysis {
                                 within_assignment = false; 
                             }
                         } 
-                        
+
                         current_parent.addASTChild(terminal_for_string_expression); // Add Terminal for StringExpression String to expression's AST children
                         
                     }
