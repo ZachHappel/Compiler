@@ -107,6 +107,7 @@ public class SymbolTable {
                     SymbolTableScope last_child = currents_parent.getLastChild();
                     String last_child_name = last_child.getName(); 
                     System.out.print("Xxx last child name: " + last_child_name);
+                    
                     // Only will work if length of name > 1 
                     if (endsInLetter(last_child_name)) {
                         new_scope_name = last_child_name + numbs.get(0);
@@ -131,9 +132,7 @@ public class SymbolTable {
         }
 
 
-        //NOTE:  Are changes being recorded within the HashMap or do they need to be manually done? ?????
         SymbolTableScope new_scope = new SymbolTableScope(new_scope_name);
-        
         
         System.out.println("iii) New Scope Name: " + new_scope_name);
         new_scope.setScopeParent(current_scope); // Dive in
@@ -236,21 +235,40 @@ public class SymbolTable {
     }
 
 
+    // Finds entry of identifier value, returns the type associated with
     public String getTypeFromAccessibleScopes (Terminal identifier_terminal) {
         SymbolTableEntry entry = retrieveEntryFromAccessibleScopes(identifier_terminal);
         String type = entry.getType();
         return type;
     }
 
+    // Returns first occurence, from current scope backtracking upwards through the scope
+    // If already declared in current scope, returns name of current scope
+    public String getConflictingScopeName (Terminal identifier_terminal) throws SemanticAnalysisException{
+        ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes(); // Obtain which it has reach/access to
+        String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
+        if (current_scope.entryExists(identifier_value)) {
+            return current_scope.getName(); // Scope where entry with same identifer exists
+        } else {
+            for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
+                SymbolTableScope scope = current_scope_accessibles.get(s);
+                if (scope.entryExists(identifier_value)) {
+                    return scope.getName(); // Scope where entry with same identifer exists
+                    
+                }
+            }
+        } throw new SemanticAnalysisException("SymbolTable, getConflictingScopeName()", "Unable to locate conflicting scope name.");
+    }
+
 
 
     
-    // E.g., scenario could be getTypeFromAccessibleScope is used to get 
+    // Returns true if type = any of the variations 
+    // Used for comparing types and assignments, ensuring they are correctly associated
     public boolean isValidAssignment (String type, String assignment_type) {
-        
-        // DIGIT, KEYWORD_TRUE, KEYWORD_FALSE
+
         // type: int, string, boolean
-        // if int: DIGIT, int (if x = y, where y was already declared an int) 
+        
         if ( type.equals("boolean") && ( 
             (assignment_type.equals("KEYWORD_TRUE") || 
             (assignment_type.equals("KEYWORD_FALSE")) ||
@@ -289,81 +307,16 @@ public class SymbolTable {
     }
 
 
-    // Needs to throw error if cannot enter
-    public void performEntry(Terminal type_terminal, Terminal identifier_terminal) {
-        // Current scope depenedent
-        // When checking to see if it has been declared, declaration checks need ONLY be done on affected scopes 
+    // Creates entry in current scope. First checks if there exists conflicts with scopes accessible to current scope, or the current scope itself
+    public void performEntry(Terminal type_terminal, Terminal identifier_terminal) throws SemanticAnalysisException {
         System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
         String type_value = type_terminal.getTokenAttribute(); // Type
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
         if (!existsWithinAccessibleScopes(identifier_terminal)) {
             current_scope.createAndInsertEntry(type_value, identifier_value, true, false);
         } else {
-            System.out.println("Variable already exists with the ID: " + identifier_value);
-            System.exit(0);
+            throw new SemanticAnalysisException
+            ("SymbolTable, performEntry()", "Variable already exists with ID, " + identifier_value + ". Conflicting declaration exists within Scope: " + getConflictingScopeName(identifier_terminal) );
         }// Error
-        
-        
-
     }
-
-
 }
-
-
-
-/** 
-public void createNewScope() {
-    String new_scope_name = "";
-    String current_scope_name = this.current_scope.getName();
-    System.out.println("Current Scope Name: " + current_scope_name);
-
-
-    // Need to remediate root scope not having parent 
-    // Need to prevent integer overflow if more than 9 siblings and 26, depending on whether number or char
-    if ( current_scope.hasParent() )  {
-        System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
-        SymbolTableScope currents_parent = current_scope.getScopeParent();
-        if (currents_parent.hasChildren()) {
-            System.out.print("current scope has children parent, ");
-            //Siblings exist
-            SymbolTableScope last_child = currents_parent.getLastChild();
-            String last_child_name = last_child.getName(); 
-            if ( endsInLetter(last_child_name) ) {
-                System.out.println("ends in letter, ");
-                int next_alpha_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1;
-                new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next number to append
-                System.out.println("i) New Scope Name: " + new_scope_name);
-            } else {
-                System.out.println(", ends in number, ");
-                int next_numbs_index = numbs.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
-                new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_numbs_index); // Next number to append
-                System.out.println("ii) New Scope Name: " + new_scope_name);
-            }
-        } else {
-            // Only will work if length of name > 1 
-            if (endsInLetter(current_scope_name)) {
-                new_scope_name = current_scope_name.substring(0, current_scope_name.length() - 1) + numbs.get(0);
-                
-            } else {
-                new_scope_name = current_scope_name.substring(0, current_scope_name.length() - 1) + alpha.get(0);
-            }
-        }
-    } else {
-        System.out.println("Current scope has no parent");
-        new_scope_name = current_scope_name + alpha.get(0); // ROOT
-    }
-
-
-    //NOTE:  Are changes being recorded within the HashMap or do they need to be manually done? ?????
-    SymbolTableScope new_scope = new SymbolTableScope(new_scope_name);
-    
-    
-    System.out.println("iii) New Scope Name: " + new_scope_name);
-    new_scope.setScopeParent(current_scope); // Dive in
-    current_scope.addScopeChild(new_scope);
-    setCurrentScope(new_scope);
-    table.put(new_scope_name, new_scope);
-
-}
-**/

@@ -1,16 +1,14 @@
 
 public class SemanticAnalysisException extends Exception {
     
-    public SemanticAnalysisException (String location, String reason, String expected, String received, Token current_token) {
-        //String message = ; 
+    public SemanticAnalysisException (String location, String reason) {
+
         super(
-            "\n[ SEMANTIC ANALYSIS ERROR - " + location + "\n Reason:" + reason + ", \n Expected: " + expected + " \n Received: " + received + 
-        ", \n Token Information: \n - Name: " + current_token.getName() + "\n - Attribute: " + current_token.getAttribute() + "\n - Line Number: " + current_token.getEndLineNumber() + " ]" ); 
+            "\n[ SEMANTIC ANALYSIS ERROR - " + location + "\n Reason:" + reason + " ]" ); 
     }
 
-    public SemanticAnalysisException(String location, String reason, String expected, String received, Token current_token, Throwable cause)  {
-        super(
-            "\n[ SEMANTIC ANALYSIS ERROR - " + location + "\n Reason:" + reason + ", \n Expected: " + expected + " \n Received: " + received + 
-        ", \n Token Information: \n - Name: " + current_token.getName() + "\n - Attribute: " + current_token.getAttribute() + "\n - Line Number: " + current_token.getEndLineNumber() + " ]" , cause);
+    public SemanticAnalysisException(String location, String reason, Throwable cause)  {
+         super(
+            "\n[ SEMANTIC ANALYSIS ERROR - " + location + "\n Reason:" + reason + " ]" ); 
     }
 }

@@ -117,45 +117,12 @@ public class SemanticAnalysis {
     }};
     
     public ArrayList<String> ACTIONABLE_NONTERMINALS = new ArrayList<String>(){{
-        //add("VarDeclStatement");
         
-        //add("PrintStatement"); // Summation of CharacterList within the Expression which is contained within print(" EXPR ")
-        // Ignored Terminals: KEYWORD_PRINT, SYMBOL_OPENPAREN, SYMBOL_STRINGEXPRBOUNDARY, SYMBOL_CLOSEPAREN
-        // PrintStatement is Parent, a nonterminal
-        // Analyzed further is Expression
-        // Think PrintStatement handling should reach down to Expression and then down to StringExpression because we know it is there
-        // -> This would mean we would never have to handle StringExpression again
-        // This would also deal with CharacterList
-        // PrintStatement parent will be new sort of terminal 
-
-
-        //add("AssignmentStatement");
         add("StringExpression");
         add("WhileStatement"); // While 
         add("IfStatement");  // If
         add("BooleanExpression"); // IfEqual or IfNotEqual
         add("IntExpression");
-        //add("StringExpression");
-        //add("CharacterList");
-    }};
-
-
-    // These NonTerminals will never be added to the CST, as they provide unnecessary concrete detail and not pertinent to the future steps, which include code gen
-    public ArrayList<String> ignore = new ArrayList<String>(){{
-        add("StatementList");
-        add("Statement");
-        add("Expression");
-        add("VarDeclStatement");
-        add("PrintStatement");
-        add("AssignmentStatement");
-        add("WhileStatement");
-        add("IfStatement");
-        
-        //add("BooleanExpression"); 
-        // Get its own weird thing
-
-        add("StringExpression");
-        add("CharacterList");
     }};
 
     public ArrayList<String> types = new ArrayList<String>(){{
@@ -166,10 +133,8 @@ public class SemanticAnalysis {
 
     public ArrayList<String> assignment_rhs = new ArrayList<String>(){{
         add("KEYWORD_TRUE");
-        add("KEYWORD_FALSE");  // // string? //digit? 
-        // Need NonTerminal "IntExpression", child is Digit, which has Terminal of value instead of the Token itself... Which makes sense as that was required AST printing...but idk
-        // Same happens for StringExpression, if I remember correctly 
-
+        add("KEYWORD_FALSE");
+        
         // Wait, we do not need the actual value right now... We just need make sure that it is being given the correct value, as it corresponds to its declaration...
 
         // What we do still need to do is make sure that comparisons (== / != ) are using correct types
@@ -186,6 +151,14 @@ public class SemanticAnalysis {
     }};
     
 
+    // Thought process / Thoughts to self / What inspired this approach
+    // Ignored Terminals: KEYWORD_PRINT, SYMBOL_OPENPAREN, SYMBOL_STRINGEXPRBOUNDARY, SYMBOL_CLOSEPAREN
+    // PrintStatement is Parent, a nonterminal
+    // Analyzed further is Expression
+    // Think PrintStatement handling should reach down to Expression and then down to StringExpression because we know it is there
+    // -> This would mean we would never have to handle StringExpression again
+    // This would also deal with CharacterList
+    // PrintStatement parent will be new sort of terminal 
     public String extractStringFromStringExpression (NonTerminal str_expr) {
         String str = ""; 
         System.out.println("Str Expr Children: " + getChildrenNames(str_expr));
@@ -209,7 +182,7 @@ public class SemanticAnalysis {
      * Apparently, according to HoF compilers, the issue that I have been chasing down -- that which permits the likes of "x = 3 + j + j" where x and j are variables -- is
      * not an actual valid case within our grammar.. Oops. 
      */
-    public void recursiveDescent (Production p, int index) {
+    public void recursiveDescent (Production p, int index) throws SemanticAnalysisException {
 
 
         if (index == 0 && p.getName().equals("Program")) {
@@ -246,11 +219,14 @@ public class SemanticAnalysis {
                                 }
                             }
                         }
+                    
                     else {
                         System.out.println("Err: Not valid. Cannot use " + terminal_name + " within Addition");
+                        
                         System.exit(0);
                     }
 
+                    
                 }
                
            
@@ -555,7 +531,7 @@ public class SemanticAnalysis {
         }
     }
     
-    public void performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) {
+    public void performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) throws SemanticAnalysisException {
         System.out.println("\n\nSEMANTIC ANALYSIS:");
         
         
