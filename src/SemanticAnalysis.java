@@ -281,10 +281,12 @@ public class SemanticAnalysis {
 
 
                     if (within_assignment && terminal_name.equals("IDENTIFIER") && !(found_assignment_leftside)) {
+                        System.out.println("Hello");
                         found_assignment_identifier = terminal;
                         found_assignment_leftside = true;
-
+                        
                     } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
+                        System.out.println("Its me ");
                         // does identifier exist in the table, if not error
                         // if so, is it same as left side type
                         // get left side type 
