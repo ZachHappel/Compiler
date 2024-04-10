@@ -28,9 +28,13 @@ public class SemanticAnalysis {
     public SymbolTable symbol_table = new SymbolTable();
     
     public boolean within_vardecl = false;
+    public boolean within_assignment = false;
     public Terminal found_vardecl_type;
     public Terminal found_vardecl_identifier;
+    public Terminal found_assignment_identifier;
+    public Terminal found_assignment_value;
 
+    public boolean within_addition = false; //prevent addition of digit + boolean/string, etc.... Know for sure, DIGIT + DIGIT + DIGIT + ... 
     // SYMBOL_CLOSEBLOCK, 
 
     //Production prev_parent; 
@@ -151,6 +155,25 @@ public class SemanticAnalysis {
         add("KEYWORD_STRING");
         add("KEYWORD_BOOLEAN");
     }};
+
+    public ArrayList<String> assignment_rhs = new ArrayList<String>(){{
+        add("KEYWORD_TRUE");
+        add("KEYWORD_FALSE");  // // string? //digit? 
+        // Need NonTerminal "IntExpression", child is Digit, which has Terminal of value instead of the Token itself... Which makes sense as that was required AST printing...but idk
+        // Same happens for StringExpression, if I remember correctly 
+
+        // Wait, we do not need the actual value right now... We just need make sure that it is being given the correct value, as it corresponds to its declaration...
+
+        // What we do still need to do is make sure that comparisons (== / != ) are using correct types
+        // e.g., while (b == true)
+        //       while (true == true)
+        //       while (true == b)
+        //       where in either case, lhs and rhs are either boolval or a variable previously declared as being boolean 
+        // IN ALL COMPILER HOFs... None of them incorporate whether or not variables need assignment prior to being used.............. Wtf. I guess that is not required? 
+        // Seems cheap to leave that out, but also... I am not complaining, I guess. I would implement it myself, but it could be a my misunderstanding of theory and this just something
+        // that is not a function of semantic analysis? 
+
+    }};
     
 
     public String extractStringFromStringExpression (NonTerminal str_expr) {
@@ -196,21 +219,37 @@ public class SemanticAnalysis {
                TerminalsList.add(c.getName());
 
                 Terminal terminal = (Terminal) c; 
-                //System.out.println("Terminal: " + c.getName()); 
-                
-                if (valid_terminals.contains(terminal.getName())) {
+                String terminal_name = terminal.getName();
+                //System.out.println("Terminal: " + c.getName());
+
+                // Prevent anything other than DIGIT and SYMBOL_INTOP from appearing within Addition... We do not want anything other than DIGITs being summed
+                if ( within_addition && !( (terminal_name.equals("SYMBOL_INTOP") || (terminal_name.equals("DIGIT")))) ) {
+                    System.out.println("Term Name: " + terminal_name);
+                    System.out.println("Unable to add anything but digits"); 
+                    System.exit(0); // Err
+                }
+           
+                if (valid_terminals.contains(terminal_name)) {
                     
 
                     // Found VarDecl Type
-                    if (types.contains(terminal.getName()) && within_vardecl) {
+                    if (within_vardecl && types.contains(terminal_name)) {
                         found_vardecl_type = terminal;    
                     }
                     // Found VarDecl Identifier
-                    if (terminal.getName().equals("IDENTIFIER") && within_vardecl) {
+                    if (within_vardecl && terminal_name.equals("IDENTIFIER")) {
                         found_vardecl_identifier = terminal;
                         symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
                         within_vardecl = false; //No longer in Variable Declaration, flip back to false
                     }
+
+
+                    if (within_assignment && terminal_name.equals("IDENTIFIER")) {
+                        found_assignment_identifier = terminal;
+                    }
+
+                    
+                    //if (within_assignment && terminal_name.equals())
 
                     
 
@@ -243,6 +282,7 @@ public class SemanticAnalysis {
                 if (VALID_NONTERMINALS.contains(nonterminal_name)) {
                     
                     if (nonterminal_name.equals("VarDeclStatement")) within_vardecl = true;  // Within Variable Decl moving forward
+                    if (nonterminal_name.equals("AssignmentStatement")) within_assignment = true;  // Within Variable Decl moving forward
 
                                                                                         System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                     current_parent.addASTChild(nonterminal);                            System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
@@ -318,7 +358,11 @@ public class SemanticAnalysis {
                             current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
                             Production previous_parent = current_parent; /* Store current parent */ System.out.println("* Saved Parent Name: " + previous_parent.getName());
                             current_parent = Addition; // Update current parent to Addition
+                            
+                            within_addition = true;
                             recursiveDescent(nonterminal, index); // Recurse over Expression, child at index 2
+                            within_addition = false; 
+                            
                             current_parent = previous_parent;
                                                                                         System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
