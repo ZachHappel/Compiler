@@ -286,10 +286,7 @@ public class SemanticAnalysis {
                         found_assignment_leftside = true;
                         
                     } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
-                        // does identifier exist in the table, if not error
-                        // if so, is it same as left side type
-                        // get left side type  
-                        // get current identifier type by looking it up
+                        // does identifier exist in the table, if not error, f so, is it same as left side type, get left side type, get current identifier type by looking it up
                         boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(found_assignment_identifier);
                         String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(found_assignment_identifier);
 
@@ -303,6 +300,7 @@ public class SemanticAnalysis {
                             symbol_table.setAsUsed(found_assignment_identifier);
                             found_assignment_leftside = false; 
                         }
+                        
                     }
 
                     
@@ -348,7 +346,6 @@ public class SemanticAnalysis {
                                     System.exit(0);
                                 }
                             }
-
                         }
                     }
 
@@ -365,21 +362,17 @@ public class SemanticAnalysis {
                 NonTerminal nonterminal = (NonTerminal) c;
                 String nonterminal_name = nonterminal.getName();  
                 Production prev_parent = current_parent; 
+                NonTerminalsList.add((NonTerminal) c);
+
                 System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
 
                 if (nonterminal_name.equals("BLOCK")) {
-                    System.out.println("\n\n\nENTERING BLOCK\n\n");
+                    System.out.println("\n\n\nENTERING BLOCK\n");
                     symbol_table.createNewScope();
+                    System.out.println("Current Scope: " + symbol_table.getCurrentScopeName() + "\n\n");
                 }
-
                 
-
-
-                NonTerminalsList.add((NonTerminal) c);
-                
-                
-                if (VALID_NONTERMINALS.contains(nonterminal_name)) {
-                    
+                if (VALID_NONTERMINALS.contains(nonterminal_name)) {                    
                     if (nonterminal_name.equals("VarDeclStatement")) within_vardecl = true;  // Within Variable Decl moving forward
                     if (nonterminal_name.equals("AssignmentStatement")) within_assignment = true;  // Within Variable Decl moving forward
 
@@ -446,9 +439,7 @@ public class SemanticAnalysis {
                                                                                         System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
                                 
-                                //recursiveDescent(nonterminal, index + 1); // Continue Recursion
                             }
-                            
                         }
                     }
 
@@ -463,7 +454,7 @@ public class SemanticAnalysis {
                             within_addition = true;
                             recursiveDescent(nonterminal, index); // Recurse over Expression, child at index 2
                             within_addition = false; 
-                            
+                
                             current_parent = previous_parent;
                                                                                         System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
@@ -516,12 +507,14 @@ public class SemanticAnalysis {
                 if (current_parent.getName().equals("PrintStatement") && nonterminal_name.equals("IDENTIFIER")) {
                     Terminal ps_identifier_terminal = (Terminal) nonterminal.getChild(0);
                     boolean valid_in_scope = symbol_table.existsWithinAccessibleScopes(ps_identifier_terminal);
-                    if (valid_in_scope) symbol_table.setAsUsed(ps_identifier_terminal);    
+                    if (valid_in_scope) symbol_table.setAsUsed(ps_identifier_terminal);
+                        
                 }
 
                 if (nonterminal_name.equals("BLOCK")) {
                     symbol_table.exitScope();
-                    System.out.println("\n\n\n EXIT BLOCK\n\n");
+                    System.out.println("\n\n\nEXIT BLOCK\n");
+                    System.out.println("Backing Into Scope: " + symbol_table.getCurrentScopeName() + "\n");
                 }
             }
             //System.out.println("HEllo");
@@ -584,35 +577,3 @@ public class SemanticAnalysis {
 
     
 }
-
-
-/**
- *  if (!is_terminal) { 
-                String nonterminal_name = c.getName(); 
-                if ( !(nonterminal_name.contains("List")) ) {
-                    System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "] "); 
-                }
-            } 
-            else { 
-                Terminal terminal = (Terminal) c; 
-                if ( 
-                    (terminal.getName().equals("IDENTIFIER")) || 
-                    (terminal.getName().equals("CHARACTER")) || 
-                    (terminal.getName().equals("DIGIT")) ||
-                    (terminal.getName().equals("KEYWORD_TRUE")) ||
-                    (terminal.getName().equals("KEYWORD_FALSE"))
-
-
-                ) 
-                
-                {
-                    System.out.println(spaces + index + stringOfCharacters(2, " ") + " < " + ((Terminal) c).getTokenAttribute() + " >"); 
-                } else if ((terminal.getName().equals("SYMBOL_EQUIVALENCE")) || (terminal.getName().equals("SYMBOL_INEQUIVALENCE"))) {
-                        
-                    System.out.println(spaces + index + stringOfCharacters(2, " ") + " < ||||||||" + ((Terminal) c).getTokenAttribute() + " >"); 
-                    
-                } else {
-                    System.out.println("SKIPPING: " + terminal.getName()); 
-                }
-            } 
- */

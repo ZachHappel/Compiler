@@ -34,6 +34,10 @@ public class SymbolTable {
         setCurrentScope(current_scope.getScopeParent()); 
     }
 
+    public String getCurrentScopeName () {
+        return current_scope.getName();
+    }
+
 
     public boolean endsInLetter (String s) {
         String last_char = "" + s.charAt(s.length() - 1);
@@ -201,6 +205,7 @@ public class SymbolTable {
     // Checks to see if variable has already been declared in the current scope's accessible scopes, if true that means that the current vardecl is invalid
     public boolean existsWithinAccessibleScopes (Terminal identifier_terminal) {
         String identifier_value = identifier_terminal.getTokenAttribute();
+        System.out.println("ID Value: " + identifier_value); 
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
         boolean exists_within_a_scope = false;
         
