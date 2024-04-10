@@ -178,7 +178,7 @@ public class SymbolTable {
     public String getScopesAndEntries () {
         String scopes_and_entries = "";
         for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
-            scopes_and_entries = scopes_and_entries + "Scope: " + scope_n.getKey() + "\n" + scope_n.getValue().getEntriesAndTheirDetails();
+            scopes_and_entries = scopes_and_entries + "\nScope: " + scope_n.getKey() + "\n" + scope_n.getValue().getEntriesAndTheirDetails();
             
         }   return scopes_and_entries; 
     }
@@ -229,7 +229,7 @@ public class SymbolTable {
         System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
         String type_value = type_terminal.getTokenAttribute(); // Type
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
-        if (!existsWithinSymbolTable(identifier_terminal)) {
+        if (!existsWithinAccessibleScopes(identifier_terminal)) {
             current_scope.createAndInsertEntry(type_value, identifier_value, true, false);
         } else {
             System.out.println("Variable already exists with the ID: " + identifier_value);
