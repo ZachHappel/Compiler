@@ -38,6 +38,12 @@ public class SemanticAnalysis {
 
     public boolean within_addition = false; //prevent addition of digit + boolean/string, etc.... Know for sure, DIGIT + DIGIT + DIGIT + ... 
     // SYMBOL_CLOSEBLOCK, 
+    public boolean within_booleanexpr = false; 
+    public boolean found_booleanexpr_lhs = false;
+    public boolean found_booleanexpr_rhs = false;
+    public Terminal booleanexpr_lhs;
+    public Terminal booleanexpr_rhs;
+
 
     //Production prev_parent; 
 
@@ -205,13 +211,7 @@ public class SemanticAnalysis {
      */
     public void recursiveDescent (Production p, int index) {
 
-        // These terminals all are child-most and their values are what is added to the AST, symbol table, etc. 
-       
-        
-       
-        
 
-        //Production = 
         if (index == 0 && p.getName().equals("Program")) {
             System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
             index++;
@@ -319,7 +319,38 @@ public class SemanticAnalysis {
                         System.out.println("True");
                     }
 
-                    
+
+                    if (within_booleanexpr) {
+                        if ((terminal_name.equals("IDENTIFIER") || (terminal_name.equals("KEYWORD_TRUE") || (terminal_name.equals("KEYWORD_FALSE"))))) {
+                            if (!found_booleanexpr_lhs ) {
+                                booleanexpr_lhs = terminal;
+                                found_booleanexpr_lhs = true;
+                                
+                            } else if (found_booleanexpr_lhs && !found_booleanexpr_rhs) {
+                                booleanexpr_rhs = terminal;
+                                boolean lhs_valid_in_scope = (booleanexpr_lhs.getName().equals("IDENTIFIER") ? symbol_table.existsWithinAccessibleScopes(booleanexpr_lhs) : true); // id, TRUE, FALSE
+                                boolean rhs_valid_in_scope = (booleanexpr_rhs.getName().equals("IDENTIFIER") ? symbol_table.existsWithinAccessibleScopes(booleanexpr_rhs) : true) ; // id, TRUE, FALSE
+                                if (lhs_valid_in_scope && rhs_valid_in_scope) {
+                                    String lhs_type = symbol_table.getTypeFromAccessibleScopes(booleanexpr_lhs);
+                                    String rhs_type = symbol_table.getTypeFromAccessibleScopes(booleanexpr_rhs);
+                                    if (lhs_type.equals(rhs_type)) {
+                                        System.out.println("Valid LHS & RHS for BooleanExpression. Between the following: " + booleanexpr_lhs.getTokenAttribute() + " and " + booleanexpr_rhs.getTokenAttribute());
+                                        symbol_table.setAsUsed(booleanexpr_lhs);
+                                        symbol_table.setAsUsed(booleanexpr_rhs);
+                                        found_booleanexpr_lhs = false; found_booleanexpr_rhs = false; within_booleanexpr = false; 
+                                    } else {
+                                        System.out.println("Invalid LHS & RHS values for Boolean Expr. "); 
+                                        System.exit(0);
+                                    }
+
+                                } else {
+                                    System.out.println("Left Hand Side of BooleanExpression contains an invalid variable"); //ERR
+                                    System.exit(0);
+                                }
+                            }
+
+                        }
+                    }
 
                     System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
@@ -340,7 +371,6 @@ public class SemanticAnalysis {
                     System.out.println("\n\n\nENTERING BLOCK\n\n");
                     symbol_table.createNewScope();
                 }
-                block_index++;
 
 
                 NonTerminalsList.add((NonTerminal) c);
@@ -379,6 +409,7 @@ public class SemanticAnalysis {
                     }
                     
                     else if (nonterminal_name.equals("BooleanExpression")) {
+                        
                         // Determine if NonTerm node that should be made should be called IsEqual or IsNotEqual OR if just true/false terminal-- which is not actionable
                         //System.out.println("NonTerminal Name - BooleanExpression");
                         if ( (nonterminal.getChild(0).getName().equals("BooleanValue")) ) {
@@ -386,6 +417,7 @@ public class SemanticAnalysis {
                             recursiveDescent(nonterminal, index + 1); // Let the terminal get added normally
                         
                         } else {
+                            within_booleanexpr = true; // Flip to true
                             // get Boolop, get Terminal, what is its name
                             String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); /* SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE */   System.out.println("** BooleanExpression Type: " + bool_op_value);
                             
