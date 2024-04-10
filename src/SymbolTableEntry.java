@@ -62,6 +62,10 @@ public class SymbolTableEntry {
         this.is_used = is_used; 
     }
 
+    public String getDetailsString () {
+        return "Type: " + this.type + ", Initialized: " + this.is_initialized + ", Used: " + this.is_used; 
+    }
+
     public String getType () {return this.type;};
     public boolean getIsUsed () { return this.is_used; } ;
     public boolean getIsInitialized () { return this.is_initialized; };

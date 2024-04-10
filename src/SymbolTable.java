@@ -175,8 +175,19 @@ public class SymbolTable {
         }   return scope_names; 
     }
 
+    public String getScopesAndEntries () {
+        String scopes_and_entries = "";
+        for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
+            scopes_and_entries = scopes_and_entries + "Scope: " + scope_n.getKey() + "\n" + scope_n.getValue().getEntriesAndTheirDetails();
+            
+        }   return scopes_and_entries; 
+    }
+
     public int getScopeCount () {return table.size();}
 
+    // Check to see if variable already exists with the same ID 
+    // Actually not good-- You can have two declarations of a variable with same ID as long as scopes do not interfere
+    // Meaning, as long as it is not in accessible scopes
     public boolean existsWithinSymbolTable (Terminal identifier_terminal) {
         String identifier_value = identifier_terminal.getTokenAttribute();
         boolean exists_within_a_scope = false;
@@ -187,13 +198,45 @@ public class SymbolTable {
         } return exists_within_a_scope; 
     } 
 
+    // Checks to see if variable has already been declared in the current scope's accessible scopes, if true that means that the current vardecl is invalid
+    public boolean existsWithinAccessibleScopes (Terminal identifier_terminal) {
+        String identifier_value = identifier_terminal.getTokenAttribute();
+        boolean exists_within_a_scope = false;
+        ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
+
+        for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
+            SymbolTableScope scope = current_scope_accessibles.get(s);
+            if (scope.entryExists(identifier_value)) {
+                exists_within_a_scope = true;
+            }
+        }
+
+        return exists_within_a_scope; 
+        /**
+        for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
+            if (scope_n.getValue().entryExists(identifier_value)) {
+                exists_within_a_scope = true;
+            }
+        } return exists_within_a_scope; **/
+
+    } 
+
+
+    // Needs to throw error if cannot enter
     public void performEntry(Terminal type_terminal, Terminal identifier_terminal) {
         // Current scope depenedent
         // When checking to see if it has been declared, declaration checks need ONLY be done on affected scopes 
         System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
+        String type_value = type_terminal.getTokenAttribute(); // Type
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
-        if (existsWithinSymbolTable(identifier_terminal)) {} // Error
-         
+        if (!existsWithinSymbolTable(identifier_terminal)) {
+            current_scope.createAndInsertEntry(type_value, identifier_value, true, false);
+        } else {
+            System.out.println("Variable already exists with the ID: " + identifier_value);
+            System.exit(0);
+        }// Error
+        
+        
 
     }
 

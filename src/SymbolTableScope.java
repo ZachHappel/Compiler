@@ -8,6 +8,8 @@ public class SymbolTableScope {
     SymbolTableScope parent;
     ArrayList<SymbolTableScope> accessible_scopes = new ArrayList<SymbolTableScope>();
     ArrayList<SymbolTableScope> children = new ArrayList<SymbolTableScope>();
+
+        //id    data (type, init, used)
     Map<String, SymbolTableEntry> entries = new HashMap<>();
 
     public SymbolTableScope (String name) {
@@ -25,6 +27,7 @@ public class SymbolTableScope {
     public void setScopeParent (SymbolTableScope x) {this.parent = x;}
     public void addScopeChild (SymbolTableScope x) {this.children.add(x);}
     public void addAccessibleScope (SymbolTableScope x) {this.accessible_scopes.add(x);}
+    public ArrayList<SymbolTableScope> getAccessibleScopes () { return this.accessible_scopes; }
 
     public ArrayList<SymbolTableScope> getScopeChildren () {return this.children;}
     public boolean hasChildren () {
@@ -49,7 +52,7 @@ public class SymbolTableScope {
     
     
 
-    public void createAndInsertEntry (String id, String type, boolean is_initialized, boolean is_used) {
+    public void createAndInsertEntry (String type, String id, boolean is_initialized, boolean is_used) {
         SymbolTableEntry new_entry = new SymbolTableEntry(type, is_initialized, is_used);
         this.entries.put(id, new_entry);
     }
@@ -100,6 +103,16 @@ public class SymbolTableScope {
         for (int i = 0; i <= accessible_scopes.size() - 1; i++) {
             accesible_scopes_names += accessible_scopes.get(i).getName() + ", ";
         } return accesible_scopes_names;
+    }
+
+    public String getEntriesAndTheirDetails() {
+        String entries_details = "";
+        for (Map.Entry<String, SymbolTableEntry> entry_n : entries.entrySet()) {
+           String e_name = entry_n.getKey(); // Name
+           String e_details = entry_n.getValue().getDetailsString(); // Details of entry
+           String name_and_details = e_name + " - " + e_details + "\n";
+           entries_details+=name_and_details; 
+        } return entries_details; 
     }
 
 }

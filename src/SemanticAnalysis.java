@@ -412,6 +412,7 @@ public class SemanticAnalysis {
         
         System.out.println("Symbol Table Scopes: " + symbol_table.getScopeNames()) ;
         System.out.println("Amount of Scopes: " + symbol_table.getScopeCount()) ;
+        System.out.println("\n\nScopes and Entries: \n" + symbol_table.getScopesAndEntries()) ;
         System.out.println("\n\nAbstract Syntax Tree\n"); 
         recursivePrint(AST.get(0), 0);
         /**
