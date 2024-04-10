@@ -290,11 +290,22 @@ public class SemanticAnalysis {
                     if (within_vardecl && types.contains(terminal_name)) {
                         found_vardecl_type = terminal;    
                     }
+                    
                     // Found VarDecl Identifier
                     if (within_vardecl && terminal_name.equals("IDENTIFIER")) {
                         found_vardecl_identifier = terminal;
-                        symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
-                        within_vardecl = false; //No longer in Variable Declaration, flip back to false
+                        
+                        boolean already_exists = symbol_table.existsWithinAccessibleScopes(found_vardecl_identifier);
+                        
+                        if (already_exists) {
+                            System.out.println("Variable already declared with identifier: " + found_vardecl_identifier.getTokenAttribute() ); //ERR
+                            System.exit(0);
+                        
+                        } else {
+                            symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
+                            within_vardecl = false; //No longer in Variable Declaration, flip back to false
+                        }
+                    
                     }
 
 

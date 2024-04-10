@@ -201,9 +201,11 @@ public class SymbolTable {
     // Checks to see if variable has already been declared in the current scope's accessible scopes, if true that means that the current vardecl is invalid
     public boolean existsWithinAccessibleScopes (Terminal identifier_terminal) {
         String identifier_value = identifier_terminal.getTokenAttribute();
-        boolean exists_within_a_scope = false;
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
-
+        boolean exists_within_a_scope = false;
+        
+        if (current_scope.entryExists(identifier_value)) return true; // If in current scope, return
+        
         for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
             SymbolTableScope scope = current_scope_accessibles.get(s);
             if (scope.entryExists(identifier_value)) {
@@ -215,6 +217,8 @@ public class SymbolTable {
     public SymbolTableEntry retrieveEntryFromAccessibleScopes (Terminal identifier_terminal) {
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes(); // Obtain which it has reach/access to
+        
+        if (current_scope.entryExists(identifier_value)) return current_scope.retrieveEntry(identifier_value); // If in current scope, return
         
         // Iterate over list of scopes
         for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
@@ -277,7 +281,6 @@ public class SymbolTable {
     }
 
     public void setAsUsed(Terminal identifier_terminal) {
-        String identifier_value = identifier_terminal.getTokenAttribute();
         SymbolTableEntry retrieved_entry = retrieveEntryFromAccessibleScopes(identifier_terminal);
         retrieved_entry.setisUsed(true);
     }
