@@ -564,11 +564,19 @@ public class SemanticAnalysis {
         current_parent = ast_starting_block;
         recursiveDescent(derivation.get(0).getChild(0), 1);
         
-        System.out.println("Symbol Table Scopes: " + symbol_table.getScopeNames()) ;
-        System.out.println("Amount of Scopes: " + symbol_table.getScopeCount()) ;
-        System.out.println("\n\nScopes and Entries: \n" + symbol_table.getScopesAndEntries()) ;
+        System.out.println("\n┌--------------------------------------------------------------------------------------------------------------------┐");
+        System.out.println("|--------------------------------------------------Symbol Table------------------------------------------------------|");
+        System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+        System.out.println("\n\n  " + symbol_table.getScopeNames()) ;
+        System.out.println("  Amount of Scopes: " + symbol_table.getScopeCount()) ;
+        System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+        System.out.println("\nScopes and Entries: \n" + symbol_table.getScopesAndEntries()) ;
+        System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+        System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
         System.out.println("\n\nAbstract Syntax Tree\n"); 
         recursivePrint(AST.get(0), 0);
+        System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+        System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
 
     }
 

@@ -1,0 +1,47 @@
+{
+    int a
+    int b
+    string c
+    string d
+    boolean e
+    boolean f
+    
+    while (true == true) {
+        a = b c = d
+        e = true
+        if (true == true) {
+            print(a)
+            print(b)
+            string g
+            string h
+            e = false
+            if true {
+                while true {
+                    if (a == b) {
+                        if (a != b) {
+
+                        }
+                    }
+                }
+            }
+        }
+        while (a != b) {
+            while (b != a) {
+                string g
+                string h
+            }
+        }
+        while false {}
+        if true { int i i = 3 }
+        int i
+        a = a
+        b = 3 + a
+        b = 3 + 3 + a /* works as it should */
+        print ("semantic analysis")
+        c = "zacharie happel"
+        d = "zach happel"
+        i = 1
+    }
+    
+}$
+
