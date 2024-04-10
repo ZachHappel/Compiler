@@ -209,17 +209,78 @@ public class SymbolTable {
             if (scope.entryExists(identifier_value)) {
                 exists_within_a_scope = true;
             }
+        } return exists_within_a_scope; 
+    } 
+
+    public SymbolTableEntry retrieveEntryFromAccessibleScopes (Terminal identifier_terminal) {
+        String identifier_value = identifier_terminal.getTokenAttribute(); // Id
+        ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes(); // Obtain which it has reach/access to
+        
+        // Iterate over list of scopes
+        for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
+            SymbolTableScope scope = current_scope_accessibles.get(s);
+            if (scope.entryExists(identifier_value)) {
+                SymbolTableEntry entry = scope.retrieveEntry(identifier_value); // If exists, retrieve it
+                return entry; 
+            }
+        } return new SymbolTableEntry("", false, false); // otherwise return blank SymbolTableEntry with "" as type
+    }
+
+
+    public String getTypeFromAccessibleScopes (Terminal identifier_terminal) {
+        SymbolTableEntry entry = retrieveEntryFromAccessibleScopes(identifier_terminal);
+        String type = entry.getType();
+        return type;
+    }
+
+
+
+    
+    // E.g., scenario could be getTypeFromAccessibleScope is used to get 
+    public boolean isValidAssignment (String type, String assignment_type) {
+        
+        // DIGIT, KEYWORD_TRUE, KEYWORD_FALSE
+        // type: int, string, boolean
+        // if int: DIGIT, int (if x = y, where y was already declared an int) 
+        if ( type.equals("boolean") && ( 
+            (assignment_type.equals("KEYWORD_TRUE") || 
+            (assignment_type.equals("KEYWORD_FALSE")) ||
+            (assignment_type.equals("boolean"))  ))) {
+            return true; 
         }
 
-        return exists_within_a_scope; 
-        /**
-        for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
-            if (scope_n.getValue().entryExists(identifier_value)) {
-                exists_within_a_scope = true;
-            }
-        } return exists_within_a_scope; **/
+        if ( type.equals("int") && ( 
+            (assignment_type.equals("DIGIT") || 
+            (assignment_type.equals("int"))))) {
+            return true; 
+        }
 
-    } 
+        if ( type.equals("string") && (
+            (assignment_type.equals("CHARACTER")) ||
+            (assignment_type.equals("string"))) ) {
+                return true; 
+            }
+        
+
+
+        return false;
+    }
+
+    public boolean existsWithinAccessibleScopesAndValidAssignment(Terminal identifier_terminal, String assignment_type) {
+
+        SymbolTableEntry e = retrieveEntryFromAccessibleScopes(identifier_terminal); 
+        String entry_type = e.getType(); 
+        if (entry_type.equals("")) return false; // retrive..() returns false if not found
+        boolean is_valid = isValidAssignment(entry_type, assignment_type);
+        return is_valid;
+
+    }
+
+    public void setAsUsed(Terminal identifier_terminal) {
+        String identifier_value = identifier_terminal.getTokenAttribute();
+        SymbolTableEntry retrieved_entry = retrieveEntryFromAccessibleScopes(identifier_terminal);
+        retrieved_entry.setisUsed(true);
+    }
 
 
     // Needs to throw error if cannot enter

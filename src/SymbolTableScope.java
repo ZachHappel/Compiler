@@ -51,7 +51,6 @@ public class SymbolTableScope {
     } 
     
     
-
     public void createAndInsertEntry (String type, String id, boolean is_initialized, boolean is_used) {
         SymbolTableEntry new_entry = new SymbolTableEntry(type, is_initialized, is_used);
         this.entries.put(id, new_entry);

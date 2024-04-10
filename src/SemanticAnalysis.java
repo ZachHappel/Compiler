@@ -172,7 +172,9 @@ public class SemanticAnalysis {
         // IN ALL COMPILER HOFs... None of them incorporate whether or not variables need assignment prior to being used.............. Wtf. I guess that is not required? 
         // Seems cheap to leave that out, but also... I am not complaining, I guess. I would implement it myself, but it could be a my misunderstanding of theory and this just something
         // that is not a function of semantic analysis? 
-
+   
+        
+        // NOTE: With the way that StringExpressions are combined into a single CHARACTER terminal, type checking for assignment is done where StringExpressions are handled
     }};
     
 
@@ -223,7 +225,15 @@ public class SemanticAnalysis {
                 //System.out.println("Terminal: " + c.getName());
 
                 // Prevent anything other than DIGIT and SYMBOL_INTOP from appearing within Addition... We do not want anything other than DIGITs being summed
-                if ( within_addition && !( (terminal_name.equals("SYMBOL_INTOP") || (terminal_name.equals("DIGIT")))) ) {
+                // Wait... need to check if IDENTIFIER, if of type -- then it is okay
+                if ( within_addition && 
+                    !( (
+                        (terminal_name.equals("SYMBOL_INTOP")) || 
+                        (terminal_name.equals("DIGIT")) 
+                        
+                    )) ) {
+
+                    // if IDENTIFIER... CHECK TYPE
                     System.out.println("Term Name: " + terminal_name);
                     System.out.println("Unable to add anything but digits"); 
                     System.exit(0); // Err
@@ -248,6 +258,16 @@ public class SemanticAnalysis {
                         found_assignment_identifier = terminal;
                     }
 
+                    
+                    // 
+                    if (within_assignment && assignment_rhs.contains(terminal_name)) {
+                        /* Because of what has previously been to ensure that the only thing that could possibly appear within Addition is DIGITS,
+                         * we can be assured that as long as the first terminal that is encountered after the IDENTIFIER is of the same type as that which 
+                         * the variable has been declared, we can conclude that they types are correct
+                         */
+                        //found_assignment_value
+                        System.out.println("True");
+                    }
                     
                     //if (within_assignment && terminal_name.equals())
 
@@ -373,17 +393,27 @@ public class SemanticAnalysis {
                         }
                     }
 
+                      //char_string.setName("CHARACTER");
+                        //char_string.setAttribute(string_expr_string);
+                        //terminal_for_string_expression.addChild(char_string_token);
                     else if (nonterminal_name.equals("StringExpression"))  {
                                                                                         System.out.println("** STRING EXPR: ");
 
                         String string_expr_string = extractStringFromStringExpression((NonTerminal) nonterminal.getChild(1));  /* Pass first CharacterList */ System.out.println("* String: " + string_expr_string);
-                        Terminal terminal_for_string_expression = new Terminal("Character"); 
+                        Terminal terminal_for_string_expression = new Terminal("CHARACTER"); 
                         terminal_for_string_expression.setTokenName(nonterminal_name);
-                        terminal_for_string_expression.setTokenAttribute(string_expr_string);
-                        Token char_string_token = new Token(0, 0);                      System.out.println("** Adding Terminal FOR String Expression: " + terminal_for_string_expression.getName() + " to Parent: " + current_parent.getName());
-                        //char_string.setName("CHARACTER");
-                        //char_string.setAttribute(string_expr_string);
-                        //terminal_for_string_expression.addChild(char_string_token);
+                        terminal_for_string_expression.setTokenAttribute(string_expr_string);              
+                        System.out.println("** Adding Terminal FOR String Expression: " + terminal_for_string_expression.getName() + " to Parent: " + current_parent.getName());
+                      
+                        if (within_assignment && current_parent.getName().equals("AssignmentStatement")) {
+                            System.out.println("Within Assignment, checking that the variable it is being assigned to is of correct type...");
+                            boolean is_valid = symbol_table.existsWithinAccessibleScopesAndValidAssignment(found_assignment_identifier, "CHARACTER");
+                            if (is_valid) {
+                                System.out.println("Valid String Assignment");
+                                symbol_table.setAsUsed(found_assignment_identifier);
+                                within_assignment = false; 
+                            }
+                        } 
                         
                         current_parent.addASTChild(terminal_for_string_expression); // Add Terminal for StringExpression String to expression's AST children
                         
