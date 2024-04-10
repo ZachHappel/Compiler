@@ -214,19 +214,14 @@ public class SemanticAnalysis {
                                     System.out.println("We are solid! CONTINUE");
                                     symbol_table.setAsUsed(terminal);
                                 } else {
-                                    System.out.println("Err: Identifier, but not one that is compatible with addition");
-                                    System.exit(0);
+                                    throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable incompatible with addition, " + terminal.getTokenAttribute());
                                 }
                             }
                         }
                     
                     else {
-                        System.out.println("Err: Not valid. Cannot use " + terminal_name + " within Addition");
-                        
-                        System.exit(0);
+                        throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable incompatible with addition, " + terminal_name + ", " + terminal.getTokenAttribute());
                     }
-
-                    
                 }
                
            
@@ -245,9 +240,7 @@ public class SemanticAnalysis {
                         boolean already_exists = symbol_table.existsWithinAccessibleScopes(found_vardecl_identifier);
                         
                         if (already_exists) {
-                            System.out.println("Variable already declared with identifier: " + found_vardecl_identifier.getTokenAttribute() ); //ERR
-                            System.exit(0);
-                        
+                            throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable already declared with identifier: " + found_vardecl_identifier.getTokenAttribute() );                    
                         } else {
                             symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
                             within_vardecl = false; //No longer in Variable Declaration, flip back to false
@@ -262,7 +255,7 @@ public class SemanticAnalysis {
                         found_assignment_leftside = true;
                         
                     } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
-                        // does identifier exist in the table, if not error, f so, is it same as left side type, get left side type, get current identifier type by looking it up
+                        // does identifier exist in the table, if not ERROR(?), f so, is it same as left side type, get left side type, get current identifier type by looking it up
                         boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(found_assignment_identifier);
                         String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(found_assignment_identifier);
 
@@ -275,7 +268,7 @@ public class SemanticAnalysis {
                             symbol_table.setAsUsed(terminal);
                             symbol_table.setAsUsed(found_assignment_identifier);
                             found_assignment_leftside = false; 
-                        }
+                        } 
                         
                     }
 
@@ -314,12 +307,11 @@ public class SemanticAnalysis {
                                         found_booleanexpr_lhs = false; found_booleanexpr_rhs = false; within_booleanexpr = false; 
                                     } else {
                                         System.out.println("Invalid LHS & RHS values for Boolean Expr. "); 
-                                        System.exit(0);
+                                        throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()","Left Hand Side of BooleanExpression contains an invalid variable");
                                     }
 
                                 } else {
-                                    System.out.println("Left Hand Side of BooleanExpression contains an invalid variable"); //ERR
-                                    System.exit(0);
+                                    throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Left Hand Side of BooleanExpression contains an invalid variable");
                                 }
                             }
                         }
@@ -476,8 +468,7 @@ public class SemanticAnalysis {
                 }
                 
                 else {
-                    System.out.println("** Something went horribly wrong");
-                    System.exit(0);
+                    throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "** Something went wrong **");
                 }
                 
                 if (current_parent.getName().equals("PrintStatement") && nonterminal_name.equals("IDENTIFIER")) {

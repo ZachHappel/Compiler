@@ -15,13 +15,10 @@ public class SymbolTable {
     ArrayList<String> alpha = new ArrayList<>(Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"));
     ArrayList<Integer> numbs = new ArrayList<>(Arrays.asList(0,1,2,3,4,5,6,7,8,9)); 
     
-
-
-
     public SymbolTable () {
         String root_scope_name = "0"; // Remember
         SymbolTableScope root_scope = new SymbolTableScope(root_scope_name);
-        insertScope(root_scope_name, root_scope);
+        try { insertScope(root_scope_name, root_scope); } catch (SemanticAnalysisException e) {System.out.println("Err");}
     }
 
 
@@ -48,13 +45,6 @@ public class SymbolTable {
             System.out.println(", Alpha DOES NOT contains: " + last_char + ", returning false");
             return false;
         }
-        /**
-        System.out.println("Last letter: " + last_char);
-        return (
-            alpha.contains(s.charAt(s.length() - 1)) ?
-            true :
-            false
-        ); **/
     }
 
 
@@ -70,7 +60,7 @@ public class SymbolTable {
 
 
         // Need to remediate root scope not having parent 
-        // Need to prevent integer overflow if more than 9 siblings and 26, depending on whether number or char
+        // Need to prevent integer overflow if more than 9 siblings or 25 siblings, depending on whether number or letter (Check: is actually limited to 9? )
         if ( current_scope.hasParent() )  {
             System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
             SymbolTableScope currents_parent = current_scope.getScopeParent();
@@ -86,11 +76,8 @@ public class SymbolTable {
                     if ( endsInLetter(last_child_name) ) {
                         System.out.println(", ends in letter, ");
                         String last_letter = String.valueOf(last_child_name.charAt(last_child_name.length() - 1));
-                        //int last_number_as_int = Integer.parseInt(last_number);  
                         int next_alpha_index = alpha.indexOf(last_letter) + 1;
-                        //int next_numbs_index = alpha.indexOf(last_child_name.charAt(last_child_name.length() - 1)) + 1; 
-                        new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next number to append
-                        //new_scope_name = last_child_name + numbs.get(next_numbs_index); // Next number to append
+                        new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next letter to append
                         System.out.println("i) New Scope Name: " + new_scope_name);
                     
                     } else {
@@ -99,9 +86,9 @@ public class SymbolTable {
                         int last_number_as_int = Integer.parseInt(last_number);  
                         int next_alpha_index = numbs.indexOf(last_number_as_int) + 1;
                         new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_alpha_index); // Next number to append
-                        //new_scope_name = last_child_name + alpha.get(next_alpha_index); // Next number to append
                         System.out.println("ii) New Scope Name: " + new_scope_name);
                     }
+
                 } else {
                     System.out.println("Xxx"); 
                     SymbolTableScope last_child = currents_parent.getLastChild();
@@ -143,7 +130,7 @@ public class SymbolTable {
 
     }
 
-    // Which scopes does the current scope have access to
+    // Regarding Current Scope; Which scopes does it have acces to? 
     public void calculateAccessibleScopes (SymbolTableScope scope) {
         SymbolTableScope scope_n = scope;
         boolean reached_root = false;
@@ -160,16 +147,14 @@ public class SymbolTable {
         System.out.println("Accessible Scope Names: " + scope.getAllAccessibleScopesNames()); 
     }
     
-    public void insertScope (String name, SymbolTableScope scope) {
+    public void insertScope (String name, SymbolTableScope scope) throws SemanticAnalysisException {
         if (!this.table.containsKey(name)) {
             this.table.put(name, scope);
             if (! (current_scope != null)) setCurrentScope(table.get(name));
-        } else {
-            /////////////////Error
-        }
+            else throw new SemanticAnalysisException("SymbolTable, insertScope()", "Unable to insert scope into Symbol Table.");
+        } else throw new SemanticAnalysisException("SymbolTable, insertScope()", "Unable to insert scope into Symbol Table.");
         
     }
-
 
     public String getScopeNames () {
         String scope_names = "";
@@ -266,7 +251,6 @@ public class SymbolTable {
     // Returns true if type = any of the variations 
     // Used for comparing types and assignments, ensuring they are correctly associated
     public boolean isValidAssignment (String type, String assignment_type) {
-
         // type: int, string, boolean
         
         if ( type.equals("boolean") && ( 
@@ -317,6 +301,6 @@ public class SymbolTable {
         } else {
             throw new SemanticAnalysisException
             ("SymbolTable, performEntry()", "Variable already exists with ID, " + identifier_value + ". Conflicting declaration exists within Scope: " + getConflictingScopeName(identifier_terminal) );
-        }// Error
+        }
     }
 }
