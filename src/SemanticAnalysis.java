@@ -372,9 +372,10 @@ public class SemanticAnalysis {
                     symbol_table.createNewScope();
                 }
 
+                
+
 
                 NonTerminalsList.add((NonTerminal) c);
-                
                 
                 
                 if (VALID_NONTERMINALS.contains(nonterminal_name)) {
@@ -510,6 +511,12 @@ public class SemanticAnalysis {
                 else {
                     System.out.println("** Something went horribly wrong");
                     System.exit(0);
+                }
+                
+                if (current_parent.getName().equals("PrintStatement") && nonterminal_name.equals("IDENTIFIER")) {
+                    Terminal ps_identifier_terminal = (Terminal) nonterminal.getChild(0);
+                    boolean valid_in_scope = symbol_table.existsWithinAccessibleScopes(ps_identifier_terminal);
+                    if (valid_in_scope) symbol_table.setAsUsed(ps_identifier_terminal);    
                 }
 
                 if (nonterminal_name.equals("BLOCK")) {
