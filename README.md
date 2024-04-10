@@ -1,4 +1,4 @@
-# Compiler (NOTE: See *parse* branch)
+# Compiler (NOTE: See *semantic-analysis* branch)
 Compiler written in Java.
 
 BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
@@ -25,6 +25,8 @@ To use the program to compile source code found within "test.txt" or "easyprogra
 ```java Compiler easyprogram```
 
 There are tests available within /input
+
+A good test for semantic-analysis is ```semantic-analysis-mega-test```
 
 For example, to use the program to compile source code found within "test.txt" or "easyprogram":
 
