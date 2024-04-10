@@ -474,7 +474,7 @@ public class Parse {
         }
     }
 
-    public  ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) throws ParsingException {
+    public ArrayList<Production> ParseTokens ( ArrayList<Token> ts, Toolkit tk ) throws ParsingException {
 
         System.out.println("Parse Tokens: \n\n");
         token_stream = ts; 

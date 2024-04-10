@@ -26,6 +26,7 @@ public class SemanticAnalysis {
     public ArrayList<String> block_indexes = new ArrayList<>(); 
     //public Map<String, Map<String, String>> symbol_table = new HashMap<>();
     public SymbolTable symbol_table = new SymbolTable();
+    public boolean in_variabledeclaration = false;
 
     //Production prev_parent; 
 
@@ -187,6 +188,7 @@ public class SemanticAnalysis {
                 Terminal terminal = (Terminal) c; 
                 //System.out.println("Terminal: " + c.getName()); 
                 if (valid_terminals.contains(terminal.getName())) {
+
                     System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
                 
@@ -381,6 +383,7 @@ public class SemanticAnalysis {
         recursiveDescent(derivation.get(0).getChild(0), 1);
         
         System.out.println("Symbol Table Scopes: " + symbol_table.getScopeNames()) ;
+        System.out.println("Amount of Scopes: " + symbol_table.getScopeCount()) ;
         System.out.println("\n\nAbstract Syntax Tree\n"); 
         recursivePrint(AST.get(0), 0);
         /**

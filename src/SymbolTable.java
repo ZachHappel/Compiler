@@ -152,14 +152,12 @@ public class SymbolTable {
 
     public String getScopeNames () {
         String scope_names = "";
-        
         for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
-            //if ( (entry.getValue()).size() > max ) max = (entry.getValue()).size();
-            //System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
             scope_names+= scope_n.getKey() + ", ";
-        }
-        return scope_names; 
+        }   return scope_names; 
     }
+
+    public int getScopeCount () {return table.size();}
 
 
 }
