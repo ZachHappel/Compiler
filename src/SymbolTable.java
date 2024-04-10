@@ -134,9 +134,27 @@ public class SymbolTable {
         System.out.println("iii) New Scope Name: " + new_scope_name);
         new_scope.setScopeParent(current_scope); // Dive in
         current_scope.addScopeChild(new_scope);
-        setCurrentScope(new_scope);
-        table.put(new_scope_name, new_scope);
+        setCurrentScope(new_scope); // Set new_scope as the current_scope
+        calculateAccessibleScopes(current_scope); // Figure out which scopes the current (prev. "new_scope") has access to
+        table.put(new_scope_name, new_scope); // Add scope to table
 
+    }
+
+    // Which scopes does the current scope have access to
+    public void calculateAccessibleScopes (SymbolTableScope scope) {
+        SymbolTableScope scope_n = scope;
+        boolean reached_root = false;
+
+        while (reached_root == false) {
+            if (scope_n.hasParent()) {
+                SymbolTableScope parent = scope_n.getScopeParent();
+                scope.addAccessibleScope(parent); // Add parent to the passed scope's accessible scopes
+                scope_n = parent; // Make parent scope_n so scope_n's parent can be added as well
+            } else {
+                reached_root = true;
+            }
+        }
+        System.out.println("Accessible Scope Names: " + scope.getAllAccessibleScopesNames()); 
     }
     
     public void insertScope (String name, SymbolTableScope scope) {
@@ -158,6 +176,26 @@ public class SymbolTable {
     }
 
     public int getScopeCount () {return table.size();}
+
+    public boolean existsWithinSymbolTable (Terminal identifier_terminal) {
+        String identifier_value = identifier_terminal.getTokenAttribute();
+        boolean exists_within_a_scope = false;
+        for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
+            if (scope_n.getValue().entryExists(identifier_value)) {
+                exists_within_a_scope = true;
+            }
+        } return exists_within_a_scope; 
+    } 
+
+    public void performEntry(Terminal type_terminal, Terminal identifier_terminal) {
+        // Current scope depenedent
+        // When checking to see if it has been declared, declaration checks need ONLY be done on affected scopes 
+        System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
+        String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
+        if (existsWithinSymbolTable(identifier_terminal)) {} // Error
+         
+
+    }
 
 
 }

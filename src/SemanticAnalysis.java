@@ -26,7 +26,12 @@ public class SemanticAnalysis {
     public ArrayList<String> block_indexes = new ArrayList<>(); 
     //public Map<String, Map<String, String>> symbol_table = new HashMap<>();
     public SymbolTable symbol_table = new SymbolTable();
-    public boolean in_variabledeclaration = false;
+    
+    public boolean within_vardecl = false;
+    public Terminal found_vardecl_type;
+    public Terminal found_vardecl_identifier;
+
+    // SYMBOL_CLOSEBLOCK, 
 
     //Production prev_parent; 
 
@@ -141,6 +146,11 @@ public class SemanticAnalysis {
         add("CharacterList");
     }};
 
+    public ArrayList<String> types = new ArrayList<String>(){{
+        add("KEYWORD_INT");
+        add("KEYWORD_STRING");
+        add("KEYWORD_BOOLEAN");
+    }};
     
 
     public String extractStringFromStringExpression (NonTerminal str_expr) {
@@ -172,7 +182,7 @@ public class SemanticAnalysis {
 
         //Production = 
         if (index == 0 && p.getName().equals("Program")) {
-                                                                                        System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
+            System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
             index++;
         }
 
@@ -187,7 +197,22 @@ public class SemanticAnalysis {
 
                 Terminal terminal = (Terminal) c; 
                 //System.out.println("Terminal: " + c.getName()); 
+                
                 if (valid_terminals.contains(terminal.getName())) {
+                    
+
+                    // Found VarDecl Type
+                    if (types.contains(terminal.getName()) && within_vardecl) {
+                        found_vardecl_type = terminal;    
+                    }
+                    // Found VarDecl Identifier
+                    if (terminal.getName().equals("IDENTIFIER") && within_vardecl) {
+                        found_vardecl_identifier = terminal;
+                        symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
+                        within_vardecl = false; //No longer in Variable Declaration, flip back to false
+                    }
+
+                    
 
                     System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
@@ -217,6 +242,8 @@ public class SemanticAnalysis {
                 
                 if (VALID_NONTERMINALS.contains(nonterminal_name)) {
                     
+                    if (nonterminal_name.equals("VarDeclStatement")) within_vardecl = true;  // Within Variable Decl moving forward
+
                                                                                         System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                     current_parent.addASTChild(nonterminal);                            System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
                     current_parent = nonterminal; 
@@ -353,6 +380,7 @@ public class SemanticAnalysis {
         }
         return children_names + "]";
     }
+    
     public void recursivePrint (Production p, int index) {
 
         if (index == 0 && p.getName().equals("Block")) {

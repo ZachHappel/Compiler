@@ -6,6 +6,7 @@ public class SymbolTableScope {
     
     String name;
     SymbolTableScope parent;
+    ArrayList<SymbolTableScope> accessible_scopes = new ArrayList<SymbolTableScope>();
     ArrayList<SymbolTableScope> children = new ArrayList<SymbolTableScope>();
     Map<String, SymbolTableEntry> entries = new HashMap<>();
 
@@ -23,8 +24,16 @@ public class SymbolTableScope {
 
     public void setScopeParent (SymbolTableScope x) {this.parent = x;}
     public void addScopeChild (SymbolTableScope x) {this.children.add(x);}
+    public void addAccessibleScope (SymbolTableScope x) {this.accessible_scopes.add(x);}
+
     public ArrayList<SymbolTableScope> getScopeChildren () {return this.children;}
-    public boolean hasChildren () { return this.children.size() > 0 ? true : false; }
+    public boolean hasChildren () {
+        System.out.print(", hasChildren = " + this.children.size() + ", ");
+        for (int i = 0; i <= children.size() - 1; i++) {
+            System.out.println(children.get(i).getName()); 
+        }
+        return this.children.size() > 0 ? true : false;
+     }
     public SymbolTableScope getLastChild () { return this.children.get(children.size() - 1);}
 
     public SymbolTableScope getScopeParent () {
@@ -79,5 +88,18 @@ public class SymbolTableScope {
         entries.get(id).setisUsed(used_state);
     }
 
+    public String getAllChildrenNames () {
+        String children_names = "";
+        for (int i = 0; i <= children.size() - 1; i++) {
+            children_names = children_names + children.get(i).getName();
+        } return children_names;
+    }
+
+    public String getAllAccessibleScopesNames () {
+        String accesible_scopes_names = "";
+        for (int i = 0; i <= accessible_scopes.size() - 1; i++) {
+            accesible_scopes_names += accessible_scopes.get(i).getName() + ", ";
+        } return accesible_scopes_names;
+    }
 
 }
