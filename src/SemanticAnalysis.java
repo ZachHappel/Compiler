@@ -320,8 +320,7 @@ public class SemanticAnalysis {
                         }
                         System.out.println("True");
                     }
-
-
+                    
                     if (within_booleanexpr) {
                         if ((terminal_name.equals("IDENTIFIER") || (terminal_name.equals("KEYWORD_TRUE") || (terminal_name.equals("KEYWORD_FALSE"))))) {
                             if (!found_booleanexpr_lhs ) {
