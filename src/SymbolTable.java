@@ -220,7 +220,7 @@ public class SymbolTable {
         
         if (current_scope.entryExists(identifier_value)) return current_scope.retrieveEntry(identifier_value); // If in current scope, return
         
-        // Iterate over list of scopes
+        // Iterate over list of scopes in which the current scope has access to
         for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
             SymbolTableScope scope = current_scope_accessibles.get(s);
             if (scope.entryExists(identifier_value)) {
@@ -265,8 +265,6 @@ public class SymbolTable {
                 return true; 
             }
         
-
-
         return false;
     }
 

@@ -34,6 +34,8 @@ public class SemanticAnalysis {
     public Terminal found_assignment_identifier;
     public Terminal found_assignment_value;
 
+    public boolean found_assignment_leftside = false; 
+
     public boolean within_addition = false; //prevent addition of digit + boolean/string, etc.... Know for sure, DIGIT + DIGIT + DIGIT + ... 
     // SYMBOL_CLOSEBLOCK, 
 
@@ -197,6 +199,10 @@ public class SemanticAnalysis {
     }
     
     
+    /**
+     * Apparently, according to HoF compilers, the issue that I have been chasing down -- that which permits the likes of "x = 3 + j + j" where x and j are variables -- is
+     * not an actual valid case within our grammar.. Oops. 
+     */
     public void recursiveDescent (Production p, int index) {
 
         // These terminals all are child-most and their values are what is added to the AST, symbol table, etc. 
@@ -222,44 +228,8 @@ public class SemanticAnalysis {
 
                 Terminal terminal = (Terminal) c; 
                 String terminal_name = terminal.getName();
-                //System.out.println("Terminal: " + c.getName());
+                if (terminal_name.equals("IDENTIFIER")) terminal.setTokenAttribute( (terminal.getTokenAttribute()).replaceAll("[^a-z]", "")); // Lex fix
 
-                // Prevent anything other than DIGIT and SYMBOL_INTOP from appearing within Addition... We do not want anything other than DIGITs being summed
-                // Wait... need to check if IDENTIFIER, if of type -- then it is okay
-                
-                /**if ( within_addition && 
-                    !( (
-                        (terminal_name.equals("SYMBOL_INTOP")) || 
-                        (terminal_name.equals("DIGIT")) 
-                        
-                    )) ) {
-
-                    // if IDENTIFIER... CHECK TYPE
-                    System.out.println("Term Name: " + terminal_name);
-                    System.out.println("Unable to add anything but digits"); 
-                    System.exit(0); // Err
-                }**/
-                /**
-                 *  if ( within_addition && 
-                    ( (
-                        (terminal_name.equals("SYMBOL_INTOP")) || 
-                        (terminal_name.equals("DIGIT")) || 
-                        (terminal_name.equals("IDENTIFIER"))
-                        
-                    )) ) {
-
-                        if (terminal_name.equals("IDENTIFIER")) {
-                            if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, "int")) {
-                                System.out.println("We are solid! CONTINUE");
-                            } else {
-                                System.out.println("Identifier, but not one that is compatible with addition");
-                                System.exit(0);
-                            }
-                        }
-
-                        System.out.println("Not Identifier, either intop or digit");
-                }
-                 */
 
                 if (within_addition) {
 
@@ -269,14 +239,15 @@ public class SemanticAnalysis {
                             if (terminal_name.equals("IDENTIFIER")) {
                                 if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, "int")) {
                                     System.out.println("We are solid! CONTINUE");
+                                    symbol_table.setAsUsed(terminal);
                                 } else {
-                                    System.out.println("Identifier, but not one that is compatible with addition");
+                                    System.out.println("Err: Identifier, but not one that is compatible with addition");
                                     System.exit(0);
                                 }
                             }
                         }
                     else {
-                        System.out.println("Not valid. Cannot use " + terminal_name + " within Addition");
+                        System.out.println("Err: Not valid. Cannot use " + terminal_name + " within Addition");
                         System.exit(0);
                     }
 
@@ -290,7 +261,7 @@ public class SemanticAnalysis {
                     if (within_vardecl && types.contains(terminal_name)) {
                         found_vardecl_type = terminal;    
                     }
-                    
+
                     // Found VarDecl Identifier
                     if (within_vardecl && terminal_name.equals("IDENTIFIER")) {
                         found_vardecl_identifier = terminal;
@@ -309,22 +280,44 @@ public class SemanticAnalysis {
                     }
 
 
-                    if (within_assignment && terminal_name.equals("IDENTIFIER")) {
+                    if (within_assignment && terminal_name.equals("IDENTIFIER") && !(found_assignment_leftside)) {
                         found_assignment_identifier = terminal;
+                        found_assignment_leftside = true;
+
+                    } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
+                        // does identifier exist in the table, if not error
+                        // if so, is it same as left side type
+                        // get left side type 
+                        // get current identifier type by looking it up
+                        boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(found_assignment_identifier);
+                        String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(found_assignment_identifier);
+
+                        boolean left_comports_with_right = symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, lhs_identifier_type);
+
+                        if (left_comports_with_right) {
+                            System.out.println("LHS, " + found_assignment_identifier.getTokenAttribute() + " is of type: " + lhs_identifier_type);
+                            System.out.println("RHS, " + terminal.getTokenAttribute() + " is of type: " + symbol_table.getTypeFromAccessibleScopes(terminal));
+                            System.out.println("Left and Right Side Work");
+                            symbol_table.setAsUsed(terminal);
+                            symbol_table.setAsUsed(found_assignment_identifier);
+                            found_assignment_leftside = false; 
+                        }
                     }
 
                     
                     // 
                     if (within_assignment && assignment_rhs.contains(terminal_name)) {
-                        /* Because of what has previously been to ensure that the only thing that could possibly appear within Addition is DIGITS,
-                         * we can be assured that as long as the first terminal that is encountered after the IDENTIFIER is of the same type as that which 
-                         * the variable has been declared, we can conclude that they types are correct
-                         */
-                        //found_assignment_value
+                       
+                        boolean left_comports_with_right = symbol_table.existsWithinAccessibleScopesAndValidAssignment(found_assignment_identifier, terminal_name);
+                        if (left_comports_with_right) {
+                            System.out.println("Assignment complete for LHS: " + found_assignment_identifier.getName() + ", val: " + found_assignment_identifier.getTokenAttribute() );
+                            System.out.println("with: " + terminal_name + ", val: " + terminal.getTokenAttribute() );
+                            symbol_table.setAsUsed(found_assignment_identifier); // Left hand side
+                            within_assignment = false; 
+                            found_assignment_leftside = false; 
+                        }
                         System.out.println("True");
                     }
-                    
-                    //if (within_assignment && terminal_name.equals())
 
                     
 
@@ -532,10 +525,8 @@ public class SemanticAnalysis {
     
     public void performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) {
         System.out.println("\n\nSEMANTIC ANALYSIS:");
-        Production topscope_block = derivation.get(0).getChild(0); 
-        //Production topscope_copy = topscope_block.clone()
-        //AST.add(derivation.get(0).getChild(0)); // Block
-        //current_parent = derivation.get(0).getChild(0);
+        
+        
         NonTerminal ast_starting_block = new NonTerminal("Block");
         AST.add(ast_starting_block);
         current_parent = ast_starting_block;
@@ -546,21 +537,6 @@ public class SemanticAnalysis {
         System.out.println("\n\nScopes and Entries: \n" + symbol_table.getScopesAndEntries()) ;
         System.out.println("\n\nAbstract Syntax Tree\n"); 
         recursivePrint(AST.get(0), 0);
-        /**
-        for (int x = 0; x <= TerminalsList.size() - 1; x++) {
-            System.out.println("Terminal: " + TerminalsList.get(x));
-        }
-
-        System.out.println("\n\n");
-
-        for (int y = 0; y <= NonTerminalsList.size() - 1; y++) {
-            NonTerminal nonterminal = NonTerminalsList.get(y);
-            System.out.print("NonTerminal: " + nonterminal.getName());
-            System.out.print(nonterminal.getChildren().size() > 0 ? "         Children: " + getChildrenNames(nonterminal) + "\n": "0\n");
-
-        } 
-        
-        **/
 
     }
 
