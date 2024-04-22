@@ -1,0 +1,199 @@
+It turns out that I misunderstood how variable declaration and redeclaration were to be handled by our language.
+
+///////////Structural Overview:
+
+SymbolTable Object is that which is used to store and track the program's variable declarations, scope, etc.
+Within the SymbolTable, representing the table structure itself, is a LinkedHashMap "table." This LinkedHashMap uses Strings as the keys
+SymbolTableScopes (obj) as the values. The compiler utlizes SymbolTableScope's `current_scope` instance variable as the means to which
+the current scope is tracked at all times. Furhermore, and a bit beyond the scope of this overview, is the `alpha` and `numbs` ArrayLists which
+are used to create the scope names. 
+
+SymbolTableScope Objects are created and used to represent each scope. Each instance of this object contains its own parent,
+accessible_scopes list, and children list. Additionally, each contain a HashMap of key-type String and value-type SymbolTableEntry
+as the means to which the entries are stored and kept track of; hence the name, `entries.` 
+
+SymbolTableEntry Objects represent variable declarations, assignments, etc. Specified for each instance is the `type,` as well as booleans which
+track `is_initialized` and `is_used.`
+
+
+
+W/in SymbolTable - LinkedHashMap used as opposed to a HashMap so that in-order retrieval of scope could be utilized later for easier and neater sys.out. 
+
+----------------------------------------------------------
+
+///////////Functional Overview:
+
+Creating Scopes: 
+Scopes are added via the SymbolTable method createNewScope(). This method first addressed the current_scope, checking to see if it has a parent (it always will -- even root.)
+
+
+    Naming Scopes:
+
+        If the current parent has children...
+
+            If the current_scope has children... The last_child's name is obtained. If the name ends in a number,
+            the next (new) scope will end in a number. Conversely, if it ends in a letter, the next (new) 
+            scope will end in a letter as well. For each case, 
+            respectively, the following sequential entry within alpha/numbs 
+            ArrayList is chosen and the name for the new scope is the same as the 
+            last_child's sans its last char and instead the value at the next
+            sequential entry is appended. 
+
+            If the current_scope does not have children... The currents_parent (the parent of the current_scope) has its last child utilized
+            for the creation of the new scope's name -- lets refer to it "parents_last_child." If parents_last_child ends in a letter, 
+            the new scope name will become parents_last_child's name + "0." Otherwise, if it ends in a number, 
+            it will be parents_last_child name + "a."
+
+        
+        If the current parent does NOT have children...
+
+            If the current_scope_name ends in a letter, the new scope name will be current[0:len() -1] + numbs[0]
+            If the current_scope_name ends in a number, the new scope name will be current[0:len()-1] + alpha[0]
+
+
+        If the current scope does not have a parent... 
+
+            As is the case with the root/top scope, the new scope name will be a concatenation of the current_scope_name (`0`) and 
+            the first entry within the `alpha` ArrayList, "a." 
+
+
+
+
+
+-----
+---- vvv Needs to be cleaned up vvv ----
+
+To Better Explain
+
+Each scope has a parent and children scopes. When you are checking to see if you are able to declare a variable, you first check if the variable has already been declared
+within the current scope. Next you check to see if it has been declared in the parent scope. You are not done yet, though.
+
+
+Scopes are represented by an Object of type SymbolTableScope. Each SymbolTableScope contains a list of children, accessible scopes, and a parent. 
+Parent, acts as a pointer reference to the scope's parent SymbolTableScope.
+Children, an ArrayList of SymbolTableScope, contains all the of the directly descendant scopes. 
+AccessibleScopes, contains
+
+
+
+What Happens When A Scope is Made:
+Made using the SymbolTable object's createNewScope() method.
+
+Calculated are the scopes which are accessible to this newly created scope. Using calculateAccessibleScopes(), all of the current scope's parents and their parents are
+recursively added to the current scope's accessible_scopes (via scope_n.addAccessibleScope(parent)). 
+
+
+--
+As it is currently, a variable cannot be redeclared if it exists within an affected/reachable scope of that which contains a variable declaration of the same ID.
+
+For example,
+
+In scope `0`, if `int a` is declared, then it may not be redeclared anywhere else. Scope 0 is the top scope. 
+
+If `int a` were first declared in scope 0a0, once you exit that block/scope you will find yourself in scope 0a. In Scope 0a, you would be able to declare `int a` 
+because it is not affected by the nested 0a0 scope. 
+
+
+----
+
+
+
+
+
+
+
+
+
+
+
+
+Below commented-out is a comment that I took from a test file I was experimenting with. 
+
+
+/*
+
+What I have learned from this is that you are able to reference variables outside of their scope, within their reach, and utilize them. Use them for manipulation,
+output, etc. 
+
+BUT 
+
+Within an affected scope, you can redeclare a variable -- meaning same id and previous variable decl type doesn't matter
+
+.
+.
+.
+. 
+ 
+ 
+ 
+ ----
+
+     {
+        int a
+        a = 6
+        {
+            string a
+            a = "a string"
+            print(a)
+        }
+        print(a)
+
+    }$
+
+
+    results: "a string6"
+
+ 
+ 
+ ----
+     {
+        int a
+        a = 6
+        {
+            int a
+            a = 7
+            print(a)
+        }
+        print(a)
+
+    }$
+
+
+    returns: '76'
+ 
+ ----
+
+
+     {
+        int a
+        a = 6
+        {
+            print(a)
+        }
+        print(a)
+
+    }$
+ 
+ 
+    returns: '66'
+ 
+ 
+
+ ----
+
+     {
+        int a
+        a = 6
+        {
+           int a
+a = 7
+print(a)
+        }
+        print(a)
+
+    }$
+
+
+
+    returns: 76
+ */
