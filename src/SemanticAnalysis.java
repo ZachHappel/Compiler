@@ -306,6 +306,9 @@ public class SemanticAnalysis {
                                         symbol_table.setAsUsed(booleanexpr_rhs);
                                         found_booleanexpr_lhs = false; found_booleanexpr_rhs = false; within_booleanexpr = false; 
                                     } else {
+                                        System.out.println("LHS Type: " + lhs_type);
+                                        System.out.println("RHS Type: " + rhs_type + ", Value: " + booleanexpr_rhs.getTokenAttribute());
+
                                         System.out.println("Invalid LHS & RHS values for Boolean Expr. "); 
                                         throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()","Left Hand Side of BooleanExpression contains an invalid variable");
                                     }
@@ -391,6 +394,8 @@ public class SemanticAnalysis {
                                 Production previous_parent = current_parent;            System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
+                                found_booleanexpr_lhs = false;
+                                found_booleanexpr_rhs = false;
                                 current_parent = previous_parent;                       System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* d Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
                                 
@@ -403,6 +408,8 @@ public class SemanticAnalysis {
                                                                                         System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsNotEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
+                                found_booleanexpr_lhs = false;
+                                found_booleanexpr_rhs = false; 
                                 current_parent = previous_parent; 
                                                                                         System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
@@ -513,11 +520,11 @@ public class SemanticAnalysis {
 
         for (int i = 0; i <= p.getASTChildren().size() - 1; i++ ) {
             Production c = p.getASTChild(i);
-            String spaces = stringOfCharacters(index * 2, " ");
+            String spaces = stringOfCharacters(index * 4, " ");
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
             //if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "] AST Children: " + getASTChildrenNames(c)); } 
-            if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "]"); } 
-            else { System.out.println(spaces + index + stringOfCharacters(2, " ") + " < " + ((Terminal) c).getTokenAttribute() + " >"); }
+            if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(5, " ") + "   [" + c.getName() + "]"); } 
+            else { System.out.println(spaces + index + stringOfCharacters(5, " ") + " < " + ((Terminal) c).getTokenAttribute() + " >"); }
             recursivePrint(c, index + 1);
         }
     }

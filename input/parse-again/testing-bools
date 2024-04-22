@@ -1,0 +1,33 @@
+{
+    int a
+    a = 0
+    boolean b
+    b = false
+    boolean c
+    c = true
+    while(((a != 9) == ("test" != "alan")) == ((5 == 5) != (b ==c))) 
+    {
+        print("a")
+    }
+}$
+
+/**
+ * 
+ * Need to address ability to nest multiple expressions within a BooleanExpression
+ * Error: 
+ * [ SEMANTIC ANALYSIS ERROR - SemanticAnalysis, recursiveDescent()
+ Reason:Left Hand Side of BooleanExpression contains an invalid variable ]
+ 
+ ----
+
+//working
+ while((("test" != "alan") == ("test" != "alan")) == (("test" != "alan") != (b ==c))) 
+while((("test" != "alan") == ("test" != "alan")) == ((5 == 5) != (b ==c))) 
+
+ 
+ Error with:
+ (a != 9) 
+ Specifically, 
+ while(((a != 9) == ("test" != "alan")) == ((5 == 5) != (b ==c)))
+ while(((a == 9) == ("test" != "alan")) == ((5 == 5) != (b ==c)))
+ */
