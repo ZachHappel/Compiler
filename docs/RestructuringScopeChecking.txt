@@ -1,5 +1,8 @@
 It turns out that I misunderstood how variable declaration and redeclaration were to be handled by our language.
 
+On top of the other modifications that need to be made, one of the changes is that "initialization" is always set to true... My brain went silly, I guess.
+While initially programming this, I thought initialization = declaration... Late night, I guess.
+
 ///////////Structural Overview:
 
 SymbolTable Object is that which is used to store and track the program's variable declarations, scope, etc.
@@ -57,10 +60,27 @@ Scopes are added via the SymbolTable method createNewScope(). This method first 
             the first entry within the `alpha` ArrayList, "a." 
 
 
-
-
-
 -----
+Performing Entries
+
+Current Implementation:
+Check to see if it currently exists within accessible scopes, if it does not, create entry
+
+existsWithinAccessibleScopes (Terminal identifier_terminal)
+    - Get potentially new ID from the terminal
+    - Get current accessible scopes, from the current_scope.getAccessibleScopes()
+        - @SymbolTableScope - getAccesibleScopes():
+            -> returns ArrayList of accessible scopes
+    - If ID exists within the current_scope's entries, return true
+    - If ID exists within the current_scope's accessible_scopes' entries, return true
+    - 
+
+
+New Implementation:
+If it does not exist within the current scope, create it lol wtf... Is it that easy? 
+
+No redeclaration within the same scope
+
 ---- vvv Needs to be cleaned up vvv ----
 
 To Better Explain
@@ -186,8 +206,8 @@ Within an affected scope, you can redeclare a variable -- meaning same id and pr
         a = 6
         {
            int a
-a = 7
-print(a)
+            a = 7
+            print(a)
         }
         print(a)
 

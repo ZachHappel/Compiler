@@ -184,6 +184,21 @@ public class SemanticAnalysis {
      */
     public void recursiveDescent (Production p, int index) throws SemanticAnalysisException {
 
+        System.out.println(
+            "\n@recursiveDescent\n" + 
+                " -- within_assignment: " + within_assignment + 
+                    " -- found_assignment_identifier: " + ( within_assignment ? (found_assignment_identifier == null ? "null" : (found_assignment_identifier.getTokenAttribute())) : "not within assignment") + 
+                    " -- found_assignment_value: " + ( within_assignment ? (found_assignment_value == null ? "null" : (found_assignment_value.getTokenAttribute())) : "not within assignment") + 
+                    " -- found_assignment_leftside: " + found_assignment_leftside + 
+                    "\n" +
+                " -- within_booleanexpr: " + within_booleanexpr + 
+                    " -- found_booleanexpr_lhs: " + found_booleanexpr_lhs + 
+                    " -- booleanexpr_lhs: [name: " + (booleanexpr_lhs == null ? "null" : booleanexpr_lhs.getName()) + ", value: " + (booleanexpr_lhs == null ? "null" : booleanexpr_lhs.getTokenAttribute())  + "] " +
+                        "\n" + 
+                    " -- found_booleanexpr_rhs: " + found_booleanexpr_rhs +  
+                        " -- booleanexpr_rhs: [name: " + (booleanexpr_rhs == null ? "null" : booleanexpr_rhs.getName()) + ", value: " + (booleanexpr_rhs == null ? "null" : booleanexpr_rhs.getTokenAttribute())  + "] " +
+                        "\n" +
+                " -- within_addition: " + within_addition + "" );
 
         if (index == 0 && p.getName().equals("Program")) {
             System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
@@ -235,6 +250,7 @@ public class SemanticAnalysis {
 
                     // Found VarDecl Identifier
                     if (within_vardecl && terminal_name.equals("IDENTIFIER")) {
+                        System.out.println("> VarDecl IDENTIFIER");
                         found_vardecl_identifier = terminal;
                         
                         boolean already_exists = symbol_table.existsWithinAccessibleScopes(found_vardecl_identifier);
@@ -243,6 +259,7 @@ public class SemanticAnalysis {
                             throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable already declared with identifier: " + found_vardecl_identifier.getTokenAttribute() );                    
                         } else {
                             symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
+                            current_parent.addASTChild(found_vardecl_identifier); // Add VarDecl identifier, Could cause issue????
                             within_vardecl = false; //No longer in Variable Declaration, flip back to false
                             break;
                         }
@@ -251,11 +268,14 @@ public class SemanticAnalysis {
 
 
                     if (within_assignment && terminal_name.equals("IDENTIFIER") && !(found_assignment_leftside)) {
+                        System.out.println(">within_assignment");
                         found_assignment_identifier = terminal;
                         found_assignment_leftside = true;
                         
                     } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
                         // does identifier exist in the table, if not ERROR(?), f so, is it same as left side type, get left side type, get current identifier type by looking it up
+                        
+                        System.out.println(">within_assignment");
                         boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(found_assignment_identifier);
                         String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(found_assignment_identifier);
 
@@ -267,13 +287,23 @@ public class SemanticAnalysis {
                             System.out.println("Left and Right Side Work");
                             symbol_table.setAsUsed(terminal);
                             symbol_table.setAsUsed(found_assignment_identifier);
+                            within_assignment = false; 
                             found_assignment_leftside = false; 
-                        } 
+                        } else {
+                            throw new SemanticAnalysisException(
+                                "SemanticAnalysis, recursiveDescent()", 
+                                " Invalid Assignment Statement: \n " +
+                                "" + "LHS, " + found_assignment_identifier.getTokenAttribute() + ", Scope: " + symbol_table.getScopeLocation(found_assignment_identifier).getName() + ", type: " + lhs_identifier_type + "\n"
+                                   + " RHS, " + terminal.getTokenAttribute() + ", Scope: " + symbol_table.getScopeLocation(terminal).getName() + ", type: " + symbol_table.getTypeFromAccessibleScopes(terminal) + "\n"
+                                   + " Incomptatible types for assignment.\n Fatal error"
+                            );
+                        }
                         
                     }
 
                     
-                    // 
+                    /* Think this is for booleans...
+                    System.out.println("Balls");
                     if (within_assignment && assignment_rhs.contains(terminal_name)) {
                        
                         boolean left_comports_with_right = symbol_table.existsWithinAccessibleScopesAndValidAssignment(found_assignment_identifier, terminal_name);
@@ -286,7 +316,7 @@ public class SemanticAnalysis {
                         }
                         System.out.println("True");
                     }
-                    
+                     */
                     if (within_booleanexpr) {
                         if ((terminal_name.equals("IDENTIFIER") || (terminal_name.equals("KEYWORD_TRUE") || (terminal_name.equals("KEYWORD_FALSE"))))) {
                             if (!found_booleanexpr_lhs ) {
@@ -320,7 +350,7 @@ public class SemanticAnalysis {
                         }
                     }
 
-                    System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
+                    System.out.println("*** " + terminal.getName() + ", Type: Terminal, Value: " + terminal.getTokenAttribute() + ", Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
                 
                 } else System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
@@ -461,6 +491,7 @@ public class SemanticAnalysis {
                                 System.out.println("Valid String Assignment");
                                 symbol_table.setAsUsed(found_assignment_identifier);
                                 within_assignment = false; 
+                                found_assignment_leftside = false;
                             }
                         } 
 

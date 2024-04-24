@@ -188,19 +188,22 @@ public class SymbolTable {
 
     // Checks to see if variable has already been declared in the current scope's accessible scopes, if true that means that the current vardecl is invalid
     public boolean existsWithinAccessibleScopes (Terminal identifier_terminal) {
+       
         String identifier_value = identifier_terminal.getTokenAttribute();
         System.out.println("ID Value: " + identifier_value); 
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
         boolean exists_within_a_scope = false;
         
         if (current_scope.entryExists(identifier_value)) return true; // If in current scope, return
-        
+        else return false; 
+        /**
         for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
             SymbolTableScope scope = current_scope_accessibles.get(s);
             if (scope.entryExists(identifier_value)) {
                 exists_within_a_scope = true;
             }
         } return exists_within_a_scope; 
+        **/
     } 
 
     public SymbolTableEntry retrieveEntryFromAccessibleScopes (Terminal identifier_terminal) {
@@ -217,6 +220,28 @@ public class SymbolTable {
                 return entry; 
             }
         } return new SymbolTableEntry("", false, false); // otherwise return blank SymbolTableEntry with "" as type
+    }
+
+
+    public SymbolTableScope getScopeLocation (Terminal identifier_terminal) throws SemanticAnalysisException {
+        String identifer_value = identifier_terminal.getTokenAttribute();
+        ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes(); // Obtain which it has reach/access to
+
+        if (current_scope.entryExists(identifer_value)) return current_scope;
+
+        for (int s = 0; s <= current_scope_accessibles.size() - 1; s++ ) {
+            SymbolTableScope scope = current_scope_accessibles.get(s); 
+            if (scope.entryExists(identifer_value)) {
+                return scope;
+            }
+        }
+
+        // If Identifier_Terminal's ID cannot be located within accessible scopes,
+        // something went wrong and an exception needs to be thrown
+        throw new SemanticAnalysisException(
+            "SymbolTable, getScopeLocation()",
+            "Unable to location scope for identifier value: " + identifer_value
+            );
     }
 
 
