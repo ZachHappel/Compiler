@@ -256,7 +256,7 @@ public class SemanticAnalysis {
                         System.out.println("> VarDecl IDENTIFIER");
                         found_vardecl_identifier = terminal;
                         
-                        boolean already_exists = symbol_table.existsWithinAccessibleScopes(found_vardecl_identifier);
+                        boolean already_exists = symbol_table.existsWithinCurrentScope(found_vardecl_identifier);
                         
                         if (already_exists) {
                             throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable already declared with identifier: " + found_vardecl_identifier.getTokenAttribute() );                    
@@ -444,7 +444,7 @@ public class SemanticAnalysis {
                     }
                     
                     else if (nonterminal_name.equals("BooleanExpression")) {
-                        
+                        System.out.println("At BooleanExpression");
                         // Determine if NonTerm node that should be made should be called IsEqual or IsNotEqual OR if just true/false terminal-- which is not actionable
                         //System.out.println("NonTerminal Name - BooleanExpression");
                         if ( (nonterminal.getChild(0).getName().equals("BooleanValue")) ) {
@@ -571,7 +571,10 @@ public class SemanticAnalysis {
                     Terminal ps_identifier_terminal = (Terminal) nonterminal.getChild(0);
                     boolean valid_in_scope = symbol_table.existsWithinAccessibleScopes(ps_identifier_terminal);
                     if (valid_in_scope) symbol_table.setAsUsed(ps_identifier_terminal);
-                        
+                    else {
+                        throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent() - PrintStatement Identifier Checking", 
+                        " Unable to access " + ps_identifier_terminal.getTokenAttribute() + " within Scope: " + symbol_table.getCurrentScopeName() + " or any accessible scopes." );
+                    }
                 }
 
                 if (nonterminal_name.equals("BLOCK")) {

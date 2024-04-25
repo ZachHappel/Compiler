@@ -192,7 +192,8 @@ public class SymbolTable {
         String identifier_value = identifier_terminal.getTokenAttribute();
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
         boolean exists_within_a_scope = false;
-        
+        System.out.println("Accessible Scopes: ");
+
         if (current_scope.entryExists(identifier_value)) {
             System.out.println("ID Value: " + identifier_value + " exists in current scope"); 
             return true; // If in current scope, return
