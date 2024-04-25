@@ -190,12 +190,34 @@ public class SymbolTable {
     public boolean existsWithinAccessibleScopes (Terminal identifier_terminal) {
        
         String identifier_value = identifier_terminal.getTokenAttribute();
-        System.out.println("ID Value: " + identifier_value); 
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
         boolean exists_within_a_scope = false;
         
-        if (current_scope.entryExists(identifier_value)) return true; // If in current scope, return
-        else return false; 
+        if (current_scope.entryExists(identifier_value)) {
+            System.out.println("ID Value: " + identifier_value + " exists in current scope"); 
+            return true; // If in current scope, return
+        } 
+        
+        for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
+            SymbolTableScope scope = current_scope_accessibles.get(s);
+            if (scope.entryExists(identifier_value)) {
+                exists_within_a_scope = true;
+            }
+        } 
+        
+        return exists_within_a_scope; 
+    } 
+
+    public boolean existsWithinCurrentScope (Terminal identifier_terminal) {
+       
+        String identifier_value = identifier_terminal.getTokenAttribute();
+        ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
+        boolean exists_within_a_scope = false;
+        
+        if (current_scope.entryExists(identifier_value)) {
+            System.out.println("ID Value: " + identifier_value + " exists in current scope"); 
+            return true; // If in current scope, return
+        } else return false; 
         /**
         for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
             SymbolTableScope scope = current_scope_accessibles.get(s);
@@ -205,6 +227,7 @@ public class SymbolTable {
         } return exists_within_a_scope; 
         **/
     } 
+
 
     public SymbolTableEntry retrieveEntryFromAccessibleScopes (Terminal identifier_terminal) {
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id
@@ -321,7 +344,7 @@ public class SymbolTable {
         System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
         String type_value = type_terminal.getTokenAttribute(); // Type
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
-        if (!existsWithinAccessibleScopes(identifier_terminal)) {
+        if (!existsWithinCurrentScope(identifier_terminal)) {
             current_scope.createAndInsertEntry(type_value, identifier_value, true, false);
         } else {
             throw new SemanticAnalysisException
