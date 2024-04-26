@@ -46,6 +46,7 @@ public class SemanticAnalysis {
     public Terminal booleanexpr_lhs;
     public Terminal booleanexpr_rhs;
 
+    public boolean evaluating_complex_boolexpr = false; 
 
 
 
@@ -289,6 +290,7 @@ public class SemanticAnalysis {
                     }
 
                     // Within Assignment Statement
+                    // MAYBE ADD: && while not evaling complex bool expression
                     if (within_assignment) {
 
                         // Terminal is IDENTIFIER, Left Hand Side of Assignment not found yet
@@ -309,7 +311,7 @@ public class SemanticAnalysis {
                             
                             
                             //boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(assignment_identifier); // LHS exists within Scope
-                            System.out.println("Within Assignment: Terminal is IDENTIFIER, Left Hand Side ALREADY found [" + booleanexpr_lhs.getName() + ", " + booleanexpr_lhs.getTokenAttribute() + "] Type of Assigment Statement: ID = ID");
+                            System.out.println("Within Assignment: Terminal is IDENTIFIER, Left Hand Side ALREADY found [" + assignment_identifier.getName() + ", " + assignment_identifier.getTokenAttribute() + "] Type of Assigment Statement: ID = ID");
                             String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(assignment_identifier); // LHS type
     
                             // Assignment Structure, ID = ID. 
@@ -328,13 +330,15 @@ public class SemanticAnalysis {
                                 */
                                 
                             } else {
-                                throw new SemanticAnalysisException(
-                                    "SemanticAnalysis, recursiveDescent()", 
-                                    " Invalid Assignment Statement: \n " +
-                                    "" + "LHS, " + assignment_identifier.getTokenAttribute() + ", Scope: " + symbol_table.getScopeLocation(assignment_identifier).getName() + ", type: " + lhs_identifier_type + "\n"
-                                       + " RHS, " + terminal.getTokenAttribute() + ", Scope: " + symbol_table.getScopeLocation(terminal).getName() + ", type: " + symbol_table.getTypeFromAccessibleScopes(terminal) + "\n"
-                                       + " Incomptatible types for assignment.\n Fatal error"
-                                );
+                                if (!evaluating_complex_boolexpr) {
+                                    throw new SemanticAnalysisException(
+                                        "SemanticAnalysis, recursiveDescent()", 
+                                        " Invalid Assignment Statement: \n " +
+                                        "" + "LHS, " + assignment_identifier.getTokenAttribute() + ", Scope: " + symbol_table.getScopeLocation(assignment_identifier).getName() + ", type: " + lhs_identifier_type + "\n"
+                                        + " RHS, " + terminal.getTokenAttribute() + ", Scope: " + symbol_table.getScopeLocation(terminal).getName() + ", type: " + symbol_table.getTypeFromAccessibleScopes(terminal) + "\n"
+                                        + " Incomptatible types for assignment.\n Fatal error"
+                                    );
+                                }
                             }
                         
                         } 
@@ -356,8 +360,48 @@ public class SemanticAnalysis {
                                 System.out.println("LHS Bool: " + booleanexpr_lhs.getName());
                                 System.out.println("RHS Bool: " + booleanexpr_rhs.getName());
 
+                                // If Identifier -> Does it exist within the current scope --> and it really compatible with booleans
+
+                                boolean lhs_in_scope = symbol_table.existsWithinAccessibleScopes(booleanexpr_lhs);
+                                boolean rhs_in_scope = symbol_table.existsWithinAccessibleScopes(booleanexpr_rhs);
+                                
+                                String booleanexpr_lhs_name = booleanexpr_lhs.getName();
+                                String booleanexpr_rhs_name = booleanexpr_rhs.getName();
+                                
+                                if (lhs_in_scope && rhs_in_scope) {
+                                    
+                                    // Both are valid in scope and both are booleans, therefore it can be assigned to a boolean entry without question 
+                                    // OR
+                                    // Evaluating complex boolean expression AND either side of booleanexpr are of same type
+                                    if (  
+                                        ((symbol_table.isValidAssignment(booleanexpr_lhs.getName(), "boolean")) && (symbol_table.isValidAssignment(booleanexpr_rhs.getName(), "boolean") )) ||
+                                        (evaluating_complex_boolexpr && (booleanexpr_lhs_name.equals(booleanexpr_rhs_name))) ||
+                                        (evaluating_complex_boolexpr && (booleanexpr_lhs_name.equals("IDENTIFIER") && symbol_table.existsWithinAccessibleScopesAndValidAssignment(booleanexpr_lhs, booleanexpr_rhs.getName())))
+                                       // (evaluating_complex_boolexpr && (booleanexpr_lhs_name.equals("IDENTIFIER") && symbolsymbol_table.getTypeFromAccessibleScopes(booleanexpr_lhs).equals()))
+                                        // OR
+                                        // Left Side is IDENTIFIER and right side type equals type is 
+                                    ) {
+                                            symbol_table.setAsUsed(booleanexpr_lhs);
+                                            symbol_table.setAsUsed(booleanexpr_rhs);
+                                            found_booleanexpr_lhs = false; found_booleanexpr_rhs = false; within_booleanexpr = false; 
+                                    } else if (evaluating_complex_boolexpr && !symbol_table.existsWithinAccessibleScopesAndValidAssignment(booleanexpr_lhs, booleanexpr_rhs.getName())) {
+                                        System.out.println("Cooking?");
+                                    }
+                                    
+                                    
+                                    else {
+
+                                        throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Either LHS or RHS of BooleanExpression is invalid\n" +
+                                        (!lhs_in_scope ? " ! LHS Invalid \n" + " - LHS Type: " + booleanexpr_lhs.getName() +  ((booleanexpr_lhs.getName().equals("IDENTIFIER") ? "\n - LHS Value: " + booleanexpr_lhs.getTokenAttribute() : "")  + "\n - LHS In-Scope: " + lhs_in_scope + "\n - RHS Scope: " + symbol_table.getScopeLocation(terminal).getName() + "\n - Current Scope: " + symbol_table.getCurrentScopeName() + "\n"): "") +
+                                        (!rhs_in_scope ? (!lhs_in_scope ? "\n" : "") + " ! RHS Invalid \n" + " - RHS Type: " + booleanexpr_rhs.getName() +  ((booleanexpr_rhs.getName().equals("IDENTIFIER") ? "\n - RHS Value: " + booleanexpr_rhs.getTokenAttribute() : "")  + "\n - RHS In-Scope: " + rhs_in_scope + "\n - RHS Scope: " + symbol_table.getScopeLocation(terminal).getName() + "\n - Current Scope: " + symbol_table.getCurrentScopeName() + "\n"): "") 
+                                        );
+                                        
+                                    }
+                                    
+                                }
+
+                                /**
                                 boolean lhs_valid_in_scope = ( 
-                                    // If Identifier -> Does it exist within the current scope --> and it really compatible with booleans
                                     booleanexpr_lhs.getName().equals("IDENTIFIER") ? 
                                     symbol_table.existsWithinAccessibleScopesAndValidAssignment(booleanexpr_lhs, "boolean")
                                     : true); // id, TRUE, FALSE
@@ -368,8 +412,9 @@ public class SemanticAnalysis {
                                     : true);
                                     /**(booleanexpr_rhs.getName().equals("IDENTIFIER") ? symbol_table.existsWithinAccessibleScopesAndValidAssignment(booleanexpr_rhs, "boolean") : false) ?  
                                     symbol_table.existsWithinAccessibleScopes(booleanexpr_rhs) : 
-                                    true) ; // id -> is valid?, TRUE, FALSE**/
+                                    true) ; // id -> is valid?, TRUE, FALSE**/ 
 
+                                    /**
                                 if ((booleanexpr_lhs.getName().equals("IDENTIFIER") )) { System.out.println("LHS Exists Within Scope: " + lhs_valid_in_scope);}
                                 if ((booleanexpr_rhs.getName().equals("IDENTIFIER") )) { System.out.println("RHS Exists Within Scope: " + rhs_valid_in_scope);}
                                 System.out.println("LHS Valid-In-Scope: " + lhs_valid_in_scope);
@@ -384,18 +429,19 @@ public class SemanticAnalysis {
                                    
                                 } else {
                                     throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Either LHS or RHS of BooleanExpression is invalid\n" +
-                                    (!lhs_valid_in_scope ? " ! LHS Invalid \n" + " - LHS Type: " + booleanexpr_lhs.getName() +  ((booleanexpr_lhs.getName().equals("IDENTIFIER") ? "\n - LHS Value: " + booleanexpr_lhs.getTokenAttribute() : "")  + "\n - LHS In-Scope: " + lhs_valid_in_scope + "\n"): "") +
-                                    (!rhs_valid_in_scope ? (!lhs_valid_in_scope ? "\n ---" : "") + "RHS Invalid: \n" + " - RHS Type" + booleanexpr_lhs.getName() +  ((booleanexpr_rhs.getName().equals("IDENTIFIER") ? ", Value: " + booleanexpr_rhs.getTokenAttribute() : "")  + ", In Scope: " + rhs_valid_in_scope + "\n"): "") 
+                                    (!lhs_valid_in_scope ? " ! LHS Invalid \n" + " - LHS Type: " + booleanexpr_lhs.getName() +  ((booleanexpr_lhs.getName().equals("IDENTIFIER") ? "\n - LHS Value: " + booleanexpr_lhs.getTokenAttribute() : "")  + "\n - LHS In-Scope: " + lhs_valid_in_scope + "\n - RHS Scope: " + symbol_table.getScopeLocation(terminal).getName() + "\n - Current Scope: " + symbol_table.getCurrentScopeName() + "\n"): "") +
+                                    (!rhs_valid_in_scope ? (!lhs_valid_in_scope ? "\n" : "") + " ! RHS Invalid \n" + " - RHS Type: " + booleanexpr_rhs.getName() +  ((booleanexpr_rhs.getName().equals("IDENTIFIER") ? "\n - RHS Value: " + booleanexpr_rhs.getTokenAttribute() : "")  + "\n - RHS In-Scope: " + rhs_valid_in_scope + "\n - RHS Scope: " + symbol_table.getScopeLocation(terminal).getName() + "\n - Current Scope: " + symbol_table.getCurrentScopeName() + "\n"): "") 
                                     );
                                 }
+                                **/
                             }
                         }
                     }
 
-                    System.out.println("*** " + terminal.getName() + ", Type: Terminal, Value: " + terminal.getTokenAttribute() + ", Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
+                    //System.out.println("*** " + terminal.getName() + ", Type: Terminal, Value: " + terminal.getTokenAttribute() + ", Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
                     current_parent.addASTChild(terminal); // Add terminal to current parent
                 
-                } else System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
+                } //else System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
 
                 
             } 
@@ -422,10 +468,10 @@ public class SemanticAnalysis {
                     if (nonterminal_name.equals("VarDeclStatement")) within_vardecl = true;  // Within Variable Decl moving forward
                     if (nonterminal_name.equals("AssignmentStatement")) within_assignment = true;  // Within Variable Decl moving forward
 
-                                                                                        System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
-                    current_parent.addASTChild(nonterminal);                            System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
+                                            //                                            System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
+                    current_parent.addASTChild(nonterminal);                            //System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
                     current_parent = nonterminal; 
-                    recursiveDescent(nonterminal, index + 1); /* recurse on non-term */ System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                    recursiveDescent(nonterminal, index + 1); /* recurse on non-term */ //System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                     if ( current_parent.getName().equals("AssignmentStatement") ) {
                         within_assignment = false; 
                         found_assignment_leftside = false;
@@ -439,20 +485,20 @@ public class SemanticAnalysis {
                     
                     // Create Parent While node, add it to the current parent, make call to recursiveDescent on the nonterminal, reset current parent back to previouw parent
                     if (nonterminal_name.equals("WhileStatement")) {
-                        NonTerminal while_node = new NonTerminal("While");              System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
-                        current_parent.addASTChild(while_node);                         System.out.println("* b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
+                        NonTerminal while_node = new NonTerminal("While");              //System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
+                        current_parent.addASTChild(while_node);                         //System.out.println("* b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
                         current_parent = while_node;
-                        recursiveDescent(nonterminal, index);                           System.out.println("** Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                        recursiveDescent(nonterminal, index);                           //System.out.println("** Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                         current_parent = prev_parent;
                     } 
                     
                     // Same as WhileStatement, but this time create a new If node
                     else if (nonterminal_name.equals("IfStatement")) {
-                                                                                        System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
+                                                                                        //System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         NonTerminal if_node = new NonTerminal("If");
-                        current_parent.addASTChild(if_node);                            System.out.println("* c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
+                        current_parent.addASTChild(if_node);                            //System.out.println("* c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
                         current_parent = if_node;
-                        recursiveDescent(nonterminal, index);                           System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
+                        recursiveDescent(nonterminal, index);                           //System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                         current_parent = prev_parent;
                     }
                     
@@ -467,8 +513,10 @@ public class SemanticAnalysis {
                             within_booleanexpr = true; 
                             recursiveDescent(nonterminal, index + 1); // Let the terminal get added normally
                             within_booleanexpr = false; 
+                            System.out.println("Finished Simple Boolean Evaluation");
                         // 
                         } else {
+                            evaluating_complex_boolexpr = true;
                             System.out.println("** BooleanExpression, Multiple Children");
                             within_booleanexpr = true; // Flip to true
                             
@@ -484,9 +532,11 @@ public class SemanticAnalysis {
                                 Production previous_parent = current_parent;            System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
+                                System.out.println("Finished Evaluation Complex Boolean Expression");
                                 found_booleanexpr_lhs = false;
                                 found_booleanexpr_rhs = false;
                                 within_booleanexpr = false; 
+                                evaluating_complex_boolexpr = false;
                                 current_parent = previous_parent;                       System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* d Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
                                 
@@ -499,9 +549,11 @@ public class SemanticAnalysis {
                                                                                         System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsNotEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
+                                System.out.println("Finished Evaluation Complex Boolean Expression");
                                 found_booleanexpr_lhs = false;
                                 found_booleanexpr_rhs = false; 
                                 within_booleanexpr = false; 
+                                evaluating_complex_boolexpr = false; 
                                 current_parent = previous_parent; 
                                                                                         System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
@@ -515,9 +567,9 @@ public class SemanticAnalysis {
                     else if (nonterminal_name.equals("IntExpression")) {
                                                                                         System.out.println("** INT EXPR: ");
                         if (nonterminal.getChildren().size() == 3) {
-                            NonTerminal Addition = new NonTerminal("ADDITION");         System.out.println("** Adding NonTerminal: Addition to Parent: " + current_parent.getName());
+                            NonTerminal Addition = new NonTerminal("ADDITION");         //System.out.println("** Adding NonTerminal: Addition to Parent: " + current_parent.getName());
                             current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
-                            Production previous_parent = current_parent; /* Store current parent */ System.out.println("* Saved Parent Name: " + previous_parent.getName());
+                            Production previous_parent = current_parent; /* Store current parent */ //System.out.println("* Saved Parent Name: " + previous_parent.getName());
                             current_parent = Addition; // Update current parent to Addition
                             
                             within_addition = true;
@@ -525,16 +577,19 @@ public class SemanticAnalysis {
                             within_addition = false; 
                 
                             current_parent = previous_parent;
-                                                                                        System.out.println("* Reset Parent Name: " + previous_parent.getName());
-                                                                                        System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
+                                                                                        //System.out.println("* Reset Parent Name: " + previous_parent.getName());
+                                                                                       // System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + Addition.getName() + "\n\n");
 
                         } else {
                             Terminal digit = (Terminal) nonterminal.getChild(0).getChild(0);
                             if (within_assignment) {
-                                if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(assignment_identifier, digit.getName())) {
+                                if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(assignment_identifier, digit.getName()) ) {
                                     /* May not be safe to close within_assignment here */
                                     within_assignment = false; 
                                     found_assignment_leftside = false; 
+                                } else if (!symbol_table.existsWithinAccessibleScopesAndValidAssignment(assignment_identifier, digit.getName()) && evaluating_complex_boolexpr) {
+                                    System.out.println("Cooking 2!");
+                                
                                 } else {
                                     throw new SemanticAnalysisException(
                                     "SemanticAnalysis, recursiveDescent(), nonterminal_name.equals('IntExpression')", 
@@ -570,6 +625,9 @@ public class SemanticAnalysis {
                                 symbol_table.setAsUsed(assignment_identifier);
                                 within_assignment = false; 
                                 found_assignment_leftside = false;
+                            } else if (!is_valid && evaluating_complex_boolexpr) {
+                                System.out.println("Cooking 3! -- String Style!!");
+                            
                             } else {
                                 throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent() nonterminal_name.equals(``StringExpression``)", "** Invalid String Assignment **");
                             }
