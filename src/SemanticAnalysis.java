@@ -14,6 +14,7 @@
         add("CharacterList");
  */
 import java.util.ArrayList;
+import java.util.Stack;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ public class SemanticAnalysis {
 
 
     public ArrayList<Production> AST = new ArrayList<Production>();
+    public Stack<Production> boolean_stack = new Stack<>(); 
     public Production current_parent;
     public int block_index = 0;
     public ArrayList<String> block_indexes = new ArrayList<>(); 
@@ -43,6 +45,8 @@ public class SemanticAnalysis {
     public boolean found_booleanexpr_rhs = false;
     public Terminal booleanexpr_lhs;
     public Terminal booleanexpr_rhs;
+
+
 
 
     //Production prev_parent; 
@@ -184,6 +188,7 @@ public class SemanticAnalysis {
      */
     public void recursiveDescent (Production p, int index) throws SemanticAnalysisException {
 
+        /**
         System.out.println(
             "\n@recursiveDescent\n" + 
                 " -- within_assignment: " + within_assignment + 
@@ -200,7 +205,7 @@ public class SemanticAnalysis {
                         "\n" +
                 " -- within_addition: " + within_addition + "" );
 
-
+        **/
 
         if (index == 0 && p.getName().equals("Program")) {
             System.out.println(stringOfCharacters(index * 2, " ") + index + stringOfCharacters(2, " ") + "   [" + p.getName() + "] ");
@@ -208,25 +213,28 @@ public class SemanticAnalysis {
         }
 
         for (int i = 0; i <= p.getChildren().size() - 1; i++ ) {
-            Production c = p.getChild(i);
+            
+            Production c = p.getChild(i); // Child
             String spaces = stringOfCharacters(index * 2, " ");
             System.out.println("\n\n[index: " + index + "]\n**** Type Checking: " + c.getClass() + ", CST Children: " + (c.getClass().getSimpleName().equals("NonTerminal") ? getChildrenNames((NonTerminal) c) : "Not NonTerminal, Cannot Get Children"));
             if (c.getClass().getSimpleName().equals("Terminal")) { System.out.println("Terminal Value: " + ((Terminal) c).getTokenAttribute());}
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
 
+            // If Production is Terminal
             if (is_terminal) {
                TerminalsList.add(c.getName());
 
-                Terminal terminal = (Terminal) c; 
-                String terminal_name = terminal.getName();
+                Terminal terminal = (Terminal) c; // Cast to Terminal
+                String terminal_name = terminal.getName(); // Get Terminal kind
                 if (terminal_name.equals("IDENTIFIER")) terminal.setTokenAttribute( (terminal.getTokenAttribute()).replaceAll("[^a-z]", "")); // Lex fix
 
-
+                // If within_addition = true
                 if (within_addition) {
 
                     if ((terminal_name.equals("SYMBOL_INTOP")) || 
                         (terminal_name.equals("DIGIT")) || 
                         (terminal_name.equals("IDENTIFIER"))) {
+                            
                             if (terminal_name.equals("IDENTIFIER")) {
                                 if (symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, "int")) {
                                     System.out.println("We are solid! CONTINUE");
@@ -235,14 +243,20 @@ public class SemanticAnalysis {
                                     throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable incompatible with addition, " + terminal.getTokenAttribute());
                                 }
                             }
+
+                            /*
+                             * Do the others need to be done..?
+                             */
                         }
                     
-                    else {
-                        throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable incompatible with addition, " + terminal_name + ", " + terminal.getTokenAttribute());
-                    }
+                    else throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable incompatible with addition, " + terminal_name + ", " + terminal.getTokenAttribute());
+            
                 }
                
            
+
+                // Valid Terminals: Identifier, Character, Digit, KEYWORD_TRUE, KEYWORD_FALSE, KEYWORD_INT, KEYWORD_BOOLEAN, KEYWORD_STRING, IDENTIFIER, DIGIT
+                // Terminals that they themselves require no sophisticated action and can more or less be added to the AST as is
                 if (valid_terminals.contains(terminal_name)) {
                     
 
@@ -256,10 +270,15 @@ public class SemanticAnalysis {
                         System.out.println("> VarDecl IDENTIFIER");
                         found_vardecl_identifier = terminal;
                         
+                        // Check to see if a variable with the same ID has been declared within the current scope
                         boolean already_exists = symbol_table.existsWithinCurrentScope(found_vardecl_identifier);
                         
+                        // Throw error if variable with same ID exists in scope already
                         if (already_exists) {
                             throw new SemanticAnalysisException("SemanticAnalysis, recursiveDescent()", "Variable already declared with identifier: " + found_vardecl_identifier.getTokenAttribute() );                    
+                        
+                        // Variable with ID does not exist yet, we can add it, 
+                        // Add the Terminal to the AST as child to the current parent
                         } else {
                             symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
                             current_parent.addASTChild(found_vardecl_identifier); // Add VarDecl identifier, Could cause issue????
@@ -269,41 +288,45 @@ public class SemanticAnalysis {
                     
                     }
 
+                    // Within Assignment Statement
                     if (within_assignment) {
 
-
-                        // Found LHS, the ID, that which is used to identify the variable, the 'a' in 'a = xyz', etc
+                        // Terminal is IDENTIFIER, Left Hand Side of Assignment not found yet
                         if (within_assignment && terminal_name.equals("IDENTIFIER") && !(found_assignment_leftside)) {
-                            // Store it within assignement_identifier, and flip found_assignment_leftside 
-                            System.out.println(">within_assignment, setting assignment_identifier: " + terminal.getName() + ", value: " + terminal.getTokenAttribute());
-                            assignment_identifier = terminal;
-                            found_assignment_leftside = true;
-                        
-                        // If LHS found, and the current Terminal is "IDENTIFIER"
-                        } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
-                            // does identifier exist in the table, if not ERROR(?), f so, is it same as left side type, get left side type, get current identifier type by looking it up
                             
-                            System.out.println(">within_assignment");
+                            System.out.println(
+                                "Within Assignment: Terminal is IDENTIFIER, " + 
+                                "Setting assignment_identifier: "+ terminal.getName() + 
+                                ", value: " + terminal.getTokenAttribute()
+                            );
+
+                            assignment_identifier = terminal; // Store Terminal as the assignment's identifier
+                            found_assignment_leftside = true; // Flip boolean indicating leftside has been found
                         
-                            boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(assignment_identifier); // LHS exists within Scope
+                        // Terminal is IDENTIFIER, Left Hand Side already been found, Assignment Statement structure is: ID = ID
+                        } else if (within_assignment && terminal_name.equals("IDENTIFIER") && (found_assignment_leftside)) {
+                            
+                            
+                            
+                            //boolean lhs_identifier_exists = symbol_table.existsWithinAccessibleScopes(assignment_identifier); // LHS exists within Scope
+                            System.out.println("Within Assignment: Terminal is IDENTIFIER, Left Hand Side ALREADY found [" + booleanexpr_lhs.getName() + ", " + booleanexpr_lhs.getTokenAttribute() + "] Type of Assigment Statement: ID = ID");
                             String lhs_identifier_type = symbol_table.getTypeFromAccessibleScopes(assignment_identifier); // LHS type
     
-                            // The current/new terminal that is being handled, of type "IDENTIFIER", 
-                            // Is an identifier of an entry that is within scope, and that entry is compatible with the lhs type
+                            // Assignment Structure, ID = ID. 
+                            // Check to see if left and right side are compatible
                             boolean left_comports_with_right = symbol_table.existsWithinAccessibleScopesAndValidAssignment(terminal, lhs_identifier_type);
     
-                            // If the above is true
+                            // If RHS is a valid assignment for LHS 
                             if (left_comports_with_right) {
-                                System.out.println("LHS, " + assignment_identifier.getTokenAttribute() + " is of type: " + lhs_identifier_type);
-                                System.out.println("RHS, " + terminal.getTokenAttribute() + " is of type: " + symbol_table.getTypeFromAccessibleScopes(terminal));
-                                System.out.println("Left and Right Side Work");
+                                System.out.println("Valid Assignment Statement, LHS and RHS are compatible || LHS, " + assignment_identifier.getTokenAttribute() + " is of type: " + lhs_identifier_type + " || RHS, " + terminal.getTokenAttribute() + " is of type: " + symbol_table.getTypeFromAccessibleScopes(terminal));
                                 symbol_table.setAsUsed(terminal); // Update the current terminal's entry as being used
                                 symbol_table.setAsUsed(assignment_identifier);  // Update the LHS entry as being used
-                                //assignment_value = terminal; // Unnecessary, as this is never seen
+                                /*
+                                 - Assigning assignment_value with terminal is unnecessary as this is never seen
+                                 - We can not say that the assigment statement is completed yet, because examples such as this are valid: 'c = a + 3'
+                                 - -> Therefore within_assignment = true  &  found_assignment_leftside = true, stay unchanged
+                                */
                                 
-                                // Cannot say that assignment is done yet, because examples such as this are valid: 'c = a + 3'
-                                //within_assignment = false; assignment_identifier = null; assignment_value = null;  
-                                //found_assignment_leftside = false; 
                             } else {
                                 throw new SemanticAnalysisException(
                                     "SemanticAnalysis, recursiveDescent()", 
@@ -313,33 +336,17 @@ public class SemanticAnalysis {
                                        + " Incomptatible types for assignment.\n Fatal error"
                                 );
                             }
-                            
-                        } else {
-                            System.out.println("Balls");
-                            // Think this is for booleans...
-                            if (within_assignment && assignment_rhs.contains(terminal_name)) {
-                                System.out.println("Balls!");
-                            
-                                boolean left_comports_with_right = symbol_table.existsWithinAccessibleScopesAndValidAssignment(assignment_identifier, terminal_name);
-                                if (left_comports_with_right) {
-                                    System.out.println("Assignment complete for LHS: " + assignment_identifier.getName() + ", val: " + assignment_identifier.getTokenAttribute() );
-                                    System.out.println("with: " + terminal_name + ", val: " + terminal.getTokenAttribute() );
-                                    symbol_table.setAsUsed(assignment_identifier); // Left hand side
-                                    within_assignment = false; 
-                                    found_assignment_leftside = false; 
-                                }
-                                System.out.println("True");
-                            }    
-                        }
-    
                         
-                        
+                        } 
+          
                     }
 
                     
                      
                     if (within_booleanexpr) {
+                        
                         if ((terminal_name.equals("IDENTIFIER") || (terminal_name.equals("KEYWORD_TRUE") || (terminal_name.equals("KEYWORD_FALSE"))))) {
+                            
                             if (!found_booleanexpr_lhs ) {
                                 booleanexpr_lhs = terminal;
                                 found_booleanexpr_lhs = true;
@@ -395,19 +402,22 @@ public class SemanticAnalysis {
             
             else {
                 
-                NonTerminal nonterminal = (NonTerminal) c;
-                String nonterminal_name = nonterminal.getName();  
-                Production prev_parent = current_parent; 
-                NonTerminalsList.add((NonTerminal) c);
+                // NonTerminal Production
+                NonTerminal nonterminal = (NonTerminal) c; // Cast to NonTerminal
+                String nonterminal_name = nonterminal.getName(); // Get NonTerminal kind
+                Production prev_parent = current_parent; // Store current_parent as prev_parent
+                NonTerminalsList.add((NonTerminal) c); // Unrelated
 
                 System.out.println("*** " + nonterminal_name + ", Type: NonTerminal,   Children: " + getChildrenNames(nonterminal));
 
+                // Block
                 if (nonterminal_name.equals("BLOCK")) {
                     System.out.println("\n\n\nENTERING BLOCK\n");
                     symbol_table.createNewScope();
                     System.out.println("Current Scope: " + symbol_table.getCurrentScopeName() + "\n\n");
                 }
                 
+                // Valid NonTerminals: Block, VarDeclStatement, PrintStatement, AssignmentStatement
                 if (VALID_NONTERMINALS.contains(nonterminal_name)) {                    
                     if (nonterminal_name.equals("VarDeclStatement")) within_vardecl = true;  // Within Variable Decl moving forward
                     if (nonterminal_name.equals("AssignmentStatement")) within_assignment = true;  // Within Variable Decl moving forward
@@ -423,10 +433,12 @@ public class SemanticAnalysis {
                     within_vardecl = false; 
                     current_parent = prev_parent;
                     
+                // Actionable NonTerminals: StringExpression, WhileStatement, IfStatement, BooleanExpression, IntExpression
+                // Requires actions beyond just a call to recursiveDescent
                 } else if (ACTIONABLE_NONTERMINALS.contains(nonterminal_name)) {
                     
+                    // Create Parent While node, add it to the current parent, make call to recursiveDescent on the nonterminal, reset current parent back to previouw parent
                     if (nonterminal_name.equals("WhileStatement")) {
-                        
                         NonTerminal while_node = new NonTerminal("While");              System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         current_parent.addASTChild(while_node);                         System.out.println("* b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
                         current_parent = while_node;
@@ -434,6 +446,7 @@ public class SemanticAnalysis {
                         current_parent = prev_parent;
                     } 
                     
+                    // Same as WhileStatement, but this time create a new If node
                     else if (nonterminal_name.equals("IfStatement")) {
                                                                                         System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         NonTerminal if_node = new NonTerminal("If");
@@ -447,15 +460,22 @@ public class SemanticAnalysis {
                         System.out.println("At BooleanExpression");
                         // Determine if NonTerm node that should be made should be called IsEqual or IsNotEqual OR if just true/false terminal-- which is not actionable
                         //System.out.println("NonTerminal Name - BooleanExpression");
+
+                        // Only child is BooleanValue (KEYWORD_TRUE or KEYWORD_FALSE)
                         if ( (nonterminal.getChild(0).getName().equals("BooleanValue")) ) {
-                            System.out.println("** BooleanExpression Type: VALUE - Letting recursion continue normally");
+                            System.out.println("** BooleanExpression, Single Child");
+                            within_booleanexpr = true; 
                             recursiveDescent(nonterminal, index + 1); // Let the terminal get added normally
-                        
+                            within_booleanexpr = false; 
+                        // 
                         } else {
+                            System.out.println("** BooleanExpression, Multiple Children");
                             within_booleanexpr = true; // Flip to true
-                            // get Boolop, get Terminal, what is its name
+                            
+                            // Determine if: == or != 
                             String bool_op_value = ((Terminal) (nonterminal.getChild(2).getChild(0))).getName(); /* SYMBOL_EQUIVALENCE OR SYMBOL_INEQUIVALENCE */   System.out.println("** BooleanExpression Type: " + bool_op_value);
                             
+                            // ==
                             if (bool_op_value.equals("SYMBOL_EQUIVALENCE")) {
                                                                                         System.out.println("** Adding NonTerminal: IsEqual to Parent: " + current_parent.getName());
 
@@ -470,7 +490,7 @@ public class SemanticAnalysis {
                                 current_parent = previous_parent;                       System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* d Updating Current Parent, " + current_parent + ",  to: " + IsEqual.getName() + "\n\n");
                                 
-                                
+                            // !=    
                             } else if (bool_op_value.equals("SYMBOL_INEQUIVALENCE")) {
                                                                                         System.out.println("** Adding NonTerminal: IsNotEqual to Parent: " + current_parent.getName());
                                 NonTerminal IsNotEqual = new NonTerminal("IsNotEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
@@ -486,6 +506,8 @@ public class SemanticAnalysis {
                                                                                         System.out.println("* Reset Parent Name: " + previous_parent.getName());
                                                                                         System.out.println("* e Updating Current Parent, " + current_parent.getName() + ",  to: " + IsNotEqual.getName() + "\n\n");
                                 
+                            } else {
+                                throw new SemanticAnalysisException("Else BooleanExpresion", "Bruh");
                             }
                         }
                     }
@@ -663,4 +685,24 @@ public class SemanticAnalysis {
   //String lhs_type = symbol_table.getTypeFromAccessibleScopes(booleanexpr_lhs);
                                     //String rhs_type = symbol_table.getTypeFromAccessibleScopes(booleanexpr_rhs);
                                     //if (lhs_type.equals(rhs_type)) {
+
+
+                                        /**else {
+                            System.out.println("Balls");
+                            // Think this is for booleans...
+                            if (within_assignment && assignment_rhs.contains(terminal_name)) {
+                                System.out.println("Balls!");
+                            
+                                boolean left_comports_with_right = symbol_table.existsWithinAccessibleScopesAndValidAssignment(assignment_identifier, terminal_name);
+                                if (left_comports_with_right) {
+                                    System.out.println("Assignment complete for LHS: " + assignment_identifier.getName() + ", val: " + assignment_identifier.getTokenAttribute() );
+                                    System.out.println("with: " + terminal_name + ", val: " + terminal.getTokenAttribute() );
+                                    symbol_table.setAsUsed(assignment_identifier); // Left hand side
+                                    within_assignment = false; 
+                                    found_assignment_leftside = false; 
+                                }
+                                System.out.println("True");
+                            }    
+                        }
+    
  */
