@@ -31,7 +31,7 @@ public class SymbolTableScope {
 
     public ArrayList<SymbolTableScope> getScopeChildren () {return this.children;}
     public boolean hasChildren () {
-        System.out.print(", hasChildren = " + this.children.size() + ", ");
+        //System.out.print(", hasChildren = " + this.children.size() + ", ");
         for (int i = 0; i <= children.size() - 1; i++) {
             System.out.println(children.get(i).getName()); 
         }

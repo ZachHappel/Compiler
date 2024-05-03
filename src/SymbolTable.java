@@ -39,10 +39,10 @@ public class SymbolTable {
     public boolean endsInLetter (String s) {
         String last_char = "" + s.charAt(s.length() - 1);
         if (alpha.contains(last_char)) {
-            System.out.print(", Alpha contains: " + last_char + ", returning true");
+            //System.out.print(", Alpha contains: " + last_char + ", returning true");
             return true;
         } else {
-            System.out.println(", Alpha DOES NOT contains: " + last_char + ", returning false");
+            //System.out.println(", Alpha DOES NOT contains: " + last_char + ", returning false");
             return false;
         }
     }
@@ -55,45 +55,45 @@ public class SymbolTable {
     public void createNewScope() {
         String new_scope_name = "";
         String current_scope_name = this.current_scope.getName();
-        System.out.println("Current Scopes: " + getScopeNames()); 
-        System.out.println("Current Scope Name: " + current_scope_name);
+        //System.out.println("Current Scopes: " + getScopeNames()); 
+        //System.out.println("Current Scope Name: " + current_scope_name);
 
 
         // Need to remediate root scope not having parent 
         // Need to prevent integer overflow if more than 9 siblings or 25 siblings, depending on whether number or letter (Check: is actually limited to 9? )
         if ( current_scope.hasParent() )  {
-            System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
+           // System.out.print("Current scope has parent: " + current_scope.getScopeParent().getName() + ", ");
             SymbolTableScope currents_parent = current_scope.getScopeParent();
             if (currents_parent.hasChildren()) {
-                System.out.print("the current scope's parent has children, ''" + currents_parent.getAllChildrenNames() + "'', ");
-                System.out.print(", current scope's children, ''" + current_scope.getAllChildrenNames() + "'', ");
+                //System.out.print("the current scope's parent has children, ''" + currents_parent.getAllChildrenNames() + "'', ");
+                //System.out.print(", current scope's children, ''" + current_scope.getAllChildrenNames() + "'', ");
                 //Siblings exist
                 
                 if (current_scope.hasChildren()) {
                     SymbolTableScope last_child = current_scope.getLastChild();
                     String last_child_name = last_child.getName(); 
-                    System.out.print("last child name: " + last_child_name);
+                    //System.out.print("last child name: " + last_child_name);
                     if ( endsInLetter(last_child_name) ) {
-                        System.out.println(", ends in letter, ");
+                        //System.out.println(", ends in letter, ");
                         String last_letter = String.valueOf(last_child_name.charAt(last_child_name.length() - 1));
                         int next_alpha_index = alpha.indexOf(last_letter) + 1;
                         new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + alpha.get(next_alpha_index); // Next letter to append
-                        System.out.println("i) New Scope Name: " + new_scope_name);
+                        //System.out.println("i) New Scope Name: " + new_scope_name);
                     
                     } else {
-                        System.out.println("~ends in number, ");
+                        //System.out.println("~ends in number, ");
                         String last_number = String.valueOf(last_child_name.charAt(last_child_name.length() - 1));
                         int last_number_as_int = Integer.parseInt(last_number);  
                         int next_alpha_index = numbs.indexOf(last_number_as_int) + 1;
                         new_scope_name = last_child_name.substring(0, last_child_name.length() - 1) + numbs.get(next_alpha_index); // Next number to append
-                        System.out.println("ii) New Scope Name: " + new_scope_name);
+                        //System.out.println("ii) New Scope Name: " + new_scope_name);
                     }
 
                 } else {
-                    System.out.println("Xxx"); 
+                    //System.out.println("Xxx"); 
                     SymbolTableScope last_child = currents_parent.getLastChild();
                     String last_child_name = last_child.getName(); 
-                    System.out.print("Xxx last child name: " + last_child_name);
+                    //System.out.print("Xxx last child name: " + last_child_name);
                     
                     // Only will work if length of name > 1 
                     if (endsInLetter(last_child_name)) {
@@ -114,14 +114,14 @@ public class SymbolTable {
                 }
             }
         } else {
-            System.out.println("Current scope has no parent");
+            //System.out.println("Current scope has no parent");
             new_scope_name = current_scope_name + alpha.get(0); // ROOT
         }
 
 
         SymbolTableScope new_scope = new SymbolTableScope(new_scope_name);
         
-        System.out.println("iii) New Scope Name: " + new_scope_name);
+        //System.out.println("iii) New Scope Name: " + new_scope_name);
         new_scope.setScopeParent(current_scope); // Dive in
         current_scope.addScopeChild(new_scope);
         setCurrentScope(new_scope); // Set new_scope as the current_scope
@@ -144,7 +144,7 @@ public class SymbolTable {
                 reached_root = true;
             }
         }
-        System.out.println("Accessible Scope Names: " + scope.getAllAccessibleScopesNames()); 
+        //System.out.println("Accessible Scope Names: " + scope.getAllAccessibleScopesNames()); 
     }
     
     public void insertScope (String name, SymbolTableScope scope) throws SemanticAnalysisException {
@@ -187,15 +187,13 @@ public class SymbolTable {
     } 
 
     // Checks to see if variable has already been declared in the current scope's accessible scopes, if true that means that the current vardecl is invalid
-    public boolean existsWithinAccessibleScopes (Terminal identifier_terminal) {
+    public boolean existsWithinAccessibleScopes (Terminal identifier_terminal)  {
        
         String identifier_value = identifier_terminal.getTokenAttribute();
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
         boolean exists_within_a_scope = false;
-        System.out.println("Accessible Scopes: ");
 
         if (current_scope.entryExists(identifier_value)) {
-            System.out.println("ID Value: " + identifier_value + " exists in current scope"); 
             return true; // If in current scope, return
         } 
         
@@ -209,6 +207,8 @@ public class SymbolTable {
         return exists_within_a_scope; 
     } 
 
+   
+
     public boolean existsWithinCurrentScope (Terminal identifier_terminal) {
        
         String identifier_value = identifier_terminal.getTokenAttribute();
@@ -216,7 +216,7 @@ public class SymbolTable {
         boolean exists_within_a_scope = false;
         
         if (current_scope.entryExists(identifier_value)) {
-            System.out.println("ID Value: " + identifier_value + " exists in current scope"); 
+            //System.out.println("ID Value: " + identifier_value + " exists in current scope"); 
             return true; // If in current scope, return
         } else return false; 
         /**
@@ -328,7 +328,7 @@ public class SymbolTable {
 
         SymbolTableEntry e = retrieveEntryFromAccessibleScopes(identifier_terminal); 
         String entry_type = e.getType(); 
-        if (entry_type.equals("")) return false; // retrive..() returns false if not found
+    if (entry_type.equals("")) return false; else { /*System.out.println("Located type: "+ entry_type)*/;} /*System.out.println("Btw.. Assignment_Type: " + assignment_type);*/// retrive..() returns false if not found
         boolean is_valid = isValidAssignment(entry_type, assignment_type);
         return is_valid;
 
@@ -339,14 +339,19 @@ public class SymbolTable {
         retrieved_entry.setisUsed(true);
     }
 
+    public void setAsInitialized(Terminal identifier_terminal) {
+        SymbolTableEntry retrieved_entry = retrieveEntryFromAccessibleScopes(identifier_terminal);
+        retrieved_entry.setIsInitialized(true);
+    }
+
 
     // Creates entry in current scope. First checks if there exists conflicts with scopes accessible to current scope, or the current scope itself
     public void performEntry(Terminal type_terminal, Terminal identifier_terminal) throws SemanticAnalysisException {
-        System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
+        //System.out.println("Preparing to add into Symbol Table: " + type_terminal.getTokenAttribute() + " " + identifier_terminal.getTokenAttribute());
         String type_value = type_terminal.getTokenAttribute(); // Type
         String identifier_value = identifier_terminal.getTokenAttribute(); // Id 
         if (!existsWithinCurrentScope(identifier_terminal)) {
-            current_scope.createAndInsertEntry(type_value, identifier_value, true, false);
+            current_scope.createAndInsertEntry(type_value, identifier_value, false, false); //Change
         } else {
             throw new SemanticAnalysisException
             ("SymbolTable, performEntry()", "Variable already exists with ID, " + identifier_value + ". Conflicting declaration exists within Scope: " + getConflictingScopeName(identifier_terminal) );
