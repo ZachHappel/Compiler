@@ -188,6 +188,8 @@ public class SymbolTable {
 
     // Checks to see if variable has already been declared in the current scope's accessible scopes, if true that means that the current vardecl is invalid
     public boolean existsWithinAccessibleScopes (Terminal identifier_terminal)  {
+
+        // Maybe add warning to a toolkit storage of semantic analysis errors
        
         String identifier_value = identifier_terminal.getTokenAttribute();
         ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
