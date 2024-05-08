@@ -1,0 +1,29 @@
+{
+int a
+
+}$
+
+results in: 
+
+"A9 00 8D 06 00 00 00 00 00..."
+
+Because, remember, in little endian... 00 06 is the address, meaning we need two bytes to store the address in Code. Because of that, that means that the stack starts at byte 6, hence the number 6
+Prior to Code being finished, the value would have been T0 00
+
+
+--
+
+{
+    int a
+    int b
+    
+}$
+
+
+Axios Compiler handles this in a way that I find preferential to Kompiler...
+ Axios Output: "A9 00 8D 0B 00 A9 00 8D 0C 00 00 00"
+ Kompiler Output: "A9 00 8D 09 00 8D 0A 00 00 00 00"
+
+ Technically, since the accumulator is already at 00, we do not need to reset it, but I believe the approach followed by Axios is more inline with what we learned in class
+ I am going to go with that...
+ Each time variable declaration occurs, accumulator gets set to 00 and then the variable is assigned a temporary value

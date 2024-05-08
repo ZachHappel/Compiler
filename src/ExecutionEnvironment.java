@@ -1,9 +1,18 @@
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class ExecutionEnvironment {
     
-    // Each int/bool uses one memory address, this means that this space is reserved an cannot be used, e.g., two variables means two bytes of memory are reserved (in theory, not sure if I will put this into practice)
-    // Each string is of undefined length, but it too will require at the very least at least one byte so that a reference can be made to its location within the heap
+    /** 
+    
+    Each int/bool uses one memory address, this means that this space is reserved an cannot be used, e.g., two variables means two bytes of memory are reserved (in theory, not sure if I will put this into practice)
+    Each string is of undefined length, but it too will require at the very least at least one byte so that a reference can be made to its location within the heap
+    
+    Strings content will be stored in the heap but just like any other variable, we must wait to provide it with an actual permanent location. The String will receive a static table entry
+    The Strings' temporary values will be used in the string_declaration hashmap as well. Associating identical strings with the same temporary value is all the collation that we need.
+
+    **/ 
+
 
     // true false null
     // 74 72 75 65 00 66 61 6C 73 65 00 6E 75 6C 6C 00
@@ -17,9 +26,14 @@ public class ExecutionEnvironment {
 
     // Reserved space the becomes necessary when variables are declared will be addressed within a create static table insertion method
     public String[] code_sequence = new String[256]; 
-    public int code_pointer = 0;
-    public int stack_pointer;
 
+
+    // Hashmap which maps String content to an address location ([a-z]* : Tn)
+    public HashMap<String, String> string_declaration = new HashMap<>(); 
+    
+    
+    public int code_pointer = 0;
+    public int stack_pointer; // Must be set when code gen is done
     public int heap_pointer = 255;
     
     
@@ -30,16 +44,37 @@ public class ExecutionEnvironment {
         java.util.Arrays.fill(code_sequence, "0"); // populate code sequence array with "0" at start
     }
 
-    public int getRemainingBytes () { return this.usable_bytes_remaining; }
-    public void setRemainingBytes (int rem_bytes) { this.usable_bytes_remaining = rem_bytes; }
-    public void checkRemainingSpace () {}
 
-    public void calculateRemainingSpace (String[] inserted_instructions, String location) {
+    public String[] getCodeSequence () { return this.code_sequence; }
+    public int getCodePointer () { return this.code_pointer; }
+    public int getStackPointer () { return this.stack_pointer; }
+    public int getHeapPointer () { return this.heap_pointer; }
+    public int getRemainingBytes () { return this.usable_bytes_remaining; }
+    
+    public void setCodePointer (int i) { this.code_pointer = i; }
+    public void setStackPointer (int i) { this.stack_pointer = i; }
+    public void setHeapPointer (int i) { this.heap_pointer = i; }
+    public void setRemainingBytes (int rem_bytes) { this.usable_bytes_remaining = rem_bytes; }
+
+
+    // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly
+    public void updateRemainingSpace (String[] inserted_instructions, String location) {
         setRemainingBytes(getRemainingBytes() - inserted_instructions.length);
     }
 
+
+    // Check to see if String with identical makeup has already been declared and inserted
+    public boolean stringExists (String string_to_check) {
+        return string_declaration.containsKey(string_to_check); 
+    }
+
+    // Return temporary location associated with identical String content
+    public String retrieveStringTemporaryAddr (String str) {
+        return string_declaration.get(str);
+    }
+
+
     public boolean codeInsertionPossible (String[] instructions, String location) throws CodeGenerationException {
-        
         // If the remaining space is greater than or equal to zero after adding the instructions (+ 1) then true
         // + 1 is just to keep good pace right now and I do not want to get too hung up on anything
         boolean insertion_possible = (getRemainingBytes() - (instructions.length + 1) >= 0 ? true : false); 
@@ -47,69 +82,57 @@ public class ExecutionEnvironment {
         return insertion_possible; 
     }
 
+
+
+
     /* instruction: the bytes, either 
      * type: either int, boolean, string
      */
     public void insert (String[] instructions, String type, String location) throws CodeGenerationException {
         
-        // Safety check 
+        
         switch (location) {
+
             case "Code":
                 if (codeInsertionPossible(instructions, "Code")) {
-                    
+                    performCodeInsertion(instructions);
                 } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Code") ;
+
             case "Stack": 
-                if (codeInsertionPossible(instructions, "Stack")) {}
-                else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Stack") ;
+                if (codeInsertionPossible(instructions, "Stack")) {
+                    performStackInsertion(instructions);
+                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Stack") ;
+
             case "Heap": 
                 if (codeInsertionPossible(instructions, "Heap")) {
-                    performHeapInsertion(instructions, type, location);
+                    performHeapInsertion(instructions);
                 } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Heap") ;
         }
 
-        if (location.equals("Heap")) {
-            String[] heap_instructions = Arrays.copyOf(instructions, instructions.length + 1); // copy instructions
-            int instructions_length = heap_instructions.length; // instructions + "00" 
-            int heap_insertion_location = heap_pointer - instructions_length; 
-
-            heap_instructions[heap_instructions.length -1] = "00"; // add "00" in last position
-            System.arraycopy(heap_instructions, 0, code_sequence, heap_pointer - heap_instructions.length, instructions_length);
-            heap_pointer = heap_insertion_location - 1;
-
-            calculateRemainingSpace(heap_instructions, "Heap"); // ensure local values are up to date
-            //usable_bytes_remaining-= instructions.length - 1;  
-        }
-
-
-        if (location.equals("Code")) {codeInsertionPossible("Code")}
-        System.arraycopy(instructions, 0, code_sequence, code_pointer, instructions.length);
-        //usable_bytes_remaining-= instructions.length; 
-
     }
 
-    public void performCodeInsertion (String[] instructions, String type, String location) throws CodeGenerationException {
-
+    public void performCodeInsertion (String[] instructions) throws CodeGenerationException {
+        System.arraycopy(instructions, 0, getCodeSequence(), getCodePointer() - instructions.length, instructions.length);
     }
 
-    public void performStackInsertion (String[] instructions, String type, String location) throws CodeGenerationException {
+    public void performStackInsertion (String[] instructions) throws CodeGenerationException {
         
     }
 
-    public void performHeapInsertion (String[] instructions, String type, String location) throws CodeGenerationException {
+    public void performHeapInsertion (String[] instructions) throws CodeGenerationException {
         String[] heap_instructions = Arrays.copyOf(instructions, instructions.length + 1); // copy instructions
         int instructions_length = heap_instructions.length; // instructions + "00" 
-        int heap_insertion_location = heap_pointer - instructions_length; 
-
+        int heap_insertion_location = getHeapPointer() - instructions_length; 
         heap_instructions[heap_instructions.length -1] = "00"; // add "00" in last position
+        
+        // Update code_sequence with new instructions
         System.arraycopy(heap_instructions, 0, code_sequence, heap_pointer - heap_instructions.length, instructions_length);
-        heap_pointer = heap_insertion_location - 1;
-
-        calculateRemainingSpace(heap_instructions, "Heap"); // ensure local values are up to date
+        
+        setHeapPointer(heap_insertion_location - 1);
+        updateRemainingSpace(heap_instructions, "Heap"); // ensure local values are up to date
     }
 
    
-
-
 
 
 }
