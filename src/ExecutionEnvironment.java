@@ -30,8 +30,8 @@ public class ExecutionEnvironment {
 
     // Maps temporary variable ID value @ scope to address locations
     // Stored will be the first portion of the temporary address value, for example: T0 00 would just be stored as T0
-    public Map<String, String> static_table = new LinkedHashMap<>(); 
-    public Map<String, String> reversed_static_table = new LinkedHashMap<>(); 
+    public Map<String, String> static_table = new LinkedHashMap<>(); // address : variable
+    public Map<String, String> reversed_static_table = new LinkedHashMap<>();  // variable : address
     
     public Map<String, String> jump_table = new HashMap<>(); 
 
@@ -76,37 +76,39 @@ public class ExecutionEnvironment {
     }
 
 
+    ////// String Declaration Map
     // Check to see if String with identical makeup has already been declared and inserted
     public boolean stringExists (String string_to_check) {
         return string_declaration.containsKey(string_to_check); 
     }
 
     // Return temporary location associated with identical String content
-    public String retrieveStringTemporaryAddr (String str) {
+    public String retrieveStringAddress (String str) {
         return string_declaration.get(str);
     }
 
+    ////// Static Table / Reversed Static Table
     public void performStaticTableInsertion (String variable_id, String scope_name) throws CodeGenerationException {
-        
         if (static_table.isEmpty()) {
            String static_table_variable_name = variable_id + "@" + scope_name; 
            String temporary_address = "T0"; 
            static_table.put(temporary_address, static_table_variable_name); 
            reversed_static_table.put(static_table_variable_name, temporary_address); 
            incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
-
         } else {
-    
             String static_table_variable_name = variable_id + "@" + scope_name; 
             String temporary_address = "T" + getTemporaryValueCounter(); // only works until 9,
             static_table.put(temporary_address, static_table_variable_name); 
             reversed_static_table.put(static_table_variable_name, temporary_address); 
             incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
-            
             if (getTemporaryValueCounter() >= 10) throw new CodeGenerationException("ExecutionEnvironment, performStaticTableInsertion()", "You did it. You broke my compiler. Currently, temporary addresses are limited to the range T0-T9...");
-
         }
+    }
 
+    ////// Code Sequence 
+    public boolean variableExistsInStaticTable (String variable_id, String scope_name) {
+        String static_table_variable_name = variable_id + "@" + scope_name; 
+        return reversed_static_table.containsKey(static_table_variable_name); // reversed table is mapped like, variable : address 
     }
 
 
@@ -117,9 +119,6 @@ public class ExecutionEnvironment {
         System.out.println("Insertion Possible: " + insertion_possible);
         return insertion_possible; 
     }
-
-
-
 
     /* instruction: the bytes, either 
      * type: either int, boolean, string

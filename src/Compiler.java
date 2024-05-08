@@ -83,9 +83,13 @@ public class Compiler {
                     ArrayList<Production> derivation = parse.ParseTokens(token_stream, Toolkit);
                     // Semantic Analysis
                     SemanticAnalysis sa = new SemanticAnalysis();
-                    sa.performSemanticAnalysis(derivation, Toolkit);
+                    ArrayList<Production> AST = sa.performSemanticAnalysis(derivation, Toolkit);
+                    // Code Generation
+                    CodeGeneration codegen = new CodeGeneration(); 
+                    codegen.performCodeGeneration(AST, Toolkit);
+                    
 
-                } catch (ParsingException | SemanticAnalysisException e) {
+                } catch (ParsingException | SemanticAnalysisException | CodeGenerationException e) {
                     System.err.println(e.getMessage());
                 }
 

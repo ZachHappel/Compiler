@@ -766,7 +766,7 @@ public class SemanticAnalysis {
         }
     }
     
-    public void performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) throws SemanticAnalysisException {
+    public ArrayList<Production> performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) throws SemanticAnalysisException {
         System.out.println("\n\nSEMANTIC ANALYSIS:");
         
         
@@ -788,6 +788,7 @@ public class SemanticAnalysis {
         recursivePrint(AST.get(0), 0);
         System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
         System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
+        return AST; 
 
     }
 
