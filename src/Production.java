@@ -7,7 +7,8 @@ public class Production implements Cloneable {
     public ArrayList<Production> children = new ArrayList<Production>();
     public Production parent;
     public String prodKind;
-    
+    public String scope_name; 
+
     public ArrayList<Production> ast_children = new ArrayList<Production>();
     public Production ast_parent;
 
@@ -37,6 +38,7 @@ public class Production implements Cloneable {
     public ArrayList<Production> getChildren () {return this.children;}
     public Production getParent () {return this.parent;}
     public Production getChild(int index) {return children.get(index);}
+    public String getScopeName () {return this.scope_name; }
     public String getProdKind() { return this.prodKind; }
     public void setName(String name) { this.name = name;}
     public void setSuccess (Boolean success) {this.success = success;}
@@ -48,7 +50,13 @@ public class Production implements Cloneable {
     public Production getASTParent () {return this.ast_parent;}
     public Production getASTChild(int index) {return ast_children.get(index);}
     public ArrayList<Production> getASTChildren () {return this.ast_children;}
-    public void addASTChild (Production child) { this.ast_children.add(child); }
+    
+    public void addASTChild (Production child, String scope_name) {
+         this.ast_children.add(child); 
+         this.scope_name = scope_name; 
+        
+    }
+
     public void addASTParent (Production parent) { this.ast_parent = parent;}
     public void removeASTChild (int index) { this.ast_children.remove(index);}
     public void removeASTChildren () {this.ast_children = new ArrayList<>();}

@@ -88,21 +88,26 @@ public class ExecutionEnvironment {
     }
 
     ////// Static Table / Reversed Static Table
-    public void performStaticTableInsertion (String variable_id, String scope_name) throws CodeGenerationException {
+    
+    // Returns String name of the new temporary address
+    public String performStaticTableInsertion (String variable_id, String scope_name) throws CodeGenerationException {
+        String temp_addr;
         if (static_table.isEmpty()) {
            String static_table_variable_name = variable_id + "@" + scope_name; 
-           String temporary_address = "T0"; 
-           static_table.put(temporary_address, static_table_variable_name); 
-           reversed_static_table.put(static_table_variable_name, temporary_address); 
+           temp_addr = "T0"; 
+           static_table.put(temp_addr, static_table_variable_name); 
+           reversed_static_table.put(static_table_variable_name, temp_addr); 
            incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
         } else {
             String static_table_variable_name = variable_id + "@" + scope_name; 
-            String temporary_address = "T" + getTemporaryValueCounter(); // only works until 9,
-            static_table.put(temporary_address, static_table_variable_name); 
-            reversed_static_table.put(static_table_variable_name, temporary_address); 
+            temp_addr = "T" + getTemporaryValueCounter(); // only works until 9,
+            static_table.put(temp_addr, static_table_variable_name); 
+            reversed_static_table.put(static_table_variable_name, temp_addr); 
             incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
             if (getTemporaryValueCounter() >= 10) throw new CodeGenerationException("ExecutionEnvironment, performStaticTableInsertion()", "You did it. You broke my compiler. Currently, temporary addresses are limited to the range T0-T9...");
         }
+
+        return temp_addr; 
     }
 
     ////// Code Sequence 
@@ -131,16 +136,19 @@ public class ExecutionEnvironment {
             case "Code":
                 if (codeInsertionPossible(instructions, "Code")) {
                     performCodeInsertion(instructions);
+                    break;
                 } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Code") ;
 
             case "Stack": 
                 if (codeInsertionPossible(instructions, "Stack")) {
                     performStackInsertion(instructions);
+                    break;
                 } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Stack") ;
 
             case "Heap": 
                 if (codeInsertionPossible(instructions, "Heap")) {
                     performHeapInsertion(instructions);
+                    break;
                 } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Heap") ;
         }
 

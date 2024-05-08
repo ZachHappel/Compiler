@@ -294,7 +294,7 @@ public class SemanticAnalysis {
                         // Add the Terminal to the AST as child to the current parent
                         } else {
                             symbol_table.performEntry(found_vardecl_type, found_vardecl_identifier);
-                            current_parent.addASTChild(found_vardecl_identifier); // Add VarDecl identifier, Could cause issue????
+                            current_parent.addASTChild(found_vardecl_identifier, symbol_table.getCurrentScopeName()); // Add VarDecl identifier, Could cause issue????
                             within_vardecl = false; //No longer in Variable Declaration, flip back to false
                             break;
                         }
@@ -504,7 +504,7 @@ public class SemanticAnalysis {
                     }
 
                     //System.out.println("*** " + terminal.getName() + ", Type: Terminal, Value: " + terminal.getTokenAttribute() + ", Children: NULL,   Action: Adding to Parent, " + current_parent.getName());
-                    current_parent.addASTChild(terminal); // Add terminal to current parent
+                    current_parent.addASTChild(terminal, symbol_table.getCurrentScopeName()); // Add terminal to current parent
                 
                 } //else System.out.println("*** " + terminal.getName() + ", Type: Terminal,   Children: NULL,   Action: Skipping");
 
@@ -534,7 +534,7 @@ public class SemanticAnalysis {
                     if (nonterminal_name.equals("AssignmentStatement")) within_assignment = true;  // Within Variable Decl moving forward
 
                                             //                                            System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
-                    current_parent.addASTChild(nonterminal);                            //System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
+                    current_parent.addASTChild(nonterminal, symbol_table.getCurrentScopeName());                            //System.out.println("* a Updating Current Parent, " + current_parent.getName() + ",  to: " + nonterminal_name+ "\n\n");
                     current_parent = nonterminal; 
                     recursiveDescent(nonterminal, index + 1); /* recurse on non-term */ //System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                     if ( current_parent.getName().equals("AssignmentStatement") ) {
@@ -551,7 +551,7 @@ public class SemanticAnalysis {
                     // Create Parent While node, add it to the current parent, make call to recursiveDescent on the nonterminal, reset current parent back to previouw parent
                     if (nonterminal_name.equals("WhileStatement")) {
                         NonTerminal while_node = new NonTerminal("While");              //System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
-                        current_parent.addASTChild(while_node);                         //System.out.println("* b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
+                        current_parent.addASTChild(while_node, symbol_table.getCurrentScopeName());                         //System.out.println("* b Updating Current Parent, " + current_parent.getName() + ",  to: " + while_node.getName()+ "\n\n");
                         current_parent = while_node;
                         recursiveDescent(nonterminal, index);                           //System.out.println("** Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                         current_parent = prev_parent;
@@ -561,7 +561,7 @@ public class SemanticAnalysis {
                     else if (nonterminal_name.equals("IfStatement")) {
                                                                                         //System.out.println("** Adding NonTerminal: " + nonterminal_name + " to Parent: " + current_parent.getName());
                         NonTerminal if_node = new NonTerminal("If");
-                        current_parent.addASTChild(if_node);                            //System.out.println("* c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
+                        current_parent.addASTChild(if_node, symbol_table.getCurrentScopeName());                            //System.out.println("* c Updating Current Parent, " + current_parent.getName() + ",  to: " + if_node.getName() + "\n\n");
                         current_parent = if_node;
                         recursiveDescent(nonterminal, index);                           //System.out.println("* Resetting Current Parent: " + current_parent.getName() + ", to Previous Parent: " + prev_parent.getName());
                         current_parent = prev_parent;
@@ -593,7 +593,7 @@ public class SemanticAnalysis {
                                                                                         //System.out.println("** Adding NonTerminal: IsEqual to Parent: " + current_parent.getName());
 
                                 NonTerminal IsEqual = new NonTerminal("IsEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
-                                current_parent.addASTChild(IsEqual);
+                                current_parent.addASTChild(IsEqual, symbol_table.getCurrentScopeName());
                                 Production previous_parent = current_parent;            //System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsEqual; // Update IsEqual to new parent
                                 recursiveDescent(nonterminal, index);
@@ -609,7 +609,7 @@ public class SemanticAnalysis {
                             } else if (bool_op_value.equals("SYMBOL_INEQUIVALENCE")) {
                                                                                         //System.out.println("** Adding NonTerminal: IsNotEqual to Parent: " + current_parent.getName());
                                 NonTerminal IsNotEqual = new NonTerminal("IsNotEqual"); // Becomes New Parent, remainder of children will be get added here ?? 
-                                current_parent.addASTChild(IsNotEqual);
+                                current_parent.addASTChild(IsNotEqual, symbol_table.getCurrentScopeName());
                                 Production previous_parent = current_parent; 
                                                                                         //System.out.println("* Saved Parent Name: " + previous_parent.getName());
                                 current_parent = IsNotEqual; // Update IsEqual to new parent
@@ -633,7 +633,7 @@ public class SemanticAnalysis {
                                                                                         //System.out.println("** INT EXPR: ");
                         if (nonterminal.getChildren().size() == 3) {
                             NonTerminal Addition = new NonTerminal("ADDITION");         //System.out.println("** Adding NonTerminal: Addition to Parent: " + current_parent.getName());
-                            current_parent.addASTChild(Addition); // Add Addition to AST Children of current Parent
+                            current_parent.addASTChild(Addition, symbol_table.getCurrentScopeName()); // Add Addition to AST Children of current Parent
                             Production previous_parent = current_parent; /* Store current parent */ //System.out.println("* Saved Parent Name: " + previous_parent.getName());
                             current_parent = Addition; // Update current parent to Addition
                             
@@ -664,7 +664,7 @@ public class SemanticAnalysis {
                                        + " Incomptatible types for assignment.\n Fatal error"
                                     );
                                 }
-                            } current_parent.addASTChild(digit);
+                            } current_parent.addASTChild(digit, symbol_table.getCurrentScopeName());
                         }
                     }
 
@@ -698,7 +698,7 @@ public class SemanticAnalysis {
                             }
                         } 
 
-                        current_parent.addASTChild(terminal_for_string_expression); // Add Terminal for StringExpression String to expression's AST children
+                        current_parent.addASTChild(terminal_for_string_expression, symbol_table.getCurrentScopeName()); // Add Terminal for StringExpression String to expression's AST children
                         
                     }
 

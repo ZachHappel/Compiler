@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class CodeGeneration {
     public Toolkit toolkit;
@@ -23,12 +24,13 @@ public class CodeGeneration {
             if (!is_terminal) {
                 NonTerminal nt = (NonTerminal) c;     
                 System.out.println("NonTerminal Name: " + nt.getName());
+                nonterminalRouter(nt);
             }
             traverseIntermediateRepresentation(c, index + 1);
         }
     }
 
-    public void nonterminalRouter (NonTerminal nt ) {
+    public void nonterminalRouter (NonTerminal nt ) throws CodeGenerationException{
         switch (nt.getName()) {
             
             case "VarDeclStatement": 
@@ -42,11 +44,16 @@ public class CodeGeneration {
     }
 
 
-    public void processVariableDeclaration (NonTerminal VarDeclStatement) {
+    
+
+    public void processVariableDeclaration (NonTerminal VarDeclStatement) throws CodeGenerationException{
         //ArrayList<Production> ast_children = VarDeclStatement.getASTChildren(); 
         Terminal type = (Terminal) VarDeclStatement.getASTChild(0);
         Terminal identifier = (Terminal) VarDeclStatement.getASTChild(1);
         //String scope = VarDeclStatement.get
+        String temp_addr = execution_environment.performStaticTableInsertion(identifier.getTokenAttribute(), identifier.getScopeName());
+        String[] op_codes = {"A9", "00", "8D", temp_addr, "00"};
+        execution_environment.insert(op_codes, "string", "Code"); // Send op_code, type which isn't used and may be removed, and location within execution environment
 
     }
     
@@ -74,6 +81,7 @@ public class CodeGeneration {
             System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
             System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
             System.out.println("\n\nAbstract Syntax Tree\n"); 
+            System.out.println(Arrays.toString(execution_environment.getCodeSequence()));
             //recursivePrint(AST.get(0), 0);
             System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
             System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
