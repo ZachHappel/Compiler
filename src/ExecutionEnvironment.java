@@ -1,6 +1,7 @@
 import java.util.Arrays;
 import java.util.HashMap;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
 public class ExecutionEnvironment {
     
     /** 
@@ -27,27 +28,38 @@ public class ExecutionEnvironment {
     // Reserved space the becomes necessary when variables are declared will be addressed within a create static table insertion method
     public String[] code_sequence = new String[256]; 
 
+    // Maps temporary variable ID value @ scope to address locations
+    // Stored will be the first portion of the temporary address value, for example: T0 00 would just be stored as T0
+    public Map<String, String> static_table = new LinkedHashMap<>(); 
+    public Map<String, String> reversed_static_table = new LinkedHashMap<>(); 
+    
+    public Map<String, String> jump_table = new HashMap<>(); 
+
+
 
     // Hashmap which maps String content to an address location ([a-z]* : Tn)
     public HashMap<String, String> string_declaration = new HashMap<>(); 
     
     
     public int code_pointer = 0;
-    public int stack_pointer; // Must be set when code gen is done
+    public int stack_pointer = -1; // Must be set when code gen is done
     public int heap_pointer = 255;
-    
+    public int temporary_value_counter = 0; 
     
     public int usable_bytes_remaining = 255; // start 255 because program will need to have an end instruction of 00 
     public int reserved_space = 0;
 
-    public ExecutionEnvironment() {
+    public ExecutionEnvironment() throws CodeGenerationException {
         java.util.Arrays.fill(code_sequence, "0"); // populate code sequence array with "0" at start
     }
 
 
     public String[] getCodeSequence () { return this.code_sequence; }
+    public Map<String, String> getStaticTable () { return this.static_table; }
+    public int getTemporaryValueCounter () { return this.temporary_value_counter; }
+
     public int getCodePointer () { return this.code_pointer; }
-    public int getStackPointer () { return this.stack_pointer; }
+    public int getStackPointer () throws CodeGenerationException { if  (this.stack_pointer > 0) { return this.stack_pointer; } else throw new CodeGenerationException("ExecutionEnvironment, getStackPointer", "Stack Pointer was never set"); }
     public int getHeapPointer () { return this.heap_pointer; }
     public int getRemainingBytes () { return this.usable_bytes_remaining; }
     
@@ -55,7 +67,8 @@ public class ExecutionEnvironment {
     public void setStackPointer (int i) { this.stack_pointer = i; }
     public void setHeapPointer (int i) { this.heap_pointer = i; }
     public void setRemainingBytes (int rem_bytes) { this.usable_bytes_remaining = rem_bytes; }
-
+    public void setTemporaryVariableCounter (int i) { this.temporary_value_counter = i;}
+    public void incrementTemporaryValueCounter () { this.temporary_value_counter = this.temporary_value_counter + 1; }
 
     // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly
     public void updateRemainingSpace (String[] inserted_instructions, String location) {
@@ -71,6 +84,29 @@ public class ExecutionEnvironment {
     // Return temporary location associated with identical String content
     public String retrieveStringTemporaryAddr (String str) {
         return string_declaration.get(str);
+    }
+
+    public void performStaticTableInsertion (String variable_id, String scope_name) throws CodeGenerationException {
+        
+        if (static_table.isEmpty()) {
+           String static_table_variable_name = variable_id + "@" + scope_name; 
+           String temporary_address = "T0"; 
+           static_table.put(temporary_address, static_table_variable_name); 
+           reversed_static_table.put(static_table_variable_name, temporary_address); 
+           incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
+
+        } else {
+    
+            String static_table_variable_name = variable_id + "@" + scope_name; 
+            String temporary_address = "T" + getTemporaryValueCounter(); // only works until 9,
+            static_table.put(temporary_address, static_table_variable_name); 
+            reversed_static_table.put(static_table_variable_name, temporary_address); 
+            incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
+            
+            if (getTemporaryValueCounter() >= 10) throw new CodeGenerationException("ExecutionEnvironment, performStaticTableInsertion()", "You did it. You broke my compiler. Currently, temporary addresses are limited to the range T0-T9...");
+
+        }
+
     }
 
 
@@ -112,11 +148,15 @@ public class ExecutionEnvironment {
     }
 
     public void performCodeInsertion (String[] instructions) throws CodeGenerationException {
-        System.arraycopy(instructions, 0, getCodeSequence(), getCodePointer() - instructions.length, instructions.length);
+        System.arraycopy(instructions, 0, getCodeSequence(), getCodePointer(), instructions.length);
+        setCodePointer(getCodePointer() + instructions.length);
+        updateRemainingSpace(instructions, "Code");
     }
 
     public void performStackInsertion (String[] instructions) throws CodeGenerationException {
-        
+        System.arraycopy(instructions, 0, getCodeSequence(), getStackPointer(), instructions.length);
+        setStackPointer(getStackPointer() + instructions.length);
+        updateRemainingSpace(instructions, "Stack");
     }
 
     public void performHeapInsertion (String[] instructions) throws CodeGenerationException {
@@ -136,6 +176,8 @@ public class ExecutionEnvironment {
 
 
 }
+
+
 
 
 //System.arraycopy( (Arrays.copyOf(instructions, instructions.length + 1)), 0, code_sequence, heap_pointer-(instructions.length + 1), instructions.length + 1);
