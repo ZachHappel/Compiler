@@ -203,17 +203,31 @@ public class CodeGeneration {
                     op_codes.add("8D"); // store
                     op_codes.add(temp_addr); op_codes.add("00"); // in temp location
                 
-                // if of form 3+3 +a
+                 // if of form 3+3 +a
                 } else if (ADDITION.getASTChild(1).getName().equals("ADDITION")) {
                     op_codes = processADDITION(op_codes, (NonTerminal) ADDITION.getASTChild(1), temp_addr, true);
                     System.out.println("Returning addition");
                     //return op_codes; 
+
+                // = 3 + a
+                } else if (ADDITION.getASTChild(1).getName().equals("IDENTIFIER")) {
+                    String scope = ADDITION.getScopeName();
+                    String id = ((Terminal) ADDITION.getASTChild(1)).getTokenAttribute(); 
+                    String static_table_variable_name = id + "@" + scope; 
+                    String static_table_temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
+                    op_codes.add("AD"); op_codes.add(static_table_temp_location); op_codes.add("00"); // Load value of a
+                    op_codes.add("6D"); op_codes.add(temp_addr); op_codes.add("00"); // Add value at memory location we have been using for addition
+                    op_codes.add("8D"); op_codes.add(temp_addr); op_codes.add("00"); // store value at that location
+                    
+                    op_codes.add("AD"); op_codes.add(temp_addr); op_codes.add("00");
+                    op_codes.add("8D"); op_codes.add(static_table_temp_location); op_codes.add("00");
                 }
+
             } else {
                 System.out.println("Should be done with addition now");
             }
             
-        } //TODO: else if (ADDITION.getASTChild(0).getName().equals("IDENTIFIER"))
+        }   //TODO: else if (ADDITION.getASTChild(0).getName().equals("IDENTIFIER"))
 
         //for (int addition_children = 0; addition_children <= ADDITION.getASTChildren().size() - 1; addition_children++) {
         //    System.out.println("Addition Children: " + ADDITION.getASTChild(addition_children).getName() + " : " + ADDITION.getASTChild(addition_children).getProdKind());

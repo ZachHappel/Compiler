@@ -125,22 +125,22 @@ public class ExecutionEnvironment {
         return temp_addr; 
     }
 
-    public void backpatch () {
+    
+    public void backpatch() throws CodeGenerationException {
         
-       
         for (int i = 0; i <= code_sequence.length - 1; i++) {
             if (code_sequence[i] == "0") {
                 code_sequence[i] = "00";
             }
         }
 
-        int stack_starting_position = code_pointer + 1; // + 1 because program ends with 00
+        int stack_addressing_index = getStackPointer(); // + 1 because program ends with 00
 
         for (Map.Entry<String, String> entry: static_table.entrySet()) {
             String temporary_location = entry.getKey();
-            String memory_location = String.format("%02X", stack_starting_position);
+            String memory_location = String.format("%02X", stack_addressing_index);
             System.out.println("Backpatching Temp Location, " + temporary_location + ", with Address: " + memory_location);
-            stack_starting_position+=1; 
+            stack_addressing_index+=1; 
 
             for (int i = 0; i <= code_sequence.length - 1; i++) if (code_sequence[i].equals(temporary_location)) code_sequence[i] = memory_location; 
         }
@@ -209,6 +209,7 @@ public class ExecutionEnvironment {
     public void performCodeInsertion (String[] instructions) throws CodeGenerationException {
         System.arraycopy(instructions, 0, getCodeSequence(), getCodePointer(), instructions.length);
         setCodePointer(getCodePointer() + instructions.length);
+        setStackPointer(getCodePointer() + 1);
         updateRemainingSpace(instructions, "Code");
     }
 
