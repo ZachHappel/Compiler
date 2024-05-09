@@ -127,6 +127,11 @@ public class CodeGeneration {
             gen_storeAccumulatorIntoMemory_8D_STA(op_codes, lhs_id_temp_location);
         }
 
+        else if ( (assignment_children.contains("KEYWORD_TRUE") || (assignment_children.contains("KEYWORD_FALSE") ) && assignment_children.size() == 2)) {
+            String boolean_value = getStringFromCHARACTER(identifier_terminal, 1); //  should work
+            
+        }
+
         //(String.format("%02X", ""+ (execution_environment.getHeapPointer() - hex_arraylist.length )))
         else if (assignment_children.contains("CHARACTER")) {
             String terminals_string_value = getStringFromCHARACTER(AssignmentStatement, 1); 
@@ -320,6 +325,8 @@ public class CodeGeneration {
         String str = ((Terminal) parent_production.getASTChild(index)).getTokenAttribute();
         return str; 
     }
+
+    
 
     public ArrayList<String> getProductionChildrenArrayList (Production parent) {
         ArrayList<String> children_names = new ArrayList<>(); 
