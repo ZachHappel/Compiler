@@ -42,16 +42,18 @@ public class ExecutionEnvironment {
     
     public int code_pointer = 0;
     public int stack_pointer = -1; // Must be set when code gen is done
-    public int heap_pointer = 255;
+    public int heap_pointer = 244;
     public int temporary_value_counter = 0; 
     public int accumulator = 0;
     ///////////////////////////////////////////////////////////////////
     
-    public int usable_bytes_remaining = 255; // start 255 because program will need to have an end instruction of 00 
+    public int usable_bytes_remaining = 244; // start 255 because program will need to have an end instruction of 00 
     public int reserved_space = 0;
 
     public ExecutionEnvironment() throws CodeGenerationException {
         java.util.Arrays.fill(code_sequence, "0"); // populate code sequence array with "0" at start
+        
+        System.arraycopy(new String[]{"74", "72", "75", "65", "00", "66", "61", "6C", "73", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 11, 11);
     }
 
 
@@ -124,14 +126,23 @@ public class ExecutionEnvironment {
     }
 
     public void backpatch () {
-        //int lastIndex = java.util.stream.IntStream.range(0, array.length).filter(i -> array[i].equals("apple")).max().orElse(-1);
-        int last_occurrence_of_00 = java.util.stream.IntStream.range(0, code_sequence.length).filter(i -> code_sequence[i].equals("00")).reduce((a, b) -> b).orElse(-1);
-        System.out.println("Last Occurrence of 00: " + last_occurrence_of_00);
-
+        
+       
         for (int i = 0; i <= code_sequence.length - 1; i++) {
             if (code_sequence[i] == "0") {
                 code_sequence[i] = "00";
             }
+        }
+
+        int stack_starting_position = code_pointer + 1; // + 1 because program ends with 00
+
+        for (Map.Entry<String, String> entry: static_table.entrySet()) {
+            String temporary_location = entry.getKey();
+            String memory_location = String.format("%02X", stack_starting_position);
+            System.out.println("Backpatching Temp Location, " + temporary_location + ", with Address: " + memory_location);
+            stack_starting_position+=1; 
+
+            for (int i = 0; i <= code_sequence.length - 1; i++) if (code_sequence[i].equals(temporary_location)) code_sequence[i] = memory_location; 
         }
 
         //String[] updatedArray = Arrays.stream(code_sequence).map(s -> s.equals("0") ? "00" : s).toArray(String[]::new);
@@ -219,6 +230,14 @@ public class ExecutionEnvironment {
         setHeapPointer(heap_insertion_location - 1);
         updateRemainingSpace(heap_instructions, "Heap"); // ensure local values are up to date
     }
+
+    public void printCodeString () {
+        String code = "";
+        for (int i = 0; i <= code_sequence.length - 1; i++) {
+            code = code + code_sequence[i] + " ";
+        }
+        System.out.println(code);
+    } 
 
    
 

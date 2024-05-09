@@ -113,7 +113,8 @@ public class CodeGeneration {
 
 
             execution_environment.loadAccumulator(0); // reset accumulator;
-            String temp_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
+            //String temp_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
+            String temp_addr = execution_environment.performStaticTableInsertion("addition", AssignmentStatement.getScopeName());  // Maybe... 
             addition_temp_addr = temp_addr;
             op_codes = processADDITION(op_codes, (NonTerminal) AssignmentStatement.getASTChild(1), addition_temp_addr, false);
 
@@ -212,7 +213,7 @@ public class CodeGeneration {
                 System.out.println("Should be done with addition now");
             }
             
-        } //else if (ADDITION.getASTChild(0).getName().equals("IDENTIFIER"))
+        } //TODO: else if (ADDITION.getASTChild(0).getName().equals("IDENTIFIER"))
 
         //for (int addition_children = 0; addition_children <= ADDITION.getASTChildren().size() - 1; addition_children++) {
         //    System.out.println("Addition Children: " + ADDITION.getASTChild(addition_children).getName() + " : " + ADDITION.getASTChild(addition_children).getProdKind());
@@ -224,7 +225,26 @@ public class CodeGeneration {
 
 
     public ArrayList<String> processPrintStatement (NonTerminal PrintStatement) {
-        return new ArrayList<String>(); 
+        ArrayList<String> op_codes = new ArrayList<>(); 
+        for (int i = 0; i <= PrintStatement.getASTChildren().size() - 1; i++) {
+            System.out.println("PrintStatement Child: " + PrintStatement.getASTChild(i).getName() + " : " + PrintStatement.getASTChild(i).getProdKind()); 
+        }
+        //System.out.println();
+        if (PrintStatement.getASTChild(0).getName().equals("IDENTIFIER")) {
+            System.out.println("PrintStatement - Terminal");
+            String scope = PrintStatement.getScopeName();
+            String id = ((Terminal) PrintStatement.getASTChild(0)).getTokenAttribute(); 
+            String static_table_variable_name = id + "@" + scope; 
+            String temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
+            op_codes.add("AC");
+            op_codes.add(temp_location); op_codes.add("00");
+            op_codes.add("A2");
+            op_codes.add("01");
+            op_codes.add("FF");
+
+        }
+
+        return op_codes;
     }
     
     public void processAssignmentRightHandSide () {
@@ -262,6 +282,7 @@ public class CodeGeneration {
             System.out.println("\n\nAbstract Syntax Tree\n"); 
             execution_environment.backpatch();
             System.out.println(Arrays.toString(execution_environment.getCodeSequence()));
+            execution_environment.printCodeString();
             //recursivePrint(AST.get(0), 0);
             System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
             System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
