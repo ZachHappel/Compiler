@@ -118,7 +118,7 @@ public class CodeGeneration {
                 heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
                 System.out.println("Heap Pointer: " + heap_pointer);
             } else {
-                heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length; // otherwise get the current heap pointer, making sure to modify it for what it will be 
+                heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length - 1; // otherwise get the current heap pointer, making sure to modify it for what it will be 
                 System.out.println("Heap Pointer: " + heap_pointer);
                 execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
                 execution_environment.insert(hex_arraylist, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
