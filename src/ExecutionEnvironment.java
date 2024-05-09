@@ -168,6 +168,26 @@ public class ExecutionEnvironment {
         return reversed_static_table.get(static_table_variable_name);
     }
 
+    public String retrieveTempLocationFromStaticTable (Terminal identifier, Production prod) {
+        
+        String identifier_value = identifier.getTokenAttribute();
+        String identifier_scope = (prod.getProdKind().equals("NonTerminal") ? ((NonTerminal) prod).getScopeName() :  ((Terminal) prod).getScopeName()); // Maybe change could be problematic
+        String static_table_variable_name = identifier_value + "@" + identifier_scope; 
+        String id_temp_location = retrieveTempLocationFromStaticTable(static_table_variable_name);
+        System.out.println("Retrieved From Static Table the Location for, " + static_table_variable_name + ": " + id_temp_location);
+        return reversed_static_table.get(id_temp_location);
+    }
+
+    public String retrieveTempLocationFromChildOfNonTerminal (NonTerminal Production, int index) {
+        String scope = Production.getScopeName();
+        String id = ((Terminal) Production.getASTChild(index)).getTokenAttribute(); 
+        String static_table_variable_name = id + "@" + scope; 
+        String temp_location = retrieveTempLocationFromStaticTable(static_table_variable_name);
+        //System.out.println("Retrieved From Static Table the Location for, " + static_table_variable_name + ": " + id_temp_location);
+        return temp_location;
+    }
+
+
 
     public boolean codeInsertionPossible (String[] instructions, String location) throws CodeGenerationException {
         // If the remaining space is greater than or equal to zero after adding the instructions (+ 1) then true

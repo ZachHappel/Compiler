@@ -15,10 +15,6 @@ public class CodeGeneration {
             Production c = p.getASTChild(i);
             String spaces = stringOfCharacters(index * 4, " ");
             Boolean is_terminal = (c.getClass().getSimpleName()).equals("Terminal");
-            //if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(2, " ") + "   [" + c.getName() + "] AST Children: " + getASTChildrenNames(c)); } 
-            //if (!is_terminal) { System.out.println(spaces + index + stringOfCharacters(5, " ") + "   [" + c.getName() + "]"); } 
-            //else { System.out.println(spaces + index + stringOfCharacters(5, " ") + " < " + ((Terminal) c).getTokenAttribute() + " >"); }
-
 
             // Need to traverse down all and look for NT, 
             if (!is_terminal) {
@@ -66,13 +62,8 @@ public class CodeGeneration {
             case "PrintStatement": 
                 op_codes = processPrintStatement(nt);
                 break; 
-            //case "ADDITION":
-                //execution_environment.loadAccumulator(0); // reset accumulator;
-                //String temp_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
-                //addition_temp_addr = temp_addr;
-                //op_codes = processADDITION(op_codes, nt, temp_addr, false);
+            //case "ADDITION": 
                 
-           
         }
 
         return op_codes; 
@@ -95,119 +86,73 @@ public class CodeGeneration {
     // a = 3 + 1 + a
     public ArrayList<String> processAssignmentStatement (NonTerminal AssignmentStatement) throws CodeGenerationException {
         ArrayList<String> op_codes = new ArrayList<>(); 
-        Terminal identifier_t = (Terminal) AssignmentStatement.getASTChild(0);
-        System.out.println("Assignment Statement AST-Children: ");
+        Terminal identifier_terminal = (Terminal) AssignmentStatement.getASTChild(0);
         ArrayList<Production> identifier_nt_astchildren = AssignmentStatement.getASTChildren();
         
-        for (int i = 0; i <= identifier_nt_astchildren.size() - 1; i++) {
-            System.out.println(AssignmentStatement.getASTChild(i).getName() + " : " + AssignmentStatement.getASTChild(i).getProdKind()); 
+        System.out.println("Assignment Statement AST-Children: ");
+        for (int i = 0; i <= identifier_nt_astchildren.size() - 1; i++) { System.out.println(AssignmentStatement.getASTChild(i).getName() + " : " + AssignmentStatement.getASTChild(i).getProdKind()); }
+
+        // Where single ID assignment goes
+
+        if (AssignmentStatement.getASTChildren().size() == 2 && AssignmentStatement.getASTChild(1).getName().equals("DIGIT")) {
+            System.out.println("\n\nAssignment for " + identifier_terminal.getName() + ", " + identifier_terminal.getTokenAttribute());
+            int terminals_digit_value = getDigitFromDIGIT(AssignmentStatement, 1); 
+            String identifiers_temporary_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0);
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, ""+terminals_digit_value);
+            gen_storeAccumulatorInMemory_8D_STA(op_codes, identifiers_temporary_location);
         }
 
-        if (AssignmentStatement.getASTChild(1).getName().equals("ADDITION")) {
-            System.out.println("Addition");
-            String identifier_value = identifier_t.getTokenAttribute();
-            String identifier_scope = AssignmentStatement.getScopeName(); // Maybe change could be problematic
-            String static_table_variable_name = identifier_value + "@" + identifier_scope; 
-            String id_temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
-            System.out.println("Assignment, using addition, for ID: " + static_table_variable_name + " at temp location: " + id_temp_location);
-
-
-            execution_environment.loadAccumulator(0); // reset accumulator;
-            //String temp_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
-            String temp_addr = execution_environment.performStaticTableInsertion("addition", AssignmentStatement.getScopeName());  // Maybe... 
-            addition_temp_addr = temp_addr;
-            op_codes = processADDITION(op_codes, (NonTerminal) AssignmentStatement.getASTChild(1), addition_temp_addr, false);
-
-
-
-            op_codes.add("AD"); // load accumulator from memory
-            op_codes.add(addition_temp_addr); op_codes.add("00"); // using address we have been using for addition
-
-            op_codes.add("8D"); // store accumulator
-            op_codes.add(id_temp_location); op_codes.add("00"); // with the address of the variable in which is being assigned
-
+        else if (AssignmentStatement.getASTChild(1).getName().equals("ADDITION")) {
+            System.out.println("\n\nAssignment for " + identifier_terminal.getName() + ", " + identifier_terminal.getTokenAttribute());
             
+            String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0); // Left side, assignment id
+            String new_addition_temp_addr = execution_environment.performStaticTableInsertion("addition", AssignmentStatement.getScopeName());  // Maybe... // Create location to store during addition
+            op_codes = processADDITION(op_codes, (NonTerminal) AssignmentStatement.getASTChild(1), new_addition_temp_addr, false); // Process addition
+            gen_loadAccumulatorFromMemory_AD_LDA(op_codes, new_addition_temp_addr); // Load accumulator with value at address
+            gen_storeAccumulatorInMemory_8D_STA(op_codes, id_temp_location); // Store in location for id
+            System.out.println("Assignment - Stored Value for Identifier: " + identifier_terminal.getName() + ", at location: " + id_temp_location + "\n");
             //op_codes.addAll(nonterminalRouter((NonTerminal) child));
-            //op_codes.addAll(
         }
-        
-
-        /*
-        for (int i = 0; i <= identifier_nt_astchildren.size() - 1; i++) {
-           System.out.println(AssignmentStatement.getASTChild(i).getName() + " : " + AssignmentStatement.getASTChild(i).getProdKind()); 
-           Production child = AssignmentStatement.getASTChild(i);
-           String child_prod_kind = child.getProdKind(); 
-           String child_name = child.getName();
-           
-           if (child_prod_kind.equals("NonTerminal")) {
-                op_codes.addAll(nonterminalRouter((NonTerminal) child)); // Add resultant op_codes to op_codes arraylist
-            } else if (child_prod_kind.equals("Terminal")) {
-                op_codes.addAll(terminalRouter((Terminal) child)); // Add resultant op_codes to op_codes arraylist
-           }
-
-        }
-        **/
-        //String identifier_nt = ((Terminal) ().getASTChild(0)).getTokenAttribute() ; // Identifier is NonTerminal
-        //System.out.println("Assignment Identifier: " + identifier_nt);
         return op_codes; 
     }
     
-    public ArrayList<String> processADDITION (ArrayList<String> op_codes, NonTerminal ADDITION, String temp_addr, boolean within_nested_addition) {
+    public ArrayList<String> processADDITION (ArrayList<String> op_codes, NonTerminal ADDITION, String temp_addition_addr, boolean within_nested_addition) {
         //ArrayList<String> op_codes = new ArrayList<>(); 
         //String temp_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
 
-        // if child 0 is digit
-        // if child 1 is ADDITION
-        System.out.println("Process ADDITION ");
+        
 
-        for (int i = 0; i <= ADDITION.getASTChildren().size() - 1; i++) {
-            System.out.println("Addition Child: " + ADDITION.getASTChild(i).getName() + " : " + ADDITION.getASTChild(i).getProdKind()); 
-        }
+        for (int i = 0; i <= ADDITION.getASTChildren().size() - 1; i++) { System.out.println("Addition Child: " + ADDITION.getASTChild(i).getName() + " : " + ADDITION.getASTChild(i).getProdKind()); }
+        
         if (ADDITION.getASTChild(0).getName().equals("DIGIT")) {
             int digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(0)).getTokenAttribute());
             System.out.println("Digit Value: " + digit_value);
-            // Load accumulator
-            op_codes.add("A9"); // load accumulator
-            execution_environment.loadAccumulator(digit_value); // load execution env's accumulator with value
-            op_codes.add(execution_environment.getAccumulatorAsString()); // get value as a string and add it to the op_codes
             
-            // if within nested addition, via recursion
+
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, ""+digit_value); // Load accum. with value in Digit
+
             if (within_nested_addition) {
-                System.out.println("Within nested addition");
-                 // Add with carry
-                 op_codes.add("6D"); // add with carry
-                 op_codes.add(temp_addr); op_codes.add("00"); // in temp location 
+                gen_addWithCarryToAccum_6D_ADC(op_codes, temp_addition_addr);  // If within recursive addition, add contents already in temp address into accumulator
             }
 
-            // Store in temp address
-            op_codes.add("8D"); // store accumulator
-            op_codes.add(temp_addr); op_codes.add("00"); // in temp location
+            gen_storeAccumulatorInMemory_8D_STA(op_codes, temp_addition_addr); // Store contents of the accumulator into memory, using the address of our temporary location
             
             if (ADDITION.getASTChildren().size() > 1) {
-                System.out.println("ADDITION.getASTChildren().size() > 1");
                 // if of form: 3 + 1
                 if (ADDITION.getASTChild(1).getName().equals("DIGIT")) {
-                    System.out.println("Second Child is DIGIT");
                     int second_digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(0)).getTokenAttribute());
-                    System.out.println("Second Digit Value: " + digit_value);
-                    // Load accumulator with second value
-                    op_codes.add("A9"); // load accumulator
-                    execution_environment.loadAccumulator(second_digit_value); // load execution env's accumulator with value
-                    op_codes.add(execution_environment.getAccumulatorAsString());
-    
-                    // Add with carry
-                    op_codes.add("6D"); // add with carry
-                    op_codes.add(temp_addr); op_codes.add("00"); // in temp location 
+                    System.out.println("Second Digit: " + second_digit_value);
                     
-                    // Store in temp location
-                    op_codes.add("8D"); // store
-                    op_codes.add(temp_addr); op_codes.add("00"); // in temp location
+                    gen_loadAccumulatorWithConstant_A9_LDA(op_codes, ""+second_digit_value);  // Load accumulator with second value
+            
+                    gen_addWithCarryToAccum_6D_ADC(op_codes, temp_addition_addr); // Add with carry into to the accum
+            
+                    gen_storeAccumulatorInMemory_8D_STA(op_codes, temp_addition_addr); // Store in temp location
+                    
                 
                  // if of form 3+3 +a
                 } else if (ADDITION.getASTChild(1).getName().equals("ADDITION")) {
-                    op_codes = processADDITION(op_codes, (NonTerminal) ADDITION.getASTChild(1), temp_addr, true);
-                    System.out.println("Returning addition");
-                    //return op_codes; 
+                    op_codes = processADDITION(op_codes, (NonTerminal) ADDITION.getASTChild(1), temp_addition_addr, true);
 
                 // = 3 + a
                 } else if (ADDITION.getASTChild(1).getName().equals("IDENTIFIER")) {
@@ -215,23 +160,21 @@ public class CodeGeneration {
                     String id = ((Terminal) ADDITION.getASTChild(1)).getTokenAttribute(); 
                     String static_table_variable_name = id + "@" + scope; 
                     String static_table_temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
-                    op_codes.add("AD"); op_codes.add(static_table_temp_location); op_codes.add("00"); // Load value of a
-                    op_codes.add("6D"); op_codes.add(temp_addr); op_codes.add("00"); // Add value at memory location we have been using for addition
-                    op_codes.add("8D"); op_codes.add(temp_addr); op_codes.add("00"); // store value at that location
+                    System.out.println("Second Value is Identifier: " + id);
+                
+                    gen_loadAccumulatorFromMemory_AD_LDA(op_codes, static_table_temp_location); // Load value for a into accumulator
+                    gen_addWithCarryToAccum_6D_ADC(op_codes, temp_addition_addr); // Add contents of temporary addition address to accumulator  
+                    gen_storeAccumulatorInMemory_8D_STA(op_codes, temp_addition_addr); // Store accumulator value in our temporary location for addition
                     
-                    op_codes.add("AD"); op_codes.add(temp_addr); op_codes.add("00");
-                    op_codes.add("8D"); op_codes.add(static_table_temp_location); op_codes.add("00");
+                    //gen_loadAccumulatorFromMemory_AD_LDA(op_codes, temp_addition_addr); // Load accumulator using the address of the value we just stored (redundant)
+                    //gen_storeAccumulatorInMemory_8D_STA(op_codes, static_table_temp_location); // Store value of accumulator into location of a (wrong)
+
                 }
 
             } else {
                 System.out.println("Should be done with addition now");
-            }
-            
-        }   //TODO: else if (ADDITION.getASTChild(0).getName().equals("IDENTIFIER"))
-
-        //for (int addition_children = 0; addition_children <= ADDITION.getASTChildren().size() - 1; addition_children++) {
-        //    System.out.println("Addition Children: " + ADDITION.getASTChild(addition_children).getName() + " : " + ADDITION.getASTChild(addition_children).getProdKind());
-
+            } 
+        }  
         
         System.out.println("Returning addition Final");
         return op_codes; 
@@ -246,16 +189,9 @@ public class CodeGeneration {
         //System.out.println();
         if (PrintStatement.getASTChild(0).getName().equals("IDENTIFIER")) {
             System.out.println("PrintStatement - Terminal");
-            String scope = PrintStatement.getScopeName();
-            String id = ((Terminal) PrintStatement.getASTChild(0)).getTokenAttribute(); 
-            String static_table_variable_name = id + "@" + scope; 
-            String temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
-            op_codes.add("AC");
-            op_codes.add(temp_location); op_codes.add("00");
-            op_codes.add("A2");
-            op_codes.add("01");
-            op_codes.add("FF");
-
+            String temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(PrintStatement, 0); // Location in static table for the Identifier the print statement is trying to print
+            gen_loadYRegisterFromMemory_AC_LDY(op_codes, temp_location);
+            gen_finishPrintStatment(op_codes); 
         }
 
         return op_codes;
@@ -266,10 +202,58 @@ public class CodeGeneration {
     }
 
 
+    
+    public ArrayList<String> gen_loadAccumulatorWithConstant_A9_LDA (ArrayList<String> op_codes, String value) {
+        op_codes.add("A9");
+        op_codes.add("0" + value);
+        return op_codes;
+    }
+
+    public ArrayList<String> gen_loadAccumulatorFromMemory_AD_LDA (ArrayList<String> op_codes, String location) {
+        op_codes.add("AD");
+        op_codes.add(location); op_codes.add("00");
+        return op_codes;
+    }
+
+    public ArrayList<String> gen_storeAccumulatorInMemory_8D_STA (ArrayList<String> op_codes, String location) {
+        op_codes.add("8D");
+        op_codes.add(location); op_codes.add("00");
+        return op_codes;
+    }
+
+    public ArrayList<String> gen_addWithCarryToAccum_6D_ADC (ArrayList<String> op_codes, String location) {
+        op_codes.add("6D");
+        op_codes.add(location); op_codes.add("00");
+        return op_codes;
+    }
+
+    public ArrayList<String> gen_loadYRegisterFromMemory_AC_LDY (ArrayList<String> op_codes, String location) {
+        op_codes.add("AC");
+        op_codes.add(location); op_codes.add("00");
+        return op_codes;
+    }
+
+    public ArrayList<String> gen_finishPrintStatment(ArrayList<String> op_codes) {
+        op_codes.add("A2");
+        op_codes.add("01");
+        op_codes.add("FF");
+        return op_codes;
+    }
     //public ArrayList<String> processIDENTIFIER (Terminal IDENTIFIER) {
 
     //}
 
+    public void printOps(ArrayList<String> op_codes) {
+        String x = ""; 
+        for (int i = 0; i<=op_codes.size() - 1; i++) {
+            x = x + op_codes.get(i);
+        } System.out.println("New Ops: " + x);
+    }
+
+    public int getDigitFromDIGIT (Production parent_production, int index) {
+        int digit = Integer.parseInt(((Terminal) parent_production.getASTChild(index)).getTokenAttribute());
+        return digit; 
+    }
 
 
     public String stringOfCharacters(int amount, String character) { String s = ""; for (int j = 0; j <= amount-1; j++) { s = s + character; } return s; }
@@ -304,3 +288,21 @@ public class CodeGeneration {
         }
 
 }
+
+/*
+        for (int i = 0; i <= identifier_nt_astchildren.size() - 1; i++) {
+           System.out.println(AssignmentStatement.getASTChild(i).getName() + " : " + AssignmentStatement.getASTChild(i).getProdKind()); 
+           Production child = AssignmentStatement.getASTChild(i);
+           String child_prod_kind = child.getProdKind(); 
+           String child_name = child.getName();
+           
+           if (child_prod_kind.equals("NonTerminal")) {
+                op_codes.addAll(nonterminalRouter((NonTerminal) child)); // Add resultant op_codes to op_codes arraylist
+            } else if (child_prod_kind.equals("Terminal")) {
+                op_codes.addAll(terminalRouter((Terminal) child)); // Add resultant op_codes to op_codes arraylist
+           }
+
+        }
+        **/
+        //String identifier_nt = ((Terminal) ().getASTChild(0)).getTokenAttribute() ; // Identifier is NonTerminal
+        //System.out.println("Assignment Identifier: " + identifier_nt);
