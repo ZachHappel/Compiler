@@ -35,16 +35,17 @@ public class ExecutionEnvironment {
     
     public Map<String, String> jump_table = new HashMap<>(); 
 
-
-
     // Hashmap which maps String content to an address location ([a-z]* : Tn)
     public HashMap<String, String> string_declaration = new HashMap<>(); 
-    
+
+    ////////////////////////////////////////////////////////////////////
     
     public int code_pointer = 0;
     public int stack_pointer = -1; // Must be set when code gen is done
     public int heap_pointer = 255;
     public int temporary_value_counter = 0; 
+    public int accumulator = 0;
+    ///////////////////////////////////////////////////////////////////
     
     public int usable_bytes_remaining = 255; // start 255 because program will need to have an end instruction of 00 
     public int reserved_space = 0;
@@ -69,6 +70,16 @@ public class ExecutionEnvironment {
     public void setRemainingBytes (int rem_bytes) { this.usable_bytes_remaining = rem_bytes; }
     public void setTemporaryVariableCounter (int i) { this.temporary_value_counter = i;}
     public void incrementTemporaryValueCounter () { this.temporary_value_counter = this.temporary_value_counter + 1; }
+
+    public void loadAccumulator (int value) {
+        this.accumulator = value;
+    }
+
+    public void addToAccumulator (int value) {
+        this.accumulator = this.accumulator + value;
+    }
+
+    public String getAccumulatorAsString () { return "0" + this.accumulator; }
 
     // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly
     public void updateRemainingSpace (String[] inserted_instructions, String location) {
@@ -95,25 +106,55 @@ public class ExecutionEnvironment {
         if (static_table.isEmpty()) {
            String static_table_variable_name = variable_id + "@" + scope_name; 
            temp_addr = "T0"; 
+           System.out.println("StaticTableInsertion: ID: " + static_table_variable_name + ", Temp Address Created: " + temp_addr);
            static_table.put(temp_addr, static_table_variable_name); 
            reversed_static_table.put(static_table_variable_name, temp_addr); 
            incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
         } else {
             String static_table_variable_name = variable_id + "@" + scope_name; 
             temp_addr = "T" + getTemporaryValueCounter(); // only works until 9,
+            System.out.println("StaticTableInsertion: ID: " + static_table_variable_name + ", Temp Address Created: " + temp_addr);
             static_table.put(temp_addr, static_table_variable_name); 
             reversed_static_table.put(static_table_variable_name, temp_addr); 
             incrementTemporaryValueCounter(); // increment counter used to form temp value addresses
-            if (getTemporaryValueCounter() >= 10) throw new CodeGenerationException("ExecutionEnvironment, performStaticTableInsertion()", "You did it. You broke my compiler. Currently, temporary addresses are limited to the range T0-T9...");
+            if (getTemporaryValueCounter() >= 99) throw new CodeGenerationException("ExecutionEnvironment, performStaticTableInsertion()", "You did it. You broke my compiler. Currently, temporary addresses are limited to the range T0-T9...");
         }
 
         return temp_addr; 
+    }
+
+    public void backpatch () {
+        //int lastIndex = java.util.stream.IntStream.range(0, array.length).filter(i -> array[i].equals("apple")).max().orElse(-1);
+        int last_occurrence_of_00 = java.util.stream.IntStream.range(0, code_sequence.length).filter(i -> code_sequence[i].equals("00")).reduce((a, b) -> b).orElse(-1);
+        System.out.println("Last Occurrence of 00: " + last_occurrence_of_00);
+
+        for (int i = 0; i <= code_sequence.length - 1; i++) {
+            if (code_sequence[i] == "0") {
+                code_sequence[i] = "00";
+            }
+        }
+
+        //String[] updatedArray = Arrays.stream(code_sequence).map(s -> s.equals("0") ? "00" : s).toArray(String[]::new);
+
+
+    }
+
+
+    public String createAndRetrieveNewTemporaryAddress () {
+        String temp_addr = "T" + getTemporaryValueCounter();
+        incrementTemporaryValueCounter();
+        return temp_addr; 
+
     }
 
     ////// Code Sequence 
     public boolean variableExistsInStaticTable (String variable_id, String scope_name) {
         String static_table_variable_name = variable_id + "@" + scope_name; 
         return reversed_static_table.containsKey(static_table_variable_name); // reversed table is mapped like, variable : address 
+    }
+
+    public String retrieveTempLocationFromStaticTable (String static_table_variable_name) {
+        return reversed_static_table.get(static_table_variable_name);
     }
 
 
