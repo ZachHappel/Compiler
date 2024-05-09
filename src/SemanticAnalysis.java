@@ -766,9 +766,10 @@ public class SemanticAnalysis {
         }
     }
     
-    public ArrayList<Production> performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) throws SemanticAnalysisException {
+    public ArrayList<Object> performSemanticAnalysis (ArrayList<Production> derivation, Toolkit tk ) throws SemanticAnalysisException {
         System.out.println("\n\nSEMANTIC ANALYSIS:");
         
+        ArrayList<Object> AST_and_Symbol_Table = new ArrayList<>(); 
         
         NonTerminal ast_starting_block = new NonTerminal("Block");
         AST.add(ast_starting_block);
@@ -788,7 +789,10 @@ public class SemanticAnalysis {
         recursivePrint(AST.get(0), 0);
         System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
         System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
-        return AST; 
+        
+        AST_and_Symbol_Table.add(AST);
+        AST_and_Symbol_Table.add(symbol_table);
+        return AST_and_Symbol_Table; 
 
     }
 

@@ -36,13 +36,13 @@ public class ExecutionEnvironment {
     public Map<String, String> jump_table = new HashMap<>(); 
 
     // Hashmap which maps String content to an address location ([a-z]* : Tn)
-    public HashMap<String, String> string_declaration = new HashMap<>(); 
+    public HashMap<String, Integer> string_declaration = new HashMap<>(); 
 
     ////////////////////////////////////////////////////////////////////
     
     public int code_pointer = 0;
     public int stack_pointer = -1; // Must be set when code gen is done
-    public int heap_pointer = 244;
+    public int heap_pointer = 245;
     public int temporary_value_counter = 0; 
     public int accumulator = 0;
     ///////////////////////////////////////////////////////////////////
@@ -73,31 +73,30 @@ public class ExecutionEnvironment {
     public void setTemporaryVariableCounter (int i) { this.temporary_value_counter = i;}
     public void incrementTemporaryValueCounter () { this.temporary_value_counter = this.temporary_value_counter + 1; }
 
-    public void loadAccumulator (int value) {
-        this.accumulator = value;
+  
+    public String getValueFromCodeSequence (int index) {
+        return code_sequence[index];
     }
-
-    public void addToAccumulator (int value) {
-        this.accumulator = this.accumulator + value;
-    }
-
-    public String getAccumulatorAsString () { return "0" + this.accumulator; }
-
+    
     // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly
     public void updateRemainingSpace (String[] inserted_instructions, String location) {
         setRemainingBytes(getRemainingBytes() - inserted_instructions.length);
     }
 
-
     ////// String Declaration Map
     // Check to see if String with identical makeup has already been declared and inserted
-    public boolean stringExists (String string_to_check) {
+    public boolean stringExistsWithStringDeclarations (String string_to_check) {
         return string_declaration.containsKey(string_to_check); 
     }
 
     // Return temporary location associated with identical String content
-    public String retrieveStringAddress (String str) {
+    public int getAddressFromStringDeclarations (String str) {
         return string_declaration.get(str);
+    }
+
+    // location being the non-hex index value within the code sequence
+    public void insertIntoStringDeclarations (String str, int location) {
+        string_declaration.put(str, location);
     }
 
     ////// Static Table / Reversed Static Table
@@ -200,7 +199,7 @@ public class ExecutionEnvironment {
     /* instruction: the bytes, either 
      * type: either int, boolean, string
      */
-    public void insert (String[] instructions, String type, String location) throws CodeGenerationException {
+    public void insert (String[] instructions, String location) throws CodeGenerationException {
         
         
         switch (location) {

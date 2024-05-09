@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import javax.tools.Tool;
 
@@ -83,10 +84,13 @@ public class Compiler {
                     ArrayList<Production> derivation = parse.ParseTokens(token_stream, Toolkit);
                     // Semantic Analysis
                     SemanticAnalysis sa = new SemanticAnalysis();
-                    ArrayList<Production> AST = sa.performSemanticAnalysis(derivation, Toolkit);
+                    ArrayList<Object> AST_and_Symbol_Table = sa.performSemanticAnalysis(derivation, Toolkit);
+                    ArrayList<Production> AST = (ArrayList<Production>) AST_and_Symbol_Table.get(0);
+                    SymbolTable symbol_table = (SymbolTable) AST_and_Symbol_Table.get(1);
+                    
                     // Code Generation
                     CodeGeneration codegen = new CodeGeneration(); 
-                    codegen.performCodeGeneration(AST, Toolkit);
+                    codegen.performCodeGeneration(AST, symbol_table, Toolkit);
                     
 
                 } catch (ParsingException | SemanticAnalysisException | CodeGenerationException e) {

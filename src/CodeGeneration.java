@@ -1,9 +1,11 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class CodeGeneration {
     public Toolkit toolkit;
     public ExecutionEnvironment execution_environment;
+    public SymbolTable symbol_table;
     public String addition_temp_addr;
 
     // REMEMBER: Make it fluid, not rigid. 
@@ -25,7 +27,7 @@ public class CodeGeneration {
                 
                 // Stuff to the heap will be added by itself
                 if (op_codes_array.length > 0) {
-                    execution_environment.insert(op_codes_array, "int", "Code");
+                    execution_environment.insert(op_codes_array, "Code");
                 }
 
             }
@@ -86,25 +88,51 @@ public class CodeGeneration {
     // a = 3 + 1 + a
     public ArrayList<String> processAssignmentStatement (NonTerminal AssignmentStatement) throws CodeGenerationException {
         ArrayList<String> op_codes = new ArrayList<>(); 
+        ArrayList<String> assignment_children = getProductionChildrenArrayList(AssignmentStatement);
         Terminal identifier_terminal = (Terminal) AssignmentStatement.getASTChild(0);
         ArrayList<Production> identifier_nt_astchildren = AssignmentStatement.getASTChildren();
         
+        System.out.println("\n\nAssignment for " + identifier_terminal.getName() + ", " + identifier_terminal.getTokenAttribute());
         System.out.println("Assignment Statement AST-Children: ");
         for (int i = 0; i <= identifier_nt_astchildren.size() - 1; i++) { System.out.println(AssignmentStatement.getASTChild(i).getName() + " : " + AssignmentStatement.getASTChild(i).getProdKind()); }
 
         // Where single ID assignment goes
-
-        if (AssignmentStatement.getASTChildren().size() == 2 && AssignmentStatement.getASTChild(1).getName().equals("DIGIT")) {
-            System.out.println("\n\nAssignment for " + identifier_terminal.getName() + ", " + identifier_terminal.getTokenAttribute());
+        if (assignment_children.contains("DIGIT") && assignment_children.size() == 2) {
             int terminals_digit_value = getDigitFromDIGIT(AssignmentStatement, 1); 
             String identifiers_temporary_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0);
             gen_loadAccumulatorWithConstant_A9_LDA(op_codes, ""+terminals_digit_value);
             gen_storeAccumulatorInMemory_8D_STA(op_codes, identifiers_temporary_location);
         }
 
-        else if (AssignmentStatement.getASTChild(1).getName().equals("ADDITION")) {
-            System.out.println("\n\nAssignment for " + identifier_terminal.getName() + ", " + identifier_terminal.getTokenAttribute());
+        //(String.format("%02X", ""+ (execution_environment.getHeapPointer() - hex_arraylist.length )))
+        else if (assignment_children.contains("CHARACTER")) {
+            String terminals_string_value = getStringFromCHARACTER(AssignmentStatement, 1); 
+            String identifiers_temporary_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0);
+            String[] hex_arraylist = terminals_string_value.chars().mapToObj(c -> String.format("%02X", c)).toArray(String[]::new);
             
+            boolean exists_in_strdecls = execution_environment.stringExistsWithStringDeclarations(terminals_string_value);
+            System.out.println("\n\nExists within string decls: " + exists_in_strdecls);
+            
+            int heap_pointer;
+            if (exists_in_strdecls) {
+                heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
+                System.out.println("Heap Pointer: " + heap_pointer);
+            } else {
+                heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length; // otherwise get the current heap pointer, making sure to modify it for what it will be 
+                System.out.println("Heap Pointer: " + heap_pointer);
+                execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
+                execution_environment.insert(hex_arraylist, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
+            }
+            
+            // Need to update heap pointer after being done, need to full on return after being in this elif block, need to store pointer for string in string_declarations map 
+            String heap_pointer_hex = String.format("%02X", heap_pointer);
+            System.out.println("Heap Pointer Hex: " + heap_pointer_hex);
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, heap_pointer_hex); // Store pointer to location in the heap
+            gen_storeAccumulatorInMemory_8D_STA(op_codes, identifiers_temporary_location);
+             // Empty list because we already added
+        }
+
+        else if (assignment_children.contains("ADDITION")) {            
             String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0); // Left side, assignment id
             String new_addition_temp_addr = execution_environment.performStaticTableInsertion("addition", AssignmentStatement.getScopeName());  // Maybe... // Create location to store during addition
             op_codes = processADDITION(op_codes, (NonTerminal) AssignmentStatement.getASTChild(1), new_addition_temp_addr, false); // Process addition
@@ -113,6 +141,7 @@ public class CodeGeneration {
             System.out.println("Assignment - Stored Value for Identifier: " + identifier_terminal.getName() + ", at location: " + id_temp_location + "\n");
             //op_codes.addAll(nonterminalRouter((NonTerminal) child));
         }
+
         return op_codes; 
     }
     
@@ -181,17 +210,21 @@ public class CodeGeneration {
     }
 
 
-    public ArrayList<String> processPrintStatement (NonTerminal PrintStatement) {
+    public ArrayList<String> processPrintStatement (NonTerminal PrintStatement) throws CodeGenerationException {
         ArrayList<String> op_codes = new ArrayList<>(); 
         for (int i = 0; i <= PrintStatement.getASTChildren().size() - 1; i++) {
             System.out.println("PrintStatement Child: " + PrintStatement.getASTChild(i).getName() + " : " + PrintStatement.getASTChild(i).getProdKind()); 
         }
         //System.out.println();
         if (PrintStatement.getASTChild(0).getName().equals("IDENTIFIER")) {
+            Terminal identifier = (Terminal) PrintStatement.getASTChild(0);
             System.out.println("PrintStatement - Terminal");
-            String temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(PrintStatement, 0); // Location in static table for the Identifier the print statement is trying to print
+            //String type =  ((Terminal) PrintStatement.getASTChild(0)).getTokenAttribute();
+            String type = getIdentifierType(PrintStatement, identifier);
+            System.out.println("Print Type: " + type);
+            String temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(PrintStatement, 0); // Location in static table for the Identifier the print statement is trying to print    
             gen_loadYRegisterFromMemory_AC_LDY(op_codes, temp_location);
-            gen_finishPrintStatment(op_codes); 
+            gen_finishPrintStatment(op_codes, type); 
         }
 
         return op_codes;
@@ -204,8 +237,10 @@ public class CodeGeneration {
 
     
     public ArrayList<String> gen_loadAccumulatorWithConstant_A9_LDA (ArrayList<String> op_codes, String value) {
+        
         op_codes.add("A9");
-        op_codes.add("0" + value);
+        if (value.length() == 2) op_codes.add(value); // Heap locations are loaded into the accumulator and they are of length 2, making adding the extra 0 unnecessary 
+        else op_codes.add("0" + value);
         return op_codes;
     }
 
@@ -233,9 +268,12 @@ public class CodeGeneration {
         return op_codes;
     }
 
-    public ArrayList<String> gen_finishPrintStatment(ArrayList<String> op_codes) {
+    public ArrayList<String> gen_finishPrintStatment(ArrayList<String> op_codes, String type) throws CodeGenerationException{
         op_codes.add("A2");
-        op_codes.add("01");
+        if (type.equals("string"))  op_codes.add("02");
+        else if (type.equals("boolean")) op_codes.add("02");
+        else if (type.equals("int")) op_codes.add("01");
+        else throw new CodeGenerationException("CodeGeneration, gen_finishPrintStatment()", "Unknown type, " + type + ". Unable to continue. ");
         op_codes.add("FF");
         return op_codes;
     }
@@ -255,11 +293,41 @@ public class CodeGeneration {
         return digit; 
     }
 
+    public String getStringFromCHARACTER (Production parent_production, int index) {
+        String str = ((Terminal) parent_production.getASTChild(index)).getTokenAttribute();
+        return str; 
+    }
+
+    public ArrayList<String> getProductionChildrenArrayList (Production parent) {
+        ArrayList<String> children_names = new ArrayList<>(); 
+        ArrayList<Production> children = parent.getASTChildren();
+        for ( int i = 0; i <= children.size() - 1; i++ ) {
+            children_names.add(children.get(i).getName());
+        } return children_names; 
+    }
+
+    public String getIdentifierType (Production parent, Terminal identifier) {
+        String scope = parent.getScopeName(); 
+        String name = identifier.getName(); 
+        String id = identifier.getTokenAttribute(); 
+        System.out.println("GetIdentifierType - Scope: " + scope + ", Name: " + name + " Id: " + id); 
+        pout("Scopes:  " + symbol_table.getScopeNames());
+        SymbolTableScope residing_scope = symbol_table.getScope(scope);
+        boolean entry_exists = residing_scope.entryExists(id);
+        pout("Entry Exists: " + entry_exists);
+        SymbolTableEntry specific_entry = residing_scope.retrieveEntry(id);
+        String type = specific_entry.getType();
+        pout("Type: " + type);
+        return type; 
+    }
 
     public String stringOfCharacters(int amount, String character) { String s = ""; for (int j = 0; j <= amount-1; j++) { s = s + character; } return s; }
+    
+    public void pout(String s) {System.out.println(s);}
 
-    public void performCodeGeneration (ArrayList<Production> AST, Toolkit tk ) throws CodeGenerationException {
+    public void performCodeGeneration (ArrayList<Production> AST, SymbolTable st, Toolkit tk ) throws CodeGenerationException {
             System.out.println("\n\nCODE GENERATION:");
+            symbol_table = st; 
             toolkit = tk;    
             execution_environment = new ExecutionEnvironment();  // not sure if necessary
             
@@ -281,6 +349,7 @@ public class CodeGeneration {
             execution_environment.backpatch();
             System.out.println(Arrays.toString(execution_environment.getCodeSequence()));
             execution_environment.printCodeString();
+            //execution_environment.
             //recursivePrint(AST.get(0), 0);
             System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
             System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
