@@ -74,11 +74,19 @@ public class CodeGeneration {
 
     
 
+    // If string, set A9 FB
     public ArrayList<String> processVariableDeclaration (NonTerminal VarDeclStatement) throws CodeGenerationException{
         Terminal type = (Terminal) VarDeclStatement.getASTChild(0);
         Terminal identifier = (Terminal) VarDeclStatement.getASTChild(1);
+        String identifier_type = getIdentifierType( (Production) VarDeclStatement, identifier);
+        String default_value = ""; 
+        System.out.println("Value at... " + execution_environment.getValueFromCodeSequence(250));
+        if (identifier_type.equals("string")) default_value = "6E"; 
+        else if (identifier_type.equals("int")) default_value = "00";
+        else if (identifier_type.equals("boolean")) default_value = "FA"; // false
+        pout("processVarDecl - type: " + identifier_type); 
         String temp_addr = execution_environment.performStaticTableInsertion(identifier.getTokenAttribute(), VarDeclStatement.getScopeName()); // Maybe could be problematic with scope
-        ArrayList<String> op_codes = new ArrayList<>(Arrays.asList("A9", "00", "8D", temp_addr, "00"));
+        ArrayList<String> op_codes = new ArrayList<>(Arrays.asList("A9", default_value, "8D", temp_addr, "00"));
         return op_codes; 
     }
 
@@ -101,7 +109,22 @@ public class CodeGeneration {
             int terminals_digit_value = getDigitFromDIGIT(AssignmentStatement, 1); 
             String identifiers_temporary_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0);
             gen_loadAccumulatorWithConstant_A9_LDA(op_codes, ""+terminals_digit_value);
-            gen_storeAccumulatorInMemory_8D_STA(op_codes, identifiers_temporary_location);
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, identifiers_temporary_location);
+        }
+        
+        // Got screwed up when it found rhs character but saw lhs identifier
+        else if (assignment_children.get(1).equals("IDENTIFIER")) {
+        //else if (assignment_children.contains("IDENTIFIER") && assignment_children.size() == 2) {
+            String lhs_id = ((Terminal) AssignmentStatement.getASTChild(0)).getTokenAttribute();
+            String rhs_id = ((Terminal) AssignmentStatement.getASTChild(1)).getTokenAttribute();
+            pout("ID LHS: " + lhs_id);
+            pout("ID RHS: " + rhs_id);
+            String lhs_id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0); // left hand side
+            String rhs_id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 1); // right side assignment id
+            pout("LHS Location: " + lhs_id_temp_location);
+            pout("RHS Location: " + rhs_id_temp_location);
+            gen_loadAccumulatorFromMemory_AD_LDA(op_codes, rhs_id_temp_location); // load accumulator with value from identifiers location
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, lhs_id_temp_location);
         }
 
         //(String.format("%02X", ""+ (execution_environment.getHeapPointer() - hex_arraylist.length )))
@@ -128,7 +151,7 @@ public class CodeGeneration {
             String heap_pointer_hex = String.format("%02X", heap_pointer);
             System.out.println("Heap Pointer Hex: " + heap_pointer_hex);
             gen_loadAccumulatorWithConstant_A9_LDA(op_codes, heap_pointer_hex); // Store pointer to location in the heap
-            gen_storeAccumulatorInMemory_8D_STA(op_codes, identifiers_temporary_location);
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, identifiers_temporary_location);
              // Empty list because we already added
         }
 
@@ -137,7 +160,7 @@ public class CodeGeneration {
             String new_addition_temp_addr = execution_environment.performStaticTableInsertion("addition", AssignmentStatement.getScopeName());  // Maybe... // Create location to store during addition
             op_codes = processADDITION(op_codes, (NonTerminal) AssignmentStatement.getASTChild(1), new_addition_temp_addr, false); // Process addition
             gen_loadAccumulatorFromMemory_AD_LDA(op_codes, new_addition_temp_addr); // Load accumulator with value at address
-            gen_storeAccumulatorInMemory_8D_STA(op_codes, id_temp_location); // Store in location for id
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, id_temp_location); // Store in location for id
             System.out.println("Assignment - Stored Value for Identifier: " + identifier_terminal.getName() + ", at location: " + id_temp_location + "\n");
             //op_codes.addAll(nonterminalRouter((NonTerminal) child));
         }
@@ -164,7 +187,7 @@ public class CodeGeneration {
                 gen_addWithCarryToAccum_6D_ADC(op_codes, temp_addition_addr);  // If within recursive addition, add contents already in temp address into accumulator
             }
 
-            gen_storeAccumulatorInMemory_8D_STA(op_codes, temp_addition_addr); // Store contents of the accumulator into memory, using the address of our temporary location
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, temp_addition_addr); // Store contents of the accumulator into memory, using the address of our temporary location
             
             if (ADDITION.getASTChildren().size() > 1) {
                 // if of form: 3 + 1
@@ -176,7 +199,7 @@ public class CodeGeneration {
             
                     gen_addWithCarryToAccum_6D_ADC(op_codes, temp_addition_addr); // Add with carry into to the accum
             
-                    gen_storeAccumulatorInMemory_8D_STA(op_codes, temp_addition_addr); // Store in temp location
+                    gen_storeAccumulatorIntoMemory_8D_STA(op_codes, temp_addition_addr); // Store in temp location
                     
                 
                  // if of form 3+3 +a
@@ -193,10 +216,10 @@ public class CodeGeneration {
                 
                     gen_loadAccumulatorFromMemory_AD_LDA(op_codes, static_table_temp_location); // Load value for a into accumulator
                     gen_addWithCarryToAccum_6D_ADC(op_codes, temp_addition_addr); // Add contents of temporary addition address to accumulator  
-                    gen_storeAccumulatorInMemory_8D_STA(op_codes, temp_addition_addr); // Store accumulator value in our temporary location for addition
+                    gen_storeAccumulatorIntoMemory_8D_STA(op_codes, temp_addition_addr); // Store accumulator value in our temporary location for addition
                     
                     //gen_loadAccumulatorFromMemory_AD_LDA(op_codes, temp_addition_addr); // Load accumulator using the address of the value we just stored (redundant)
-                    //gen_storeAccumulatorInMemory_8D_STA(op_codes, static_table_temp_location); // Store value of accumulator into location of a (wrong)
+                    //gen_storeAccumulatorIntoMemory_8D_STA(op_codes, static_table_temp_location); // Store value of accumulator into location of a (wrong)
 
                 }
 
@@ -250,7 +273,7 @@ public class CodeGeneration {
         return op_codes;
     }
 
-    public ArrayList<String> gen_storeAccumulatorInMemory_8D_STA (ArrayList<String> op_codes, String location) {
+    public ArrayList<String> gen_storeAccumulatorIntoMemory_8D_STA (ArrayList<String> op_codes, String location) {
         op_codes.add("8D");
         op_codes.add(location); op_codes.add("00");
         return op_codes;
