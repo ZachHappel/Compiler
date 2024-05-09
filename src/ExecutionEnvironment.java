@@ -83,8 +83,10 @@ public class ExecutionEnvironment {
     public String getValueFromCodeSequence (int index) { return code_sequence[index]; }
 
     public String getFalsePointer () { return this.false_pointer; }
+    public String getFalsePointerHex () {  String hex_value = String.format("%02X", this.false_pointer); return hex_value;   }
     public String getTruePointer () { return this.true_pointer; }
-
+    public String getTruePointerHex () {  String hex_value = String.format("%02X", this.true_pointer); return hex_value;   }
+    
 
     
     // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly

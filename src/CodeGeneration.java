@@ -64,6 +64,24 @@ public class CodeGeneration {
             case "PrintStatement": 
                 op_codes = processPrintStatement(nt);
                 break; 
+            
+            //case "ADDITION": 
+                
+        }
+
+        return op_codes; 
+    }
+
+    public ArrayList<String> nonterminalCallableRouter (ArrayList<String> op_codes, NonTerminal nt ) throws CodeGenerationException{
+        ArrayList<String> new_op_codes = new ArrayList<>(); 
+        switch (nt.getName()) {
+            
+            case "IsEqual": 
+                new_op_codes = processIsEqual(new_op_codes, nt);
+                op_codes.addAll(new_op_codes); // add result of IsEqual to op_codes 
+                break; 
+            
+            
             //case "ADDITION": 
                 
         }
@@ -72,6 +90,26 @@ public class CodeGeneration {
     }
 
 
+    public String handleCHARACTERterminalAndGetStringAddress (Terminal terminal) throws CodeGenerationException {
+        String terminal_string_value = terminal.getTokenAttribute(); 
+        boolean exists_in_strdecls = execution_environment.stringExistsWithStringDeclarations(terminals_string_value);
+        System.out.println("\n\nExists within string decls: " + exists_in_strdecls);
+        
+        int heap_pointer;
+        if (exists_in_strdecls) {
+            heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
+            System.out.println("Heap Pointer: " + heap_pointer);
+        } else {
+            heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length - 1; // otherwise get the current heap pointer, making sure to modify it for what it will be 
+            System.out.println("Heap Pointer: " + heap_pointer);
+            execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
+            execution_environment.insert(hex_arraylist, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
+        }
+        
+        // Need to update heap pointer after being done, need to full on return after being in this elif block, need to store pointer for string in string_declarations map 
+        String heap_pointer_hex = String.format("%02X", heap_pointer);
+        System.out.println("Heap Pointer Hex: " + heap_pointer_hex);
+    }
     
 
     // If string, set A9 FB
@@ -104,6 +142,11 @@ public class CodeGeneration {
         System.out.println("Assignment Statement AST-Children: ");
         for (int i = 0; i <= identifier_nt_astchildren.size() - 1; i++) { System.out.println(AssignmentStatement.getASTChild(i).getName() + " : " + AssignmentStatement.getASTChild(i).getProdKind()); }
 
+
+        if (assignment_children.contains("IsEqual")) {
+            String lhs_id_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0); // left hand side
+            processIsEqual(op_codes, AssignmentStatement, lhs_id_location);
+        }
         // Where single ID assignment goes
         if (assignment_children.contains("DIGIT") && assignment_children.size() == 2) {
             int terminals_digit_value = getDigitFromDIGIT(AssignmentStatement, 1); 
@@ -177,8 +220,154 @@ public class CodeGeneration {
 
         return op_codes; 
     }
+
+    /*
+    public ArrayList<String> processTerminalA9 (ArrayList<String> op_codes, NonTerminal parent, Terminal terminal, int index) throws CodeGenerationException {
+        if (terminal.getName().equals("IDENTIFIER")) {
+            // Load address of ID from static table
+            String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(parent, index); // Left side, assignment id
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, id_temp_location);
+        }
+    } */
+
+
+    public ArrayList<String> gen_loadXRegisterFromAddress_AE_LDX (ArrayList<String> op_codes, String address) throws CodeGenerationException {
+        op_codes.add("AE"); 
+        op_codes.add(address); op_codes.add("00"); 
+        return op_codes; 
+    }
+
+    public ArrayList<String> gen_loadXRegisterWithValue_A2_LDX (ArrayList<String> op_codes, String value) throws CodeGenerationException {
+        op_codes.add("A2"); 
+        op_codes.add(value); op_codes.add("00"); 
+        return op_codes; 
+    }
+
+    public ArrayList<String> gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX (ArrayList<String> op_codes, String address) throws CodeGenerationException {
+        op_codes.add("EC"); 
+        op_codes.add(address); op_codes.add("00"); 
+        return op_codes; 
+    }
+
+    public ArrayList<String> gen_branchIfNotEqual(ArrayList<String> op_codes, String lhs_location) throws CodeGenerationException {
+        op_codes.add("D0");
+        
+        String true_location = execution_environment.getTruePointerHex();
+        ArrayList<String> set_lhs_true_op_codes = new ArrayList<String>();
+        gen_loadAccumulatorWithConstant_A9_LDA(set_lhs_true_op_codes, true_location); // Load true
+        gen_storeAccumulatorIntoMemory_8D_STA(set_lhs_true_op_codes, lhs_location);
+        int set_true_ops_length = set_lhs_true_op_codes.size(); 
+        String set_true_ops_length_hex = String.format("%02X", set_lhs_true_op_codes); // Maybe
+        
+        op_codes.add(set_true_ops_length_hex); // Add length of op codes to skip if not equal
+        op_codes.addAll(set_lhs_true_op_codes); // Add the op codes that are processed if true
+
+        op_codes.add("A2"); op_codes.add("FF"); // load x register with FF
+        gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, execution_environment.getFalsePointerHex());
+
+        return op_codes; 
+    }
+
+
+    public String getLocationOfTerminal (NonTerminal parent, Terminal terminal, int index_if_identifier) throws CodeGenerationException {
+        String location = ""; 
+        
+        if (terminal.getName().equals("IDENTIFIER")) {
+            location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(parent, index_if_identifier);    
+        /*
+        } else if (terminal.getName().equals("DIGIT")) {
+            String value = terminal.getTokenAttribute(); 
+            gen_loadXRegisterWithValue_A2_LDX(op_codes, value); */
+
+        } else if (terminal.getName().equals("CHARACTER")) {
+            location = handleCHARACTERterminalAndGetStringAddress(terminal);
+            
+        } else if ( (terminal.getName().equals("KEYWORD_TRUE")) || (terminal.getName().equals("KEYWORD_FALSE"))) {
+            if (terminal.getName().equals("KEYWORD_TRUE")) {
+                location = execution_environment.getTruePointer(); 
+
+            } else if (terminal.getName().equals("KEYWORD_FALSE")) {
+                location = execution_environment.getFalsePointerHex();
+            }
+
+        } else throw new CodeGenerationException("CodeGeneration, getLocationOfTerminal()", "Terminal sent to getLocationOfTerminal() is not of type IDENTIFIER, CHARACTER, KEYWORD_TRUE, KEYWORD_FALSE. \nTerminal type received: " + terminal.getName());
+
+        return location; 
+    }
     
-    public ArrayList<String> processADDITION (ArrayList<String> op_codes, NonTerminal ADDITION, String temp_addition_addr, boolean within_nested_addition) {
+    public ArrayList<String> gen_loadXRegister(ArrayList<String> op_codes, NonTerminal parent, Terminal terminal, int index) throws CodeGenerationException {
+
+        
+        if (terminal.getName().equals("IDENTIFIER")) {
+            String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(parent, index); 
+            gen_loadXRegisterFromAddress_AE_LDX(op_codes, id_temp_location); // Load address of ID from static table
+        } else if (terminal.getName().equals("DIGIT")) {
+            String value = terminal.getTokenAttribute(); 
+            gen_loadXRegisterWithValue_A2_LDX(op_codes, value);
+        } else if (terminal.getName().equals("CHARACTER")) {
+            String string_location = handleCHARACTERterminalAndGetStringAddress(terminal);
+            gen_loadXRegisterFromAddress_AE_LDX(op_codes, string_location);
+            
+        } else if ( (terminal.getName().equals("KEYWORD_TRUE")) || (terminal.getName().equals("KEYWORD_FALSE"))) {
+            if (terminal.getName().equals("KEYWORD_TRUE")) {
+                gen_loadXRegisterWithValue_A2_LDX(op_codes, execution_environment.getTruePointerHex());
+            } else if (terminal.getName().equals("KEYWORD_FALSE")) {
+                gen_loadXRegisterWithValue_A2_LDX(op_codes, execution_environment.getFalsePointerHex());
+            }
+        }
+
+        
+        
+        return op_codes; 
+        
+        // elif boolean, elif DIGIT, 
+    }
+
+    
+    public ArrayList<String> processIsEqual (ArrayList<String> op_codes, NonTerminal IsEqual, String lhs_location) throws CodeGenerationException {
+        Production lhs = IsEqual.getASTChild(0);
+        Production rhs = IsEqual.getASTChild(1);
+
+        // TODO: Is Boolean reference to Heap or is it just set 0 and 1 -- think just set 0 and 1, fuck
+        // Need to finish NonTerminals, but thinking load X register with LHS, save in temp value, then load X register with RHS, and compare X register with temp value
+
+        // I think only NonTerminal it could be is IsEqual or IsNotEqual 
+        if (lhs.getProdKind().equals("NonTerminal")) {
+            nonterminalCallableRouter(op_codes, ((NonTerminal) lhs)); 
+        }
+        
+        if (rhs.getProdKind().equals("NonTerminal")) {
+            nonterminalCallableRouter(op_codes, ((NonTerminal) rhs)); 
+        }
+
+        if (lhs.getProdKind().equals("Terminal")) {
+            gen_loadXRegister(op_codes, IsEqual, ( (Terminal) lhs) , 0); 
+            //if ( !(((Terminal) lhs).getName().equals("DIGIT"))) {
+             //  
+            //} else {
+                // need to load value into register
+            //}
+        }
+
+        if (rhs.getProdKind().equals("Terminal")) {
+            String terminal_location = getLocationOfTerminal( IsEqual, ((Terminal) rhs), 1);
+            if ( !(((Terminal) lhs).getName().equals("DIGIT"))) {
+                gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, terminal_location);
+                gen_branchIfNotEqual(op_codes, lhs_location);
+                // need to find first declaration of assignments lhs
+            } else {
+                // need to compare to value somehow
+            }
+        }
+
+
+        //execution_environment.retrieveTempLocationFromChildOfNonTerminal(IsEqual, 0);
+        execution_environment.retrieveTempLocationFromChildOfNonTerminal(IsEqual, 0);
+        
+        return new ArrayList<String>();
+    }
+    
+    public ArrayList<String> processADDITION (ArrayList<String> op_codes, NonTerminal ADDITION, String temp_addition_addr, boolean within_nested_addition) throws CodeGenerationException {
         //ArrayList<String> op_codes = new ArrayList<>(); 
         //String temp_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
 
@@ -269,7 +458,7 @@ public class CodeGeneration {
 
 
     
-    public ArrayList<String> gen_loadAccumulatorWithConstant_A9_LDA (ArrayList<String> op_codes, String value) {
+    public ArrayList<String> gen_loadAccumulatorWithConstant_A9_LDA (ArrayList<String> op_codes, String value) throws CodeGenerationException {
         
         op_codes.add("A9");
         if (value.length() == 2) op_codes.add(value); // Heap locations are loaded into the accumulator and they are of length 2, making adding the extra 0 unnecessary 
@@ -277,31 +466,31 @@ public class CodeGeneration {
         return op_codes;
     }
 
-    public ArrayList<String> gen_loadAccumulatorFromMemory_AD_LDA (ArrayList<String> op_codes, String location) {
+    public ArrayList<String> gen_loadAccumulatorFromMemory_AD_LDA (ArrayList<String> op_codes, String location) throws CodeGenerationException {
         op_codes.add("AD");
         op_codes.add(location); op_codes.add("00");
         return op_codes;
     }
 
-    public ArrayList<String> gen_storeAccumulatorIntoMemory_8D_STA (ArrayList<String> op_codes, String location) {
+    public ArrayList<String> gen_storeAccumulatorIntoMemory_8D_STA (ArrayList<String> op_codes, String location) throws CodeGenerationException {
         op_codes.add("8D");
         op_codes.add(location); op_codes.add("00");
         return op_codes;
     }
 
-    public ArrayList<String> gen_addWithCarryToAccum_6D_ADC (ArrayList<String> op_codes, String location) {
+    public ArrayList<String> gen_addWithCarryToAccum_6D_ADC (ArrayList<String> op_codes, String location) throws CodeGenerationException {
         op_codes.add("6D");
         op_codes.add(location); op_codes.add("00");
         return op_codes;
     }
 
-    public ArrayList<String> gen_loadYRegisterFromMemory_AC_LDY (ArrayList<String> op_codes, String location) {
+    public ArrayList<String> gen_loadYRegisterFromMemory_AC_LDY (ArrayList<String> op_codes, String location) throws CodeGenerationException {
         op_codes.add("AC");
         op_codes.add(location); op_codes.add("00");
         return op_codes;
     }
 
-    public ArrayList<String> gen_finishPrintStatment(ArrayList<String> op_codes, String type) throws CodeGenerationException{
+    public ArrayList<String> gen_finishPrintStatment(ArrayList<String> op_codes, String type) throws CodeGenerationException {
         op_codes.add("A2");
         if (type.equals("string"))  op_codes.add("02");
         else if (type.equals("boolean")) op_codes.add("02");

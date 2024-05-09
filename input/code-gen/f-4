@@ -1,0 +1,8 @@
+{
+    int a 
+    a = 3
+    int b
+    b = 2 + 3 + a
+    print(a)
+    print(b)
+}$

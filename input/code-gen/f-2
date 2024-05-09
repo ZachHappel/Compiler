@@ -1,0 +1,10 @@
+{
+    int a
+    int b
+    int c
+    c = 6
+    b = 3 + 1
+    a = 1 + c
+    
+    
+    }$
