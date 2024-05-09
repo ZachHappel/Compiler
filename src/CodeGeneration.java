@@ -80,7 +80,7 @@ public class CodeGeneration {
         Terminal identifier = (Terminal) VarDeclStatement.getASTChild(1);
         String identifier_type = getIdentifierType( (Production) VarDeclStatement, identifier);
         String default_value = ""; 
-        System.out.println("Value at... " + execution_environment.getValueFromCodeSequence(250));
+        System.out.println("Value at... " + execution_environment.getValueFromCodeSequence(240));
         if (identifier_type.equals("string")) default_value = "6E"; 
         else if (identifier_type.equals("int")) default_value = "00";
         else if (identifier_type.equals("boolean")) default_value = "FA"; // false
@@ -128,8 +128,13 @@ public class CodeGeneration {
         }
 
         else if ( (assignment_children.contains("KEYWORD_TRUE") || (assignment_children.contains("KEYWORD_FALSE") ) && assignment_children.size() == 2)) {
-            String boolean_value = getStringFromCHARACTER(identifier_terminal, 1); //  should work
-            
+            String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0);
+            String heap_boolean_location = (assignment_children.contains("KEYWORD_TRUE") ? execution_environment.getTruePointer() : execution_environment.getFalsePointer()); 
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, heap_boolean_location);
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, id_temp_location);
+            //String boolean_value = getStringFromCHARACTER(identifier_terminal, 1); //  should work
+            //System.out.println("Value at : " + execution_environment.getValueFromCodeSequence(244));
+
         }
 
         //(String.format("%02X", ""+ (execution_environment.getHeapPointer() - hex_arraylist.length )))

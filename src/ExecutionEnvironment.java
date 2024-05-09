@@ -42,18 +42,24 @@ public class ExecutionEnvironment {
     
     public int code_pointer = 0;
     public int stack_pointer = -1; // Must be set when code gen is done
-    public int heap_pointer = 245;
+    public int heap_pointer = 240;
     public int temporary_value_counter = 0; 
     public int accumulator = 0;
+
+    // Starting index in hexadecimal for each of the constant string values stored in Heap 
+    public String null_pointer = "F0";
+    public String false_pointer = "FA";
+    public String true_pointer = "F5"; 
+
     ///////////////////////////////////////////////////////////////////
     
-    public int usable_bytes_remaining = 244; // start 255 because program will need to have an end instruction of 00 
+    public int usable_bytes_remaining = 240; // start 255 because program will need to have an end instruction of 00 
     public int reserved_space = 0;
 
     public ExecutionEnvironment() throws CodeGenerationException {
         java.util.Arrays.fill(code_sequence, "0"); // populate code sequence array with "0" at start
         
-        System.arraycopy(new String[]{"74", "72", "75", "65", "00", "66", "61", "6C", "73", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 11, 11);
+        System.arraycopy(new String[]{"6E", "75", "6C", "6C", "00", "74", "72", "75", "65", "00", "66", "61", "6C", "73", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 16, 16);
     }
 
 
@@ -74,9 +80,12 @@ public class ExecutionEnvironment {
     public void incrementTemporaryValueCounter () { this.temporary_value_counter = this.temporary_value_counter + 1; }
 
   
-    public String getValueFromCodeSequence (int index) {
-        return code_sequence[index];
-    }
+    public String getValueFromCodeSequence (int index) { return code_sequence[index]; }
+
+    public String getFalsePointer () { return this.false_pointer; }
+    public String getTruePointer () { return this.true_pointer; }
+
+
     
     // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly
     public void updateRemainingSpace (String[] inserted_instructions, String location) {
