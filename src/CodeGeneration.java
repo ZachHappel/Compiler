@@ -36,6 +36,8 @@ public class CodeGeneration {
     }
 
 
+   
+
     public ArrayList<String> terminalRouter (Terminal t ) throws CodeGenerationException{
         ArrayList<String> op_codes = new ArrayList<>(); 
         
@@ -77,7 +79,7 @@ public class CodeGeneration {
         switch (nt.getName()) {
             
             case "IsEqual": 
-                new_op_codes = processIsEqual(new_op_codes, nt, lhs_location);
+                new_op_codes = og_processIsEqual(new_op_codes, nt, lhs_location);
                 op_codes.addAll(new_op_codes); // add result of IsEqual to op_codes 
                 break; 
             
@@ -151,7 +153,8 @@ public class CodeGeneration {
 
         if (assignment_children.contains("IsEqual")) {
             String lhs_id_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0); // left hand side
-            processIsEqual(op_codes, AssignmentStatement, lhs_id_location);
+            //processIsEqual(op_codes, AssignmentStatement, lhs_id_location);
+            processIsEqual(op_codes, (NonTerminal) AssignmentStatement.getASTChild(1), lhs_id_location);
         }
         // Where single ID assignment goes
         if (assignment_children.contains("DIGIT") && assignment_children.size() == 2) {
@@ -177,6 +180,7 @@ public class CodeGeneration {
         }
 
         else if ( (assignment_children.contains("KEYWORD_TRUE") || (assignment_children.contains("KEYWORD_FALSE") ) && assignment_children.size() == 2)) {
+            System.out.println("Location At 250: " + execution_environment.getValueFromCodeSequence(250));
             String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0);
             String heap_boolean_location = (assignment_children.contains("KEYWORD_TRUE") ? execution_environment.getTruePointer() : execution_environment.getFalsePointer()); 
             gen_loadAccumulatorWithConstant_A9_LDA(op_codes, heap_boolean_location);
@@ -245,7 +249,7 @@ public class CodeGeneration {
 
     public ArrayList<String> gen_loadXRegisterWithValue_A2_LDX (ArrayList<String> op_codes, String value) throws CodeGenerationException {
         op_codes.add("A2"); 
-        op_codes.add(value); op_codes.add("00"); 
+        op_codes.add(value); //op_codes.add("00"); fk.
         return op_codes; 
     }
 
@@ -255,7 +259,9 @@ public class CodeGeneration {
         return op_codes; 
     }
 
-    public ArrayList<String> gen_branchIfNotEqual(ArrayList<String> op_codes, String lhs_location) throws CodeGenerationException {
+    // Backup before modifying -- workds for (x == y) where x and y are booleans
+    
+    public ArrayList<String> old_gen_branchIfNotEqual(ArrayList<String> op_codes, String lhs_location) throws CodeGenerationException {
         op_codes.add("D0");
         
         String true_location = execution_environment.getTruePointer();
@@ -277,7 +283,209 @@ public class CodeGeneration {
 
         return op_codes; 
     }
+    
 
+    public ArrayList<String> gen_branchNBytes_D0_BNE(ArrayList<String> op_codes, String byte_amount_in_hex) throws CodeGenerationException {
+        op_codes.add("D0"); op_codes.add(byte_amount_in_hex); 
+        return op_codes;
+    }
+
+
+    // maybe have return be an object with both op_codes and result value location
+    /*
+     * TODO: 
+     * Update nonterminalCallableRouter to use newProcessIsEqual
+     */
+    public ArrayList<String> newProcessIsEqual (ArrayList<String> op_codes, NonTerminal IsEqual, String assignment_location) throws CodeGenerationException {
+        Production lhs = IsEqual.getASTChild(0);
+        Production rhs = IsEqual.getASTChild(1);
+        
+
+        if (lhs.getProdKind().equals("Terminal")) {
+            //gen_loadXRegister(op_codes, IsEqual, ( (Terminal) lhs) , 0); 
+            String lhs_terminal_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(0), 0);
+            //gen_loadAccumulatorFromMemory_AD_LDA(op_codes, lhs_terminal_location); // Load first value into accumulator 
+            
+            
+            if (rhs.getProdKind().equals("Terminal")) {
+                String rhs_terminal_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(1), 1);
+                gen_loadXRegisterWithValue_A2_LDX(op_codes, rhs_terminal_location); // Load X Register with second value
+                
+                gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, lhs_terminal_location); // Compare first value which we 
+
+                
+                ArrayList<String> op_codes_if_true = new ArrayList<String>();  /// if true
+                gen_loadAccumulatorWithConstant_A9_LDA(op_codes_if_true, execution_environment.getTruePointer()); // Load true in accumulator
+                gen_storeAccumulatorIntoMemory_8D_STA(op_codes_if_true, assignment_location); // Store in assignment location
+                
+                
+                //ArrayList<String> op_codes_if_false = new ArrayList<String>(); /// if false
+                //gen_loadAccumulatorWithConstant_A9_LDA(op_codes_if_false, execution_environment.getFalsePointer()); // Load true in accumulator
+                //gen_storeAccumulatorIntoMemory_8D_STA(op_codes_if_false, assignment_location); // Store in assignment location
+                
+                
+                int branch_ops_length = op_codes_if_true.size(); // both are same amount of ops so can use either one
+                String branch_ops_length_hex = (branch_ops_length >= 10) ? String.format("%02X", branch_ops_length) : ("0" + branch_ops_length) ; // Maybe
+                System.out.println("Branch ops length: " + branch_ops_length);
+                
+                gen_branchNBytes_D0_BNE(op_codes, branch_ops_length_hex);
+                op_codes.addAll(op_codes_if_true); // add op codes to be processed if true
+
+                //gen_branchNBytes_D0_BNE(op_codes, branch_ops_length_hex);
+                //op_codes.addAll(op_codes_if_false); // add op codes to be processed if false
+
+
+
+                //int set_true_ops_length = set_lhs_true_op_codes.size(); 
+                //System.out.println("Set True Ops Length Hex: " + set_true_ops_length_hex);
+
+            } else if ( rhs.getProdKind().equals("NonTerminal")) {
+                NonTerminal rhs_nt = (NonTerminal) rhs;
+                String rhs_name = rhs_nt.getName(); 
+                if (rhs_name.equals("IsEqual") || rhs_name.equals("IsNotEqual")) {
+                    System.out.println("newProcessIsEqual() - rhs is " + rhs_name + "...");
+                    System.exit(0);
+                } else {
+                    System.out.println("newProcessIsEqual() - rhs is " + rhs_name + "... Not good?");
+                    System.exit(0);
+                }
+            }
+
+
+
+            
+            //gen_load
+        }
+
+        return op_codes; 
+
+    }
+
+    public ArrayList<String> processIsEqual (ArrayList<String> op_codes, NonTerminal IsEqual, String assignment_location) throws CodeGenerationException { 
+        Production lhs = IsEqual.getASTChild(0);
+        Production rhs = IsEqual.getASTChild(1);
+        System.out.println("Assignment Location Address: " + assignment_location);
+
+        //gen_loadXRegisterWithValue_A2_LDX(op_codes, execution_environment.getTruePointer());
+
+        // TempValue Counter used to make variable names unique, because after insertion the counter will increase itself and having duplicate "lhsT1" for example will never be a problem
+        String lhs_value_location = execution_environment.performStaticTableInsertion("lhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // where we will store temp value
+        String rhs_value_location = execution_environment.performStaticTableInsertion("rhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // where we will store temp value
+        //String false_pointer_location = execution_environment.performStaticTableInsertion(execution_environment.createAndRetrieveNewTemporaryAddress(), rhs_value_location)
+       
+        //String lhs_value_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(0), 0);
+        //String rhs_value_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(1), 1);
+
+        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) { 
+
+            Terminal lhs_terminal = (Terminal) lhs;
+            Terminal rhs_terminal = (Terminal) rhs;
+            
+            String lhs_terminal_value = getLocationOfTerminal(IsEqual, lhs_terminal, 0); // Get value associated with terminal in format that can be saved * Careful zach*
+            String rhs_terminal_value = getLocationOfTerminal(IsEqual, rhs_terminal, 1); // Get value associated with terminal in format that can be saved * Careful zach*
+            
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, lhs_terminal_value);
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, lhs_value_location);
+
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, rhs_terminal_value);
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, rhs_value_location);
+
+            gen_loadXRegisterWithValue_A2_LDX(op_codes, lhs_terminal_value); // Store in X Register
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, rhs_value_location); // CHECK HERE IF PROBLEM
+
+            ArrayList<String> op_codes_if_false = new ArrayList<String>(); /// if false
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes_if_false, execution_environment.getFalsePointer()); // Load false into accumulator 
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes_if_false, assignment_location); // Store in assignment location address
+
+
+            int branch_ops_length = op_codes_if_false.size(); // both are same amount of ops so can use either one
+            String branch_ops_length_hex = (branch_ops_length >= 10) ? String.format("%02X", branch_ops_length) : ("0" + branch_ops_length) ; // Maybe
+            System.out.println("Branch ops length: " + branch_ops_length);
+
+            gen_branchNBytes_D0_BNE(op_codes, branch_ops_length_hex);
+
+            // true case 
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes, execution_environment.getTruePointer());
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes, assignment_location); // Store true in assignment location
+
+            /*
+            String lhs_terminal_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(0), 0);
+            String rhs_terminal_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(1), 1);
+            gen_loadXRegisterWithValue_A2_LDX(op_codes, rhs_terminal_location);
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, lhs_terminal_location);
+
+            ArrayList<String> op_codes_if_true = new ArrayList<String>();  /// if true
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes_if_true, "F5"); // Load true in accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes_if_true, assignment_location); // Store in assignment location
+
+            ArrayList<String> op_codes_if_false = new ArrayList<String>(); /// if false
+            gen_loadAccumulatorWithConstant_A9_LDA(op_codes_if_false, "FA"); // Load true in accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(op_codes_if_false, assignment_location); // Store in assignment location
+
+            int branch_ops_length = op_codes_if_true.size(); // both are same amount of ops so can use either one
+            String branch_ops_length_hex = (branch_ops_length >= 10) ? String.format("%02X", branch_ops_length) : ("0" + branch_ops_length) ; // Maybe
+            System.out.println("Branch ops length: " + branch_ops_length);
+
+            gen_branchNBytes_D0_BNE(op_codes, branch_ops_length_hex);
+            op_codes.addAll(op_codes_if_true);
+            op_codes.addAll(op_codes_if_false);*/
+        }
+
+        return op_codes;
+    }
+
+    // lhs location refers to the location in memory of the lhs of the IsEqual children
+    public ArrayList<String> gen_branchIfNotEqual(ArrayList<String> op_codes, String lhs_location) throws CodeGenerationException {
+        
+        String true_heap_location = execution_environment.getTruePointer();
+        ArrayList<String> set_lhs_true_op_codes = new ArrayList<String>();
+        
+        String new_addr = execution_environment.createAndRetrieveNewTemporaryAddress();
+        gen_loadAccumulatorWithConstant_A9_LDA(op_codes, true_heap_location); // Load true
+        gen_storeAccumulatorIntoMemory_8D_STA(op_codes, new_addr);
+        gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, new_addr); // LHS x terminal should be loaded into accumulator => Compare it to the value of true which we have stored in new location `new_addr`
+        
+
+        //----------
+        // If true, stiore true_heap_location in a new secondary temp address
+        String second_new_addr = execution_environment.createAndRetrieveNewTemporaryAddress(); 
+        gen_loadAccumulatorWithConstant_A9_LDA(set_lhs_true_op_codes, true_heap_location); // Load true
+        gen_storeAccumulatorIntoMemory_8D_STA(set_lhs_true_op_codes, second_new_addr);
+        set_lhs_true_op_codes.add("A2"); set_lhs_true_op_codes.add("FF");
+        gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(set_lhs_true_op_codes, execution_environment.getFalsePointer()); // Compare value at X register to false_pointer_location
+
+
+        int set_true_ops_length = set_lhs_true_op_codes.size(); 
+        String set_true_ops_length_hex = (set_true_ops_length >= 10) ? String.format("%02X", set_true_ops_length) : ("0" + set_true_ops_length) ; // Maybe
+        System.out.println("Set True Ops Length Hex: " + set_true_ops_length_hex);
+        //----------
+        
+        op_codes.add("D0"); op_codes.add(set_true_ops_length_hex); // Branch length of instructions that would have been processed if true, if it is not true
+        
+        op_codes.addAll(set_lhs_true_op_codes); // Add the op codes that are processed if true
+
+
+        ArrayList<String> second_jump_set_of_op_codes = new ArrayList<String>();
+        gen_loadAccumulatorWithConstant_A9_LDA(second_jump_set_of_op_codes, execution_environment.getFalsePointer()); // load accumulator with false heap pointer
+        gen_storeAccumulatorIntoMemory_8D_STA(second_jump_set_of_op_codes, second_new_addr); // store the value of false heap pointer into the second address
+        int set_false_ops_length = second_jump_set_of_op_codes.size(); 
+        String set_false_ops_length_hex = (set_false_ops_length >= 10) ? String.format("%02X", set_false_ops_length) : ("0" + set_false_ops_length) ; // Maybe
+        System.out.println("Set True Ops Length Hex: " + set_false_ops_length);
+
+        op_codes.add("D0"); op_codes.add(set_false_ops_length_hex); // Branch length of instructions that would have been processed if true, if it is not true
+        op_codes.addAll(second_jump_set_of_op_codes); // Add the op codes that are processed if true
+
+        gen_loadAccumulatorFromMemory_AD_LDA(op_codes, second_new_addr); // get value from new 2nd addr and load into accum
+        gen_storeAccumulatorIntoMemory_8D_STA(second_jump_set_of_op_codes, lhs_location); // sets LHS location as the destination for the FINAL VALUE.... *****
+
+        
+        //op_codes.add("A2"); op_codes.add("FF"); // load x register with FF
+        //gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, execution_environment.getFalsePointer()); // Compare value at X register to false_pointer_location
+
+
+
+        return op_codes; 
+    }
 
     public String getLocationOfTerminal (NonTerminal parent, Terminal terminal, int index_if_identifier) throws CodeGenerationException {
         String location = ""; 
@@ -333,8 +541,11 @@ public class CodeGeneration {
         // elif boolean, elif DIGIT, 
     }
 
+
+    // Recursive approach ??
+    // What if processIsEqualLeft processIsEqualRight called by processIsEqual 
     
-    public ArrayList<String> processIsEqual (ArrayList<String> op_codes, NonTerminal IsEqual, String lhs_location) throws CodeGenerationException {
+    public ArrayList<String> og_processIsEqual (ArrayList<String> op_codes, NonTerminal IsEqual, String lhs_location) throws CodeGenerationException {
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
 
@@ -343,6 +554,7 @@ public class CodeGeneration {
 
         // I think only NonTerminal it could be is IsEqual or IsNotEqual 
         if (lhs.getProdKind().equals("NonTerminal")) {
+            System.out.println("processIsEqual() lhs is NonTerminal: " + ((NonTerminal) lhs).getName());
             nonterminalCallableRouter(op_codes, ((NonTerminal) lhs), lhs_location); 
         }
 
@@ -362,8 +574,10 @@ public class CodeGeneration {
         if (rhs.getProdKind().equals("Terminal")) {
             String terminal_location = getLocationOfTerminal( IsEqual, ((Terminal) rhs), 1);
             if ( !(((Terminal) lhs).getName().equals("DIGIT"))) {
+                
+                // X Register will be loaded with value of lhs rerminal if lhs is Terminal -- currently
                 gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, terminal_location);
-                gen_branchIfNotEqual(op_codes, lhs_location);
+                old_gen_branchIfNotEqual(op_codes, lhs_location);
                 // need to find first declaration of assignments lhs
             } else {
                 // need to compare to value somehow

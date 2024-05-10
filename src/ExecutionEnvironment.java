@@ -48,7 +48,7 @@ public class ExecutionEnvironment {
 
     // Starting index in hexadecimal for each of the constant string values stored in Heap 
     public String null_pointer = "F0";
-    public String false_pointer = "FA";
+    public String false_pointer = "FA"; // 250
     public String true_pointer = "F5"; 
 
     ///////////////////////////////////////////////////////////////////
@@ -141,6 +141,14 @@ public class ExecutionEnvironment {
         for (int i = 0; i <= code_sequence.length - 1; i++) {
             if (code_sequence[i] == "0") {
                 code_sequence[i] = "00";
+            }
+
+            if (code_sequence[i] == "true") {
+                code_sequence[i] = getTruePointer(); 
+            }
+
+            if (code_sequence[i] == "false") {
+                code_sequence[i] = getFalsePointer(); 
             }
         }
 
