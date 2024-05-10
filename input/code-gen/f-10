@@ -1,0 +1,9 @@
+{
+    boolean c
+    c = (true == false)
+    print(c)
+    c = (true == false)
+    print(c)
+    c = (true == false)
+    print(c)
+}$
