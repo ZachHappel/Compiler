@@ -345,10 +345,6 @@ public class CodeGeneration {
         if (lhs.getProdKind().equals("NonTerminal")) {
             nonterminalCallableRouter(op_codes, ((NonTerminal) lhs), lhs_location); 
         }
-        
-        if (rhs.getProdKind().equals("NonTerminal")) {
-            nonterminalCallableRouter(op_codes, ((NonTerminal) rhs), lhs_location); 
-        }
 
         if (lhs.getProdKind().equals("Terminal")) {
             gen_loadXRegister(op_codes, IsEqual, ( (Terminal) lhs) , 0); 
@@ -357,6 +353,10 @@ public class CodeGeneration {
             //} else {
                 // need to load value into register
             //}
+        }
+
+        if (rhs.getProdKind().equals("NonTerminal")) {
+            nonterminalCallableRouter(op_codes, ((NonTerminal) rhs), lhs_location); 
         }
 
         if (rhs.getProdKind().equals("Terminal")) {
