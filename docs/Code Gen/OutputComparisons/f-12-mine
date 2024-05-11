@@ -1,0 +1,78 @@
+   LDA #$F5 - Load the accumulator with constant F5 // a decl
+   STA $3200 - Store the accumulator into memory at address $3200
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5 // b decl
+   STA $3300 - Store the accumulator into memory at address $3300
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5 //c decl
+   STA $3400 - Store the accumulator into memory at address $3400
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5 // a init
+   STA $3200 - Store the accumulator into memory at address $3200
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5 // b init
+   STA $3300 - Store the accumulator into memory at address $3300
+   BRK - Break
+
+   LDX $3200 - Load the X register from memory at address $3200, which contains 00
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $3500 - Store the accumulator into memory at address $3500
+   BRK - Break
+
+   CPX $3500 - Compare the X register with memory at address $3500, which contains 00
+   BRK - Break
+
+   BNE $05 - Branch n bytes if Z flag is 0, to skip 05 bytes
+   LDA #$FA - Load the accumulator with constant FA
+   STA $3400 - Store the accumulator into memory at address $3400
+   BRK - Break
+
+   LDY $3400 - Load the Y register from memory at address $3400, which contains 00
+   BRK - Break
+
+   LDX #$02 - Load the X register with constant 02
+   SYS - System Call
+
+   BRK - Break
+
+   BRK - Break
+
+   Unknown opcode: 6E
+
+   Unknown opcode: 75
+
+   Unknown opcode: 6C
+
+   Unknown opcode: 6C
+
+   BRK - Break
+
+   Unknown opcode: 66
+
+   Unknown opcode: 61
+
+   Unknown opcode: 6C
+
+   Unknown opcode: 73
+
+   Unknown opcode: 65
+
+   BRK - Break
+
+   Unknown opcode: 74
+
+   Unknown opcode: 72
+
+   Unknown opcode: 75
+
+   Unknown opcode: 65
+
+   BRK - Break
+
+

@@ -29,6 +29,7 @@ public class CodeGeneration {
                 
                 // Stuff to the heap will be added by itself
                 if (op_codes_array.length > 0) {
+                    System.out.println("\n\n\n\nINSERTIONNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                     execution_environment.insert(op_codes_array, "Code");
                 }
 
@@ -782,7 +783,7 @@ public class CodeGeneration {
                     break;
                 case "AD":
                     // Load accumulator from memory
-                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "8D":
@@ -797,7 +798,7 @@ public class CodeGeneration {
                     break;
                 case "AE":
                     // Load X from memory
-                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "A0":
@@ -807,7 +808,7 @@ public class CodeGeneration {
                     break;
                 case "AC":
                     // Load Y from memory
-                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "EA":
@@ -820,7 +821,7 @@ public class CodeGeneration {
                     break;
                 case "EC":
                     // Compare X with memory
-                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "D0":
@@ -862,7 +863,7 @@ public class CodeGeneration {
                     break;
                 case "AD":
                     // Load accumulator from memory
-                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "8D":
@@ -877,7 +878,7 @@ public class CodeGeneration {
                     break;
                 case "AE":
                     // Load X from memory
-                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "A0":
@@ -887,7 +888,7 @@ public class CodeGeneration {
                     break;
                 case "AC":
                     // Load Y from memory
-                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "EA":
@@ -900,7 +901,7 @@ public class CodeGeneration {
                     break;
                 case "EC":
                     // Compare X with memory
-                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + env.getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
                     i++;
                     break;
                 case "D0":
