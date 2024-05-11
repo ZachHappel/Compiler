@@ -8,6 +8,8 @@ public class CodeGeneration {
     public SymbolTable symbol_table;
     public String addition_temp_addr;
 
+    public ArrayList<String> constants = new ArrayList<String>(Arrays.asList("KEYWORD_TRUE", "KEYWORD_FALSE")); // TODO: Add DIGIT?
+
     // REMEMBER: Make it fluid, not rigid. 
     public void traverseIntermediateRepresentation ( Production p, int index ) throws CodeGenerationException {
         
@@ -129,7 +131,7 @@ public class CodeGeneration {
         System.out.println("Value at... " + execution_environment.getValueFromCodeSequence(240));
         if (identifier_type.equals("string")) default_value = "6E"; 
         else if (identifier_type.equals("int")) default_value = "00";
-        else if (identifier_type.equals("boolean")) default_value = "FA"; // false
+        else if (identifier_type.equals("boolean")) default_value = "F5"; // false
         pout("processVarDecl - type: " + identifier_type); 
         String temp_addr = execution_environment.performStaticTableInsertion(identifier.getTokenAttribute(), VarDeclStatement.getScopeName()); // Maybe could be problematic with scope
         ArrayList<String> op_codes = new ArrayList<>(Arrays.asList("A9", default_value, "8D", temp_addr, "00"));
@@ -361,6 +363,24 @@ public class CodeGeneration {
 
     }
 
+
+    public String getConstantsPointer (String terminal_attribute_value) throws CodeGenerationException {
+
+        switch (terminal_attribute_value) {
+            case ("KEYWORD_TRUE"):
+                return execution_environment.getTruePointer(); 
+                 
+            case ("KEYWORD_FALSE"):
+                return execution_environment.getFalsePointer();
+                
+            default:
+                return "ERROR"; 
+                
+        }
+        
+    }
+
+
     public ArrayList<String> processIsEqual (ArrayList<String> op_codes, NonTerminal IsEqual, String assignment_location) throws CodeGenerationException { 
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
@@ -369,21 +389,44 @@ public class CodeGeneration {
         //gen_loadXRegisterWithValue_A2_LDX(op_codes, execution_environment.getTruePointer());
 
         // TempValue Counter used to make variable names unique, because after insertion the counter will increase itself and having duplicate "lhsT1" for example will never be a problem
-        String lhs_value_location = execution_environment.performStaticTableInsertion("lhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // where we will store temp value
-        String rhs_value_location = execution_environment.performStaticTableInsertion("rhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // where we will store temp value
+        //String lhs_value_location = execution_environment.performStaticTableInsertion("lhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // where we will store temp value
+        //String rhs_value_location = execution_environment.performStaticTableInsertion("rhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // where we will store temp value
         //String false_pointer_location = execution_environment.performStaticTableInsertion(execution_environment.createAndRetrieveNewTemporaryAddress(), rhs_value_location)
        
-        //String lhs_value_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(0), 0);
-        //String rhs_value_location = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(1), 1);
+        String lhs_value = "";//getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(0), 0);
+        String rhs_value = "";//getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(1), 1);
 
         if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) { 
 
-            Terminal lhs_terminal = (Terminal) lhs;
-            Terminal rhs_terminal = (Terminal) rhs;
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
             
-            String lhs_terminal_value = getLocationOfTerminal(IsEqual, lhs_terminal, 0); // Get value associated with terminal in format that can be saved * Careful zach*
-            String rhs_terminal_value = getLocationOfTerminal(IsEqual, rhs_terminal, 1); // Get value associated with terminal in format that can be saved * Careful zach*
+            String rhs_value_location = execution_environment.performStaticTableInsertion("rhs" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName());
+
+            //String lhs_terminal_value = getLocationOfTerminal(IsEqual, lhs_terminal, 0); // Get value associated with terminal in format that can be saved * Careful zach*
+            //String rhs_terminal_value = getLocationOfTerminal(IsEqual, rhs_terminal, 1); // Get value associated with terminal in format that can be saved * Careful zach*
             
+            if (constants.contains(lhs_terminal_name)) {
+                lhs_value = getConstantsPointer(lhs_terminal_name); // Constant (KEYWORD_TRUE or KEYWORD_FALSE)
+                gen_loadXRegisterWithValue_A2_LDX(op_codes, lhs_value);
+                //gen_loadAccumulatorWithConstant_A9_LDA(op_codes, lhs_value);
+            } else {
+                lhs_value = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(0), 0); // Address of assignment
+                gen_loadXRegisterFromAddress_AE_LDX(op_codes, lhs_value);
+                //gen_loadAccumulatorFromMemory_AD_LDA(op_codes, lhs_value);
+            }
+
+            if (constants.contains(rhs_terminal_name)) {
+                rhs_value = getConstantsPointer(rhs_terminal_name); // Constant (KEYWORD_TRUE or KEYWORD_FALSE)
+                gen_loadAccumulatorWithConstant_A9_LDA(op_codes, rhs_value);
+                gen_storeAccumulatorIntoMemory_8D_STA(op_codes, rhs_value_location);
+            } else {
+                rhs_value = getLocationOfTerminal(IsEqual, (Terminal) IsEqual.getASTChild(1), 1); // Address of assignment
+                gen_loadAccumulatorFromMemory_AD_LDA(op_codes, rhs_value);
+                gen_storeAccumulatorIntoMemory_8D_STA(op_codes, rhs_value_location);
+            }
+
+            /*/
             gen_loadAccumulatorWithConstant_A9_LDA(op_codes, lhs_terminal_value);
             gen_storeAccumulatorIntoMemory_8D_STA(op_codes, lhs_value_location);
 
@@ -391,6 +434,7 @@ public class CodeGeneration {
             gen_storeAccumulatorIntoMemory_8D_STA(op_codes, rhs_value_location);
 
             gen_loadXRegisterWithValue_A2_LDX(op_codes, lhs_terminal_value); // Store in X Register
+            */
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(op_codes, rhs_value_location); // CHECK HERE IF PROBLEM
 
             ArrayList<String> op_codes_if_false = new ArrayList<String>(); /// if false
@@ -402,6 +446,46 @@ public class CodeGeneration {
             String branch_ops_length_hex = (branch_ops_length >= 10) ? String.format("%02X", branch_ops_length) : ("0" + branch_ops_length) ; // Maybe
             System.out.println("Branch ops length: " + branch_ops_length);
 
+
+            /*  Z Flag = 1, if last operation was equal... Using D0, it checks if the value of the Z Flag. "Not Set" means the value is 0. When the value is 0, it means that the last operation 
+                (if it occurred, i think idk default) was not equal. 
+
+                D0 branches to another part of the code if the Z Flag is "not set", meaning the last operation was not equal. 
+
+                Operations such as EC (CPX) flip the Z flag depending on their evaluation 
+
+                The byte value next assigned after D0 is the distance to jump if the result of the previous calculations were "not set"/0/"not equal"
+
+
+                Suggested online:  If equal: no branch, set c = true and jump over setting c = false
+                                   If noteq: branch to ----------------------------> c = false
+
+
+                                ----> set false set true
+                                branch 
+
+                                   
+
+                WAIT!!!!!!!!!!!! 
+                                 if equal: 
+                                        D0 -----------> 
+                                 if noteq                                             
+                                        D0 00 set false, set true
+                FOR JUMPING
+
+                Branch if Not equal... Okay
+
+                Typically that means
+
+                if not equal --> branch to setting c = false, 
+                what would run if equal --> c = true
+                but since we don't have JMP...
+                we cam do
+
+                if not equal--> branch to c = true
+                c = false 
+            
+            */
             gen_branchNBytes_D0_BNE(op_codes, branch_ops_length_hex);
 
             // true case 
@@ -487,6 +571,7 @@ public class CodeGeneration {
         return op_codes; 
     }
 
+    // TODO: REMOVE CONSTANTS FROM HERE
     public String getLocationOfTerminal (NonTerminal parent, Terminal terminal, int index_if_identifier) throws CodeGenerationException {
         String location = ""; 
         
@@ -679,8 +764,174 @@ public class CodeGeneration {
     public void processAssignmentRightHandSide () {
 
     }
+    
+
+    // Did not code myself
+    public String translateOpcodesToEnglish(ArrayList<String> opcodes, ExecutionEnvironment env) throws CodeGenerationException{
+        StringBuilder sb = new StringBuilder();
+    
+        for (int i = 0; i < opcodes.size(); i++) {
+            String code = opcodes.get(i);
+            String nextValue = (i + 1 < opcodes.size()) ? opcodes.get(i + 1) : "";
+            
+            switch (code) {
+                case "A9":
+                    // Load accumulator with constant
+                    sb.append(String.format("   LDA #$%s - Load the accumulator with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AD":
+                    // Load accumulator from memory
+                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "8D":
+                    // Store accumulator in memory
+                    sb.append(String.format("   STA $%s00 - Store the accumulator into memory at address $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "A2":
+                    // Load X with constant
+                    sb.append(String.format("   LDX #$%s - Load the X register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AE":
+                    // Load X from memory
+                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "A0":
+                    // Load Y with constant
+                    sb.append(String.format("   LDY #$%s - Load the Y register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AC":
+                    // Load Y from memory
+                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "EA":
+                    sb.append("   NOP - No operation\n");
+                    break;
+                case "00":
+                    if ( (i <= execution_environment.getStackPointer()) || (i >= execution_environment.getHeapPointer()) ) {
+                        sb.append("   BRK - Break\n");
+                    }
+                    break;
+                case "EC":
+                    // Compare X with memory
+                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "D0":
+                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s bytes", nextValue, nextValue));
+                    i++;
+                    break;
+                case "EE":
+                    // Increment memory
+                    sb.append(String.format("   INC $%s00 - Increment the value at memory location $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "FF":
+                    sb.append("   SYS - System Call\n");
+                    break;
+                default:
+                    sb.append(String.format("   Unknown opcode: %s\n", code));
+                    break;
+            }
+            if ( ((i <= execution_environment.getStackPointer()) || (i >= execution_environment.getHeapPointer())) ) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    // Did not code myself
+    public String translateOpcodesToEnglishUnrestricted(ArrayList<String> opcodes, ExecutionEnvironment env) throws CodeGenerationException{
+        StringBuilder sb = new StringBuilder();
+    
+        for (int i = 0; i < opcodes.size(); i++) {
+            String code = opcodes.get(i);
+            String nextValue = (i + 1 < opcodes.size()) ? opcodes.get(i + 1) : "";
+            
+            switch (code) {
+                case "A9":
+                    // Load accumulator with constant
+                    sb.append(String.format("   LDA #$%s - Load the accumulator with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AD":
+                    // Load accumulator from memory
+                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "8D":
+                    // Store accumulator in memory
+                    sb.append(String.format("   STA $%s00 - Store the accumulator into memory at address $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "A2":
+                    // Load X with constant
+                    sb.append(String.format("   LDX #$%s - Load the X register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AE":
+                    // Load X from memory
+                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "A0":
+                    // Load Y with constant
+                    sb.append(String.format("   LDY #$%s - Load the Y register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AC":
+                    // Load Y from memory
+                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "EA":
+                    sb.append("   NOP - No operation\n");
+                    break;
+                case "00":
+                    
+                    sb.append("   BRK - Break\n");
+                    
+                    break;
+                case "EC":
+                    // Compare X with memory
+                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, env.getValueFromCodeSequence(Integer.parseInt(nextValue, 16))));
+                    i++;
+                    break;
+                case "D0":
+                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s bytes", nextValue, nextValue));
+                    i++;
+                    break;
+                case "EE":
+                    // Increment memory
+                    sb.append(String.format("   INC $%s00 - Increment the value at memory location $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "FF":
+                    sb.append("   SYS - System Call\n");
+                    break;
+                default:
+                    sb.append(String.format("   Unknown opcode: %s\n", code));
+                    break;
+            }
+            
+                sb.append("\n");
+        }
+        return sb.toString();
+    }
 
 
+    public static ArrayList<String> parseHexadecimalString(String hexString) {
+        // Split the string into an array of strings using space as the delimiter
+        String[] hexValues = hexString.split("\\s+");
+        // Create an ArrayList from the array of hex values
+        return new ArrayList<>(Arrays.asList(hexValues));
+    }
     
     public ArrayList<String> gen_loadAccumulatorWithConstant_A9_LDA (ArrayList<String> op_codes, String value) throws CodeGenerationException {
         
@@ -779,6 +1030,7 @@ public class CodeGeneration {
             toolkit = tk;    
             execution_environment = new ExecutionEnvironment();  // not sure if necessary
             
+            
             //NonTerminal ast_starting_block = new NonTerminal("Block");
             //AST.add(ast_starting_block);
             traverseIntermediateRepresentation(AST.get(0), 1); // start on block
@@ -797,8 +1049,24 @@ public class CodeGeneration {
             execution_environment.backpatch();
             System.out.println(Arrays.toString(execution_environment.getCodeSequence()));
             execution_environment.printCodeString();
-            //execution_environment.
-            //recursivePrint(AST.get(0), 0);
+
+            String readableOpcodes = translateOpcodesToEnglish(new ArrayList<>(Arrays.asList(execution_environment.getCodeSequence())), execution_environment);
+            System.out.println("\n┌--------------------------------------------------------------------------------------------------------------------┐");
+            System.out.println("|-------------------------------------------READABLE INSTRUCTION OUTPUT----------------------------------------------|");
+            System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+            System.out.println(readableOpcodes);
+            
+            
+            
+            System.out.println("\n┌--------------------------------------------------------------------------------------------------------------------┐");
+            System.out.println("|-------------------------------------------READABLE INSTRUCTION OUTPUT----------------------------------------------|");
+            System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
+            ArrayList<String> proper_ops = parseHexadecimalString("A9 F5 8D 44 00 A9 F5 8D 45 00 A9 F5 8D 46 00 A9 F5 8D 44 00 A9 F5 8D 45 00 AE 44 00 A9 F5 8D 47 00 EC 47 00 D0 0C A9 F0 8D 48 00 A2 FF EC F5 00 D0 05 A9 F5 8D 48 00 AD 48 00 8D 46 00 AC 46 00 A2 02 FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 74 72 75 65 00 66 61 6C 73 65 00 6E 75 6C 6C 00");
+            String proper_readable_ops = translateOpcodesToEnglishUnrestricted(proper_ops, execution_environment);
+            System.out.println(proper_readable_ops);
+            
+            
+            System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
             System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
             System.out.println("└--------------------------------------------------------------------------------------------------------------------┘");
 

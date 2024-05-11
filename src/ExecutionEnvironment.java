@@ -33,10 +33,11 @@ public class ExecutionEnvironment {
     public Map<String, String> static_table = new LinkedHashMap<>(); // address : variable
     public Map<String, String> reversed_static_table = new LinkedHashMap<>();  // variable : address
     
-    public Map<String, String> jump_table = new HashMap<>(); 
-
     // Hashmap which maps String content to an address location ([a-z]* : Tn)
     public HashMap<String, Integer> string_declaration = new HashMap<>(); 
+    
+    public Map<String, String> jump_table = new HashMap<>(); 
+
 
     ////////////////////////////////////////////////////////////////////
     
@@ -48,8 +49,8 @@ public class ExecutionEnvironment {
 
     // Starting index in hexadecimal for each of the constant string values stored in Heap 
     public String null_pointer = "F0";
-    public String false_pointer = "FA"; // 250
-    public String true_pointer = "F5"; 
+    public String false_pointer = "F5"; // 250
+    public String true_pointer = "FA"; 
 
     ///////////////////////////////////////////////////////////////////
     
@@ -59,7 +60,7 @@ public class ExecutionEnvironment {
     public ExecutionEnvironment() throws CodeGenerationException {
         java.util.Arrays.fill(code_sequence, "0"); // populate code sequence array with "0" at start
         
-        System.arraycopy(new String[]{"6E", "75", "6C", "6C", "00", "74", "72", "75", "65", "00", "66", "61", "6C", "73", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 16, 16);
+        System.arraycopy(new String[]{"6E", "75", "6C", "6C", "00", "66", "61", "6C", "73", "65", "00", "74", "72", "75", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 16, 16);
     }
 
 
