@@ -79,7 +79,7 @@ public class CodeGeneration {
         String temp_addr = execution_environment.performStaticTableInsertion(identifier.getTokenAttribute(), VarDeclStatement.getScopeName()); // Maybe could be problematic with scope
         
         ArrayList<String> op_codes = new ArrayList<>(Arrays.asList("A9", default_value, "8D", temp_addr, "00"));
-        execution_environment.insertImmediately(op_codes, temp_addr);
+        execution_environment.insertImmediately(op_codes, "Code");
     }
 
     public void processAssignmentStatement (NonTerminal AssignmentStatement) throws CodeGenerationException {
@@ -217,7 +217,7 @@ public class CodeGeneration {
                 
                 // if of form: 3 + 1
                 if (ADDITION.getASTChild(1).getName().equals("DIGIT")) {
-                    int second_digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(0)).getTokenAttribute()); System.out.println("Second Digit: " + second_digit_value);
+                    int second_digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(1)).getTokenAttribute()); System.out.println("Second Digit: " + second_digit_value);
                     
                     gen_loadAccumulatorWithConstant_A9_LDA(""+second_digit_value);  // Load accumulator with second value
                     gen_addWithCarryToAccum_6D_ADC(temp_addition_addr); // Add with carry into to the accum
