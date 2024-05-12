@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -245,7 +246,52 @@ public class ExecutionEnvironment {
 
     }
 
+    // Takes in op_codes array and returns an empty one after insertiom 
+    public ArrayList<String> insertImmediately (ArrayList<String> op_codes, String location) throws CodeGenerationException {
+        //if (op_codes.size() == 0) return new ArrayList<String>(); // If empty, do not add
+        System.out.println("Insert Immediately: " + op_codes);
+        
+        String[] instructions = op_codes.toArray(new String[0]);
+        System.out.println("Instructions Array: " + Arrays.toString(instructions));
+        switch (location) {
+
+            case "Code":
+                if (codeInsertionPossible(instructions, "Code")) {
+                    System.out.println("Before insertion: Code pointer at " + getCodePointer());
+                    System.out.println("Inserting: " + Arrays.toString(instructions));
+                    performCodeInsertion(instructions);
+                    System.out.println("After insertion: Code pointer at " + getCodePointer());
+                    System.out.println("Current code sequence: " + Arrays.toString(getCodeSequence()));
+                    //performCodeInsertion(instructions);
+                    break;
+                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Code") ;
+
+            case "Stack": 
+                if (codeInsertionPossible(instructions, "Stack")) {
+                    performStackInsertion(instructions);
+                    break;
+                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Stack") ;
+
+            case "Heap": 
+                if (codeInsertionPossible(instructions, "Heap")) {
+                    performHeapInsertion(instructions);
+                    break;
+                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Heap") ;
+        }
+
+        op_codes = new ArrayList<String>();
+        System.out.println("Insert Immediately: RETURNING" );
+        System.out.println("Code Pointer Now: " + getCodePointer() );
+        String codeseq = String.join(" ", this.code_sequence);
+        System.out.println("Sequence to String: " + codeseq );
+
+        return new ArrayList<String>(); 
+
+    }
+
+
     public void performCodeInsertion (String[] instructions) throws CodeGenerationException {
+        //System.out.println("Code Instructions Length at Code Insertion: " + instructions.length);
         System.arraycopy(instructions, 0, getCodeSequence(), getCodePointer(), instructions.length);
         setCodePointer(getCodePointer() + instructions.length);
         setStackPointer(getCodePointer() + 1);
@@ -279,7 +325,167 @@ public class ExecutionEnvironment {
         System.out.println(code);
     } 
 
-   
+
+
+    // Did not code myself
+    public String translateOpcodesToEnglishUnrestricted(ArrayList<String> opcodes) throws CodeGenerationException{
+        StringBuilder sb = new StringBuilder();
+    
+        for (int i = 0; i < opcodes.size(); i++) {
+            String code = opcodes.get(i);
+            String nextValue = (i + 1 < opcodes.size()) ? opcodes.get(i + 1) : "";
+            
+            switch (code) {
+                case "A9":
+                    // Load accumulator with constant
+                    sb.append(String.format("   LDA #$%s - Load the accumulator with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AD":
+                    // Load accumulator from memory
+                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "8D":
+                    // Store accumulator in memory
+                    sb.append(String.format("   STA $%s00 - Store the accumulator into memory at address $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "A2":
+                    // Load X with constant
+                    sb.append(String.format("   LDX #$%s - Load the X register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AE":
+                    // Load X from memory
+                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "A0":
+                    // Load Y with constant
+                    sb.append(String.format("   LDY #$%s - Load the Y register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AC":
+                    // Load Y from memory
+                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "EA":
+                    sb.append("   NOP - No operation\n");
+                    break;
+                case "00":
+                    
+                    sb.append("   BRK - Break\n");
+                    
+                    break;
+                case "EC":
+                    // Compare X with memory
+                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "D0":
+                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s bytes", nextValue, nextValue));
+                    i++;
+                    break;
+                case "EE":
+                    // Increment memory
+                    sb.append(String.format("   INC $%s00 - Increment the value at memory location $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "FF":
+                    sb.append("   SYS - System Call\n");
+                    break;
+                default:
+                    sb.append(String.format("   Unknown opcode: %s\n", code));
+                    break;
+            }
+            
+                sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+     // Did not code myself
+     public String translateOpcodesToEnglish(ArrayList<String> opcodes) throws CodeGenerationException{
+        StringBuilder sb = new StringBuilder();
+    
+        for (int i = 0; i < opcodes.size(); i++) {
+            String code = opcodes.get(i);
+            String nextValue = (i + 1 < opcodes.size()) ? opcodes.get(i + 1) : "";
+            
+            switch (code) {
+                case "A9":
+                    // Load accumulator with constant
+                    sb.append(String.format("   LDA #$%s - Load the accumulator with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AD":
+                    // Load accumulator from memory
+                    sb.append(String.format("   LDA $%s00 - Load the accumulator from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "8D":
+                    // Store accumulator in memory
+                    sb.append(String.format("   STA $%s00 - Store the accumulator into memory at address $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "A2":
+                    // Load X with constant
+                    sb.append(String.format("   LDX #$%s - Load the X register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AE":
+                    // Load X from memory
+                    sb.append(String.format("   LDX $%s00 - Load the X register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "A0":
+                    // Load Y with constant
+                    sb.append(String.format("   LDY #$%s - Load the Y register with constant %s", nextValue, nextValue));
+                    i++;
+                    break;
+                case "AC":
+                    // Load Y from memory
+                    sb.append(String.format("   LDY $%s00 - Load the Y register from memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "EA":
+                    sb.append("   NOP - No operation\n");
+                    break;
+                case "00":
+                    if ( (i <= getStackPointer()) || (i >= getHeapPointer()) ) {
+                        sb.append("   BRK - Break\n");
+                    }
+                    break;
+                case "EC":
+                    // Compare X with memory
+                    sb.append(String.format("   CPX $%s00 - Compare the X register with memory at address $%s00, which contains %s", nextValue, nextValue, "address pointer [hex: " + getValueFromCodeSequence(i+1) + ", decimal: " + Integer.parseInt(nextValue, 16) + "]"));
+                    i++;
+                    break;
+                case "D0":
+                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s bytes", nextValue, nextValue));
+                    i++;
+                    break;
+                case "EE":
+                    // Increment memory
+                    sb.append(String.format("   INC $%s00 - Increment the value at memory location $%s00", nextValue, nextValue));
+                    i++;
+                    break;
+                case "FF":
+                    sb.append("   SYS - System Call\n");
+                    break;
+                default:
+                    sb.append(String.format("   Unknown opcode: %s\n", code));
+                    break;
+            }
+            if ( ((i <= getStackPointer()) || (i >= getHeapPointer())) ) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
 
 
 }
