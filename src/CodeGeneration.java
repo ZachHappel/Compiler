@@ -50,9 +50,14 @@ public class CodeGeneration {
             case "AssignmentStatement": 
                 processAssignmentStatement(nt);
                 break; 
+
             case "PrintStatement": 
                 processPrintStatement(nt);
                 break; 
+
+            case "If":
+                processIf(nt);
+                break;
             
             //case "ADDITION": 
 
@@ -167,6 +172,35 @@ public class CodeGeneration {
  
     }
 
+    public void processIf (NonTerminal If) throws CodeGenerationException {
+        /** 
+         * Something 
+         * Block
+         * 
+         * Something: IsEqual, IsNotEqual, KEYWORD_TRUE, KEYWORD_FALSE
+         * 
+         * IsEqual -> Process IsEqual? 
+         * IsNotEqual -> ProcessIsNotEqual? 
+         * KEYWORD_TRUE/KEYWORD_FALSE -> hmmm
+         * 
+         * Maybe create nonTerminalOrTerminalRouter...
+         *      here we "process if", here we know it exists
+         *      - store current code pointer locally
+         *      - call NTorT router
+         *          - can call NT router
+         *          - maybe 
+         *              instead of NTorT, we have NTorSingleBoolExpr,
+         *              need similar 
+         * 
+         *              or what if we say "fkit" and if its an If, and we see "false", just skip everything until after the block lol... dead code anyways, never will be touched
+         *                      if true, just process it normally
+         *              
+         *              however, this wouldn't work for "while true", but then again, i think we can think of these things entirely separately... 
+         *                      if true in that case would always have a recursive branch back to the start of the while.. dead code there on after that
+         * 
+         * */
+
+    }
     
     public void processPrintStatement (NonTerminal PrintStatement) throws CodeGenerationException {
         /*
