@@ -353,8 +353,8 @@ public class CodeGeneration {
                     within_jump = true; 
                     NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
                     int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
-                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                     String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                     pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
                     gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
                     within_jump = false; 
@@ -364,6 +364,29 @@ public class CodeGeneration {
             }
 
         
+        } else {
+            Terminal if_statement_lhs_terminal = (Terminal) if_statement_lhs; String lhs_terminal_name = if_statement_lhs_terminal.getName();
+            if (lhs_terminal_name.equals("KEYWORD_TRUE") || lhs_terminal_name.equals("KEYWORD_FALSE")) {
+                String terminal_addressing_component = getTerminalAddressingComponent(If, if_statement_lhs_terminal, 0); 
+                String temporary_address = execution_environment.performStaticTableInsertion("if" + execution_environment.getTemporaryValueCounter(), If.getScopeName()); // Create first temp addr
+
+                gen_loadAccumulatorWithConstant_A9_LDA(terminal_addressing_component); 
+                gen_storeAccumulatorIntoMemory_8D_STA(temporary_address);
+                gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
+                gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temporary_address);
+                
+                if (!within_jump) {
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                }
+            }
+
         }
 
     }
@@ -518,41 +541,8 @@ public class CodeGeneration {
     
 
     }
+
     
-    /*public void processIsEqual( NonTerminal IsEqual) throws CodeGenerationException {
-        Production lhs = IsEqual.getASTChild(0);
-        Production rhs = IsEqual.getASTChild(1);
-        
-        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) {     
-            String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
-            String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
-            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
-            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
-            String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, lhs_terminal, 0);
-            String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, rhs_terminal, 1);
-
-            // LHS goes in X Register
-
-
-            // Load LHS into X Register
-            if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
-            else gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
-            
-            // Load RHS into Accumulator
-            if (constants.contains(rhs_terminal_name)) gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
-            else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
-
-
-            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
-            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register  // THE COMPARISON=
-
-            //gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
-
-        }
-    
-
-    }*/
-
     //public boolean processIsEqual (NonTerminal IsEqual, String assignment_locatio, boolean is_assignment) {
 
     //}
