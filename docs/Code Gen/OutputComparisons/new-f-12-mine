@@ -1,0 +1,215 @@
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $D900 - Store the accumulator into memory at address $D900
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DA00 - Store the accumulator into memory at address $DA00
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $D900 - Store the accumulator into memory at address $D900
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $D900 - Store the accumulator into memory at address $D900
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DA00 - Store the accumulator into memory at address $DA00
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DA00 - Store the accumulator into memory at address $DA00
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDA #$FA - Load the accumulator with constant FA
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDA #$FA - Load the accumulator with constant FA
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDA #$FA - Load the accumulator with constant FA
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDX $D900 - Load the X register from memory at address $D900, which contains address pointer [hex: D9, decimal: 217]
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DC00 - Store the accumulator into memory at address $DC00
+   BRK - Break
+
+   CPX $DC00 - Compare the X register with memory at address $DC00, which contains address pointer [hex: DC, decimal: 220]
+   BRK - Break
+
+   BNE $04 - Branch n bytes if Z flag is 0, to skip 04 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDA #$FA - Load the accumulator with constant FA
+   STA $DB00 - Store the accumulator into memory at address $DB00
+   BRK - Break
+
+   LDY $DB00 - Load the Y register from memory at address $DB00, which contains address pointer [hex: DB, decimal: 219]
+   BRK - Break
+
+   LDY $DB00 - Load the Y register from memory at address $DB00, which contains address pointer [hex: DB, decimal: 219]
+   BRK - Break
+
+   LDX #$02 - Load the X register with constant 02
+   SYS - System Call
+
+   LDY $DB00 - Load the Y register from memory at address $DB00, which contains address pointer [hex: DB, decimal: 219]
+   BRK - Break
+
+   LDX #$02 - Load the X register with constant 02
+   SYS - System Call
+
+   BRK - Break
+
+   BRK - Break
+
+   Unknown opcode: 6E
+
+   Unknown opcode: 75
+
+   Unknown opcode: 6C
+
+   Unknown opcode: 6C
+
+   BRK - Break
+
+   Unknown opcode: 66
+
+   Unknown opcode: 61
+
+   Unknown opcode: 6C
+
+   Unknown opcode: 73
+
+   Unknown opcode: 65
+
+   BRK - Break
+
+   Unknown opcode: 74
+
+   Unknown opcode: 72
+
+   Unknown opcode: 75
+
+   Unknown opcode: 65
+
+   BRK - Break

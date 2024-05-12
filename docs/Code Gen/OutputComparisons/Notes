@@ -1,0 +1,81 @@
+Axios
+Explanation: 
+I see... Branch twice.. piggy back off a branch onto another.. but
+
+Holy shit genius, force a z flag flip by comparing to FF, which will always be 00 
+
+Brilliant. 
+
+--
+Load X with LHS IsEqExpr, Load Accum with FALSE constant, Store in Temp Addr, Compare X reg with Tem, 
+Branch If Not Equal 
+
+    EQUAL: (FALSE & FALSE)
+        Load Accum with Null Constant, Store in new Temp Addr, Load X Reg with FF (255 in hex..), Compare X Reg with Address of FALSE, 
+
+--
+
+///
+Load Accumulator with Constant, F5, store in 3A // a decl
+Load Accumulator with Constant, F5, store in 3B // c decl
+//
+
+Load Accumulator with Constant, F5, store in 3A // init. 'a' with false (F5) 
+///
+
+A2:: Load X Register:: from Address, 3A ('a'),  (LHS)
+
+A9:: Load Accumulator:: with Constant, F5 // Load False Constant   
+8D:: -->   Store in NEW address, 30 // temp storage
+
+EC:: Compare X Register:: with Address, 30 (temp address)
+
+DO:: Branch IF Not Equal, 12 Bytes 
+-----
+A9:: Load Accumulator with Consant, F0 ('true')   (2)
+8D:: Store in NEW address, 3D                     (2)
+
+A2:: Load X Register with Constant, FF, // interesting  (2)
+ 
+
+EC:: Compare X Resgister with ADDRESS, F5 // interesting (6)
+
+D0:: Branch If Not Equal, 5 bytes (2)
+-----
+A9:: Load Accumulator with Constant F5,         (2)
+8D:: Store in Second NEW Memory Address, 3D     (3)
+-----
+
+A9:: Load Accumulator from Address, 3D, Second NEW Address 
+8D:: Store Accumulator in Memory, 3B ('c')
+
+.
+.
+.
+Print C
+
+
+
+
+
+
+
+
+
+
+
+
+
+Load X Register Using Address, address of 'a'
+
+Load the Accumulator with Constant/Value - F5  (False)
+Store Accumulator Into Memory - Temp Location created
+break
+
+Compare X Register with Address - Temp location that was just created and used to store F5   (comparing 'a' to F5)
+break 
+
+Branch If Not Equal - Skip (0C) bytes if not Equal
+
+
+
