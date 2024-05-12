@@ -91,6 +91,25 @@ public class ExecutionEnvironment {
     public String getTruePointerHex () {  String hex_value = String.format("%02X", this.true_pointer); return hex_value;   }
     
 
+
+    public void clearCodeSequence () {
+        for (int i = 0; i <= this.code_sequence.length - 1; i++) {
+            this.code_sequence[i]  = "00";
+        }
+    }
+
+    public void restoreCodeSequenceValues (String[] deep_copy_code_sequence) {
+        for (int i = 0; i <= deep_copy_code_sequence.length - 1; i++) {
+            this.code_sequence[i]  = deep_copy_code_sequence[i];
+        }
+
+        
+    }
+
+    public int getStackPointerSafe() {
+        return this.stack_pointer; 
+        //return this.stack_pointer;
+    }
     // Safeguard to be ran to in case stack is unset at EOF
     public void updateStackPointerEOF() {
         if (this.stack_pointer < 0) {

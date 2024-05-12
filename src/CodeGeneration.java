@@ -58,6 +58,16 @@ public class CodeGeneration {
             case "If":
                 processIf(nt);
                 break;
+
+            // Keep under those which use IsEqual
+            case "IsEqual":
+                // do something
+                //processIsEqual(nt); 
+                break;
+
+        /*  case "Block":
+        *       Maybe, actually... no.
+             */
             
             //case "ADDITION": 
 
@@ -65,7 +75,105 @@ public class CodeGeneration {
         }
     }
 
+
+
+    // Store current contents of code_sequence in new array,  store current pointers, clear code_sequence, process NT, new code_pointer after + 1 is jump distance, restore all values, return jump distance
+    public int nonterminalRouterWithJumpWatcher (NonTerminal nt ) throws CodeGenerationException{
+        
+        // Store and clear code sequence so that overflows dont happen
+        int stored_code_pointer = execution_environment.getCodePointer(); // Store so that it can be restored later 
+        int stored_stack_pointer = execution_environment.getStackPointerSafe(); 
+        int stored_heap_pointer = execution_environment.getHeapPointer(); 
+
+        String[] code_sequence = execution_environment.getCodeSequence();
+        String[] deep_copy_code_sequence = new String[code_sequence.length];
+        
+        deepCopyStringArray(code_sequence, deep_copy_code_sequence); // Store contents of current code_sequence into new array
+        execution_environment.clearCodeSequence();
+        execution_environment.setCodePointer(0);
+
+        int jump_distance = 0; 
+
+
+        switch (nt.getName()) {
+            
+
+            case "VarDeclStatement": 
+                processVariableDeclaration(nt);
+                //String[] op_codes_array = op_codes.toArray(new String[0]); // convert to standard array
+                //execution_environment.insert(op_codes_array, "int", "Code");
+                jump_distance = execution_environment.getCodePointer();
+                
+                break; 
+               
+            case "AssignmentStatement": 
+                processAssignmentStatement(nt);
+                jump_distance = execution_environment.getCodePointer() + 1;
+                
+                break; 
+
+            case "PrintStatement": 
+                processPrintStatement(nt);
+                jump_distance = execution_environment.getCodePointer() + 1;
+                
+                break; 
+
+            case "If":
+                processIf(nt);
+                jump_distance = execution_environment.getCodePointer() + 1;
+                
+                break;
+
+            // Keep under those which use IsEqual
+            case "IsEqual":
+
+                jump_distance = execution_environment.getCodePointer() + 1;
+              
+                // do something 
+                break;
+            
+            case "Block": 
+                //.
+                processBlock(nt);
+                jump_distance = execution_environment.getCodePointer() + 1;
+                break; 
+
+
+        /*  case "Block":
+        *       Maybe, actually... no.
+             */
+            
+            //case "ADDITION": 
+
+                
+        }
+        
+        execution_environment.restoreCodeSequenceValues(deep_copy_code_sequence); // Fill array back with the stored values
+        execution_environment.setCodePointer(stored_code_pointer);
+        execution_environment.setStackPointer(stored_stack_pointer);
+        execution_environment.setHeapPointer(stored_heap_pointer);
+        return jump_distance; 
+    }
+
+
     /*********************************************** NonTerminal Handlers ***********************************************/
+
+
+    public void processBlock (NonTerminal Block) throws CodeGenerationException {
+        
+        Production block_production = (Production) Block; 
+        traverseIntermediateRepresentation(block_production, 0);
+        /*
+        ArrayList<Production> block_children = Block.getASTChildren(); 
+        for (int i = 0; i <= block_children.size(); i++) {
+            Production block_child = Block.getASTChild(i);
+            String block_child_type = block_child.getProdKind();
+            if (block_child_type.equals("NonTerminal")) {
+
+            }
+        }
+        */
+    }
 
     public void processVariableDeclaration (NonTerminal VarDeclStatement) throws CodeGenerationException{
         
@@ -197,8 +305,33 @@ public class CodeGeneration {
          *              
          *              however, this wouldn't work for "while true", but then again, i think we can think of these things entirely separately... 
          *                      if true in that case would always have a recursive branch back to the start of the while.. dead code there on after that
+         
          * 
          * */
+
+         
+        Production if_statement_lhs = If.getASTChild(0);
+        Production if_statement_rhs = If.getASTChild(1);
+
+        /* 
+        **  RHS is nonterminal always
+            Current if conditions handled:
+            - LHS is NonTerminal IsEqual
+        */
+        if (if_statement_lhs.getProdKind().equals("NonTerminal")) {
+            NonTerminal if_statement_lhs_nonterminal = (NonTerminal) if_statement_lhs; String lhs_nonterminal_name = if_statement_lhs_nonterminal.getName(); 
+
+            if (lhs_nonterminal_name.equals("IsEqual")) {
+                processIsEqual(if_statement_lhs_nonterminal);                
+                NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
+                int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                String jump_distance_hex = String.format("%02X", jump_distance);
+                gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                // Recursion will continue normally from here
+            }
+
+        
+        }
 
     }
     
@@ -235,7 +368,7 @@ public class CodeGeneration {
     }
 
     
-    // IsEqual
+    // IsEqual Assignment
     public void processIsEqualAssignment ( NonTerminal IsEqual, String assignment_location ) throws CodeGenerationException {
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
@@ -290,6 +423,39 @@ public class CodeGeneration {
             gen_loadAccumulatorFromMemory_AD_LDA(temp_addr_2);// Temp Addr 2, at this point, contains answer to whether equal or not
             //gen_loadAccumulatorWithConstant_A9_LDA(temp_addr_2); 
             gen_storeAccumulatorIntoMemory_8D_STA(assignment_location); // Store answer in assignment location, the location of the variable in which the result of this comparison is being stored
+
+        }
+    
+
+    }
+
+    public void processIsEqual( NonTerminal IsEqual) throws CodeGenerationException {
+        Production lhs = IsEqual.getASTChild(0);
+        Production rhs = IsEqual.getASTChild(1);
+        
+        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) {     
+            String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
+            String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
+            String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, lhs_terminal, 0);
+            String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, rhs_terminal, 1);
+
+            // LHS goes in X Register
+
+
+            // Load LHS into X Register
+            if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            else gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+            
+            // Load RHS into Accumulator
+            if (constants.contains(rhs_terminal_name)) gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
+
+
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register  // THE COMPARISON=
+
 
         }
     
@@ -512,6 +678,12 @@ public class CodeGeneration {
     }
 
     /*********************************************** Helpers ***********************************************/
+
+    public void deepCopyStringArray (String[] main_array, String[] copy_of_array) {
+        for (int i = 0; i <= main_array.length - 1; i++) {
+            copy_of_array[i] = main_array[i]; 
+        }
+    }
 
     public String getTerminalAddressingComponent (NonTerminal parent, Terminal terminal, int index_if_identifier) throws CodeGenerationException {
         String addressing_component = ""; 
