@@ -1,6 +1,23 @@
 {
     boolean b
-    boolean a
+    
     b = false
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+
+
     print(b)
+    print(b)
+
+    print(b)
+    print(b)
+    print(b)
+    print(b)
+    print(b)
+    
 }$
