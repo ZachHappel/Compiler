@@ -11,7 +11,7 @@ public class CodeGeneration {
     public boolean within_nested_addition = false;
 
 
-    public ArrayList<String> constants = new ArrayList<String>(Arrays.asList("KEYWORD_TRUE", "KEYWORD_FALSE")); // TODO: Add DIGIT?
+    public ArrayList<String> constants = new ArrayList<String>(Arrays.asList("KEYWORD_TRUE", "KEYWORD_FALSE", "DIGIT")); // TODO: Add DIGIT?
 
     // REMEMBER: Make it fluid, not rigid. 
     public void traverseIntermediateRepresentation ( Production p, int index ) throws CodeGenerationException {
@@ -192,8 +192,62 @@ public class CodeGeneration {
     
     // IsEqual
     public void processIsEqualAssignment ( NonTerminal IsEqual, String assignment_location ) throws CodeGenerationException {
+        Production lhs = IsEqual.getASTChild(0);
+        Production rhs = IsEqual.getASTChild(1);
+        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) { 
+            
+            String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
+            String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
+            
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
+
+            String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, lhs_terminal, 0);
+            String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, rhs_terminal, 1);
+
+            // LHS goes in X Register
+
+            if (constants.contains(lhs_terminal_name)) {
+
+            }
+
+            if (constants.contains(rhs_terminal_name)) {
+
+            }
+            // IF CONSTANT, USE A2, e.g., DIGIT, BOOLEANS 
+            //gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+            gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register
+
+            gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
+
+                // IF EQUAL (12 bytes)
+                gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getTruePointer()); // Load TRUE constant into Accumulator
+                gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+
+                    // Force Flip
+                    gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
+                    gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
+                    gen_branchNBytes_D0_BNE("05"); // BRANCH FORWARD 5 Bytes -- which IT WILL DO because it is guaranteed false --> SKIPS "IF FALSE"
+
+            //IF FALSE (Will be skipped if TRUE due to force flip ) (5 bytes)
+            gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load FALSE constant into Accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+
+            gen_loadAccumulatorFromMemory_AD_LDA(temp_addr_2);// Temp Addr 2, at this point, contains answer to whether equal or not
+            //gen_loadAccumulatorWithConstant_A9_LDA(temp_addr_2); 
+            gen_storeAccumulatorIntoMemory_8D_STA(assignment_location); // Store answer in assignment location, the location of the variable in which the result of this comparison is being stored
+
+        }
+    
 
     }
+
+    //public boolean processIsEqual (NonTerminal IsEqual, String assignment_locatio, boolean is_assignment) {
+
+    //}
 
     // ADDITION
     
@@ -293,6 +347,8 @@ public class CodeGeneration {
         pout("processBOOLEANAssignment - stored accumulator into memory ");
     } 
 
+    
+
     /*********************************************** OP Code Generators  ***********************************************/
 
     public void gen_loadXRegisterFromAddress_AE_LDX ( String address) throws CodeGenerationException {
@@ -352,6 +408,13 @@ public class CodeGeneration {
         execution_environment.insertImmediately(op_codes, "Code");
     }
 
+    public void gen_branchNBytes_D0_BNE(String byte_amount_in_hex) throws CodeGenerationException {
+        ArrayList<String> op_codes = new ArrayList<>();
+        op_codes.add("D0"); op_codes.add(byte_amount_in_hex); 
+        execution_environment.insertImmediately(op_codes, "Code");
+    }
+
+
     public void gen_finishPrintStatment( String type) throws CodeGenerationException {
         ArrayList<String> op_codes = new ArrayList<>();
         op_codes.add("A2");
@@ -391,6 +454,24 @@ public class CodeGeneration {
     }
 
     /*********************************************** Helpers ***********************************************/
+
+    public String getTerminalAddressingComponent (NonTerminal parent, Terminal terminal, int index_if_identifier) throws CodeGenerationException {
+        String addressing_component = ""; 
+        
+        if (terminal.getName().equals("IDENTIFIER")) { addressing_component = execution_environment.retrieveTempLocationFromChildOfNonTerminal(parent, index_if_identifier);    
+        
+        } else if (terminal.getName().equals("DIGIT")) { addressing_component= "0" + terminal.getTokenAttribute(); 
+
+        } else if (terminal.getName().equals("CHARACTER")) { addressing_component = handleCHARACTERterminalAndGetStringAddress(terminal);
+            
+        } else if ( (terminal.getName().equals("KEYWORD_TRUE")) || (terminal.getName().equals("KEYWORD_FALSE"))) {
+            if (terminal.getName().equals("KEYWORD_TRUE"))  addressing_component = execution_environment.getTruePointer(); 
+            else if (terminal.getName().equals("KEYWORD_FALSE"))  addressing_component = execution_environment.getFalsePointer();
+
+        } else throw new CodeGenerationException("CodeGeneration, getLocationOfTerminal()", "Terminal sent to getLocationOfTerminal() is not of type IDENTIFIER, CHARACTER, KEYWORD_TRUE, KEYWORD_FALSE. \nTerminal type received: " + terminal.getName());
+
+        return addressing_component; 
+    }
 
     public String handleCHARACTERterminalAndGetStringAddress (Terminal terminal) throws CodeGenerationException {
         String terminals_string_value = terminal.getTokenAttribute(); 

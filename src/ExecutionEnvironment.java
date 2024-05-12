@@ -49,9 +49,9 @@ public class ExecutionEnvironment {
     public int accumulator = 0;
 
     // Starting index in hexadecimal for each of the constant string values stored in Heap 
-    public String null_pointer = "F0";
+    public String null_pointer = "FA";
     public String false_pointer = "F5"; // 250
-    public String true_pointer = "FA"; 
+    public String true_pointer = "F0"; 
 
     ///////////////////////////////////////////////////////////////////
     
@@ -60,8 +60,9 @@ public class ExecutionEnvironment {
 
     public ExecutionEnvironment() throws CodeGenerationException {
         java.util.Arrays.fill(code_sequence, "0"); // populate code sequence array with "0" at start
-        
-        System.arraycopy(new String[]{"6E", "75", "6C", "6C", "00", "66", "61", "6C", "73", "65", "00", "74", "72", "75", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 16, 16);
+        //"74" "72" "75" "65" "00" "66" "61" "6C" "73" "65" "00" "6E" "75" "6C" "6C" "00"
+        System.arraycopy(new String[]{"74", "72", "75", "65", "00", "66", "61", "6C", "73", "65", "00", "6E", "75", "6C", "6C", "00"}, 0, getCodeSequence(), code_sequence.length - 16, 16);
+        //System.arraycopy(new String[]{"6E", "75", "6C", "6C", "00", "66", "61", "6C", "73", "65", "00", "74", "72", "75", "65", "00"}, 0, getCodeSequence(), code_sequence.length - 16, 16);
     }
 
 
