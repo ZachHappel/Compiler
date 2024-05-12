@@ -91,6 +91,13 @@ public class ExecutionEnvironment {
     public String getTruePointerHex () {  String hex_value = String.format("%02X", this.true_pointer); return hex_value;   }
     
 
+    // Safeguard to be ran to in case stack is unset at EOF
+    public void updateStackPointerEOF() {
+        if (this.stack_pointer < 0) {
+            setStackPointer(code_pointer + 1);
+        }
+        //return this.stack_pointer;
+    }
     
     // Called after new instructions were inserted into the code sequence, this updates the remaining bytes accordingly
     public void updateRemainingSpace (String[] inserted_instructions, String location) {

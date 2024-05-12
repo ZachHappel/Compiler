@@ -174,18 +174,28 @@ public class CodeGeneration {
         * If String is argument, e.g., print("string") --> It would fail
         */
         ArrayList<String> op_codes = new ArrayList<>(); 
-        
         for (int i = 0; i <= PrintStatement.getASTChildren().size() - 1; i++) { System.out.println("PrintStatement Child: " + PrintStatement.getASTChild(i).getName() + " : " + PrintStatement.getASTChild(i).getProdKind()); }
+        if (PrintStatement.getASTChildren().size() > 1) throw new CodeGenerationException("CodeGeneration, processPrintStatment", "I thought print statements could only have one child");
         
-        if (PrintStatement.getASTChild(0).getName().equals("IDENTIFIER")) {
-            Terminal identifier = (Terminal) PrintStatement.getASTChild(0);
-            String type = getIdentifierType(PrintStatement, identifier);
-            System.out.println("PrintStatement - Terminal, type: " + type);
-            
+        Terminal print_child = (Terminal) PrintStatement.getASTChild(0); 
+
+        // Can't there only be one child...? Why did I do this...
+        
+        //PrintStatement.getASTChild(0).getName().equals("IDENTIFIER")
+
+
+
+        if (print_child.getName().equals("IDENTIFIER")) {
+            //Terminal identifier = (Terminal) PrintStatement.getASTChild(0);
+            String type = getIdentifierType(PrintStatement, print_child); System.out.println("PrintStatement - Terminal, type: " + type);
             String temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(PrintStatement, 0); // Location in static table for the Identifier the print statement is trying to print    
             gen_loadYRegisterFromMemory_AC_LDY(temp_location);
             gen_finishPrintStatment(type); 
 
+        } else if (print_child.getName().equals("CHARACTER")) {
+            String hex_location = handleCHARACTERterminalAndGetStringAddress(print_child); 
+            gen_loadYRegisterFromConstant_AO_LDY(hex_location);
+            gen_finishPrintStatment("string"); 
         }
 
     }
@@ -415,6 +425,13 @@ public class CodeGeneration {
         execution_environment.insertImmediately(op_codes, "Code");
     }
 
+    public void gen_loadYRegisterFromConstant_AO_LDY ( String location) throws CodeGenerationException {
+        ArrayList<String> op_codes = new ArrayList<>();
+        op_codes.add("A0");
+        op_codes.add(location);
+        execution_environment.insertImmediately(op_codes, "Code");
+    }
+
     public void gen_branchNBytes_D0_BNE(String byte_amount_in_hex) throws CodeGenerationException {
         ArrayList<String> op_codes = new ArrayList<>();
         op_codes.add("D0"); op_codes.add(byte_amount_in_hex); 
@@ -564,6 +581,7 @@ public class CodeGeneration {
             //NonTerminal ast_starting_block = new NonTerminal("Block");
             //AST.add(ast_starting_block);
             traverseIntermediateRepresentation(AST.get(0), 1); // start on block
+            execution_environment.updateStackPointerEOF();
 
             
             System.out.println("\n┌--------------------------------------------------------------------------------------------------------------------┐");
