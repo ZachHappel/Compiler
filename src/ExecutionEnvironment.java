@@ -239,9 +239,11 @@ public class ExecutionEnvironment {
     public boolean codeInsertionPossible (String[] instructions, String location) throws CodeGenerationException {
         // If the remaining space is greater than or equal to zero after adding the instructions (+ 1) then true
         // + 1 is just to keep good pace right now and I do not want to get too hung up on anything
-        boolean insertion_possible = (getRemainingBytes() - (instructions.length + 1) >= 0 ? true : false); 
-        System.out.println("Insertion Possible: " + insertion_possible);
-        return insertion_possible; 
+        if ( (code_pointer + (static_table.size() / 2) >= heap_pointer) || (stack_pointer + instructions.length>= heap_pointer )) return false;    
+        else return true; 
+        //boolean insertion_possible = (getRemainingBytes() - (instructions.length + 1) >= 0 ? true : false); 
+        //System.out.println("Insertion Possible: " + insertion_possible);
+        //return insertion_possible; 
     }
 
     /* instruction: the bytes, either 
@@ -289,21 +291,21 @@ public class ExecutionEnvironment {
                     performCodeInsertion(instructions);
                     System.out.println("After insertion: Code pointer at " + getCodePointer());
                     System.out.println("Current code sequence: " + Arrays.toString(getCodeSequence()));
-                    //performCodeInsertion(instructions);
                     break;
-                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Code") ;
+                } else throw new CodeGenerationException("ExecutionEnvironment, insert(), case: `Code`", " Unable to insert into `Code`.\n\n  ---\n  Instructions: " + Arrays.toString(instructions) + "\n  Bytes Remaining: " + getRemainingBytes() + "/256 Bytes\n" +  getCodeSequenceString()) ;
+                
 
             case "Stack": 
                 if (codeInsertionPossible(instructions, "Stack")) {
                     performStackInsertion(instructions);
                     break;
-                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Stack") ;
+                } throw new CodeGenerationException("ExecutionEnvironment, insert(), case: `Stack`", " Unable to insert into `Stack`.\n\n  ---\n  Instructions: " + Arrays.toString(instructions) + "\n  Bytes Remaining: " + getRemainingBytes() + "/256 Bytes\n" +  getCodeSequenceString()) ;
 
             case "Heap": 
                 if (codeInsertionPossible(instructions, "Heap")) {
                     performHeapInsertion(instructions);
                     break;
-                } else throw new CodeGenerationException("ExecutionEnvironment, insert()", "Unable to insert into Heap") ;
+                } throw new CodeGenerationException("ExecutionEnvironment, insert(), case: `Heap`", " Unable to insert into `Heap`.\n\n  ---\n  Instructions: " + Arrays.toString(instructions) + "\n  Bytes Remaining: " + getRemainingBytes() + "/256 Bytes\n" +  getCodeSequenceString()) ;
         }
 
         op_codes = new ArrayList<String>();
@@ -351,6 +353,8 @@ public class ExecutionEnvironment {
         }
         System.out.println(code);
     } 
+
+    public String getCodeSequenceString () { String code = ""; for (int i = 0; i <= code_sequence.length - 1; i++) { code = code + code_sequence[i] + " "; } return code; } 
 
 
 
@@ -412,7 +416,7 @@ public class ExecutionEnvironment {
                     i++;
                     break;
                 case "D0":
-                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s bytes", nextValue, nextValue));
+                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s (hex val) bytes", nextValue, nextValue));
                     i++;
                     break;
                 case "EE":
@@ -491,7 +495,7 @@ public class ExecutionEnvironment {
                     i++;
                     break;
                 case "D0":
-                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s bytes", nextValue, nextValue));
+                    sb.append(String.format("   BNE $%s - Branch n bytes if Z flag is 0, to skip %s (hex val) bytes", nextValue, nextValue));
                     i++;
                     break;
                 case "EE":

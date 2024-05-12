@@ -10,6 +10,14 @@ public class CodeGeneration {
 
     public boolean within_nested_addition = false;
 
+    String [] deep_copy_code_sequence = new String[256];
+    int stored_code_pointer = 0; 
+    int stored_stack_pointer = 0; 
+    int stored_heap_pointer = 0; 
+    boolean within_jump = false;
+    
+    int blocks_explored = 0;
+
 
     public ArrayList<String> constants = new ArrayList<String>(Arrays.asList("KEYWORD_TRUE", "KEYWORD_FALSE", "DIGIT")); // TODO: Add DIGIT?
 
@@ -80,62 +88,75 @@ public class CodeGeneration {
     // Store current contents of code_sequence in new array,  store current pointers, clear code_sequence, process NT, new code_pointer after + 1 is jump distance, restore all values, return jump distance
     public int nonterminalRouterWithJumpWatcher (NonTerminal nt ) throws CodeGenerationException{
         
-        // Store and clear code sequence so that overflows dont happen
-        int stored_code_pointer = execution_environment.getCodePointer(); // Store so that it can be restored later 
-        int stored_stack_pointer = execution_environment.getStackPointerSafe(); 
-        int stored_heap_pointer = execution_environment.getHeapPointer(); 
+        pout("Performing Stores and Resets");
+        stored_code_pointer = execution_environment.getCodePointer(); // Store so that it can be restored later 
+        stored_stack_pointer = execution_environment.getStackPointerSafe(); 
+        stored_heap_pointer = execution_environment.getHeapPointer(); 
 
         String[] code_sequence = execution_environment.getCodeSequence();
-        String[] deep_copy_code_sequence = new String[code_sequence.length];
-        
         deepCopyStringArray(code_sequence, deep_copy_code_sequence); // Store contents of current code_sequence into new array
+        
         execution_environment.clearCodeSequence();
         execution_environment.setCodePointer(0);
+        execution_environment.setStackPointer(1);
+        execution_environment.setHeapPointer(240);
+
+            
+      
+        // Store and clear code sequence so that overflows dont happen
+        
 
         int jump_distance = 0; 
-
-
+        pout("nt.getName() " + nt.getName());
+    
         switch (nt.getName()) {
             
-
+            
             case "VarDeclStatement": 
                 processVariableDeclaration(nt);
                 //String[] op_codes_array = op_codes.toArray(new String[0]); // convert to standard array
                 //execution_environment.insert(op_codes_array, "int", "Code");
                 jump_distance = execution_environment.getCodePointer();
+                pout("within switch jump distance :" + jump_distance);
                 
                 break; 
                
             case "AssignmentStatement": 
                 processAssignmentStatement(nt);
-                jump_distance = execution_environment.getCodePointer() + 1;
-                
+                jump_distance = execution_environment.getCodePointer();
+                //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                pout("within switch jump distance :" + jump_distance);
                 break; 
 
             case "PrintStatement": 
                 processPrintStatement(nt);
-                jump_distance = execution_environment.getCodePointer() + 1;
+                jump_distance = execution_environment.getCodePointer();
+                pout("within switch jump distance :" + jump_distance);
+                //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                break;  
                 
-                break; 
-
             case "If":
                 processIf(nt);
-                jump_distance = execution_environment.getCodePointer() + 1;
+                jump_distance = execution_environment.getCodePointer();
+                pout("within switch jump distance :" + jump_distance);
+                //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                break; 
                 
-                break;
-
-            // Keep under those which use IsEqual
+                // Keep under those which use IsEqual
             case "IsEqual":
-
-                jump_distance = execution_environment.getCodePointer() + 1;
-              
+                processIsEqual(nt);
+                jump_distance = execution_environment.getCodePointer();
+                pout("within switch jump distance :" + jump_distance);
+                //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                break;  
                 // do something 
-                break;
-            
-            case "Block": 
+                
+            case "BLOCK": 
                 //.
                 processBlock(nt);
-                jump_distance = execution_environment.getCodePointer() + 1;
+                jump_distance = execution_environment.getCodePointer();
+                pout("within switch jump distance :" + jump_distance);
+                //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                 break; 
 
 
@@ -148,11 +169,9 @@ public class CodeGeneration {
                 
         }
         
-        execution_environment.restoreCodeSequenceValues(deep_copy_code_sequence); // Fill array back with the stored values
-        execution_environment.setCodePointer(stored_code_pointer);
-        execution_environment.setStackPointer(stored_stack_pointer);
-        execution_environment.setHeapPointer(stored_heap_pointer);
-        return jump_distance; 
+        
+        System.out.println("Jump Distance Before returning: " + jump_distance); 
+        return execution_environment.getCodePointer(); 
     }
 
 
@@ -160,7 +179,6 @@ public class CodeGeneration {
 
 
     public void processBlock (NonTerminal Block) throws CodeGenerationException {
-        
         Production block_production = (Production) Block; 
         traverseIntermediateRepresentation(block_production, 0);
         /*
@@ -322,11 +340,26 @@ public class CodeGeneration {
             NonTerminal if_statement_lhs_nonterminal = (NonTerminal) if_statement_lhs; String lhs_nonterminal_name = if_statement_lhs_nonterminal.getName(); 
 
             if (lhs_nonterminal_name.equals("IsEqual")) {
-                processIsEqual(if_statement_lhs_nonterminal);                
+                /**
                 NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
                 int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
                 String jump_distance_hex = String.format("%02X", jump_distance);
-                gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                pout("Jump Distance Calculated: " + jump_distance + ", hex: " + jump_distance_hex);
+                processIsEqual(if_statement_lhs_nonterminal, jump_distance_hex);                
+                **/
+                processIsEqual(if_statement_lhs_nonterminal);                
+
+                if (!within_jump) {
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                }
+                
                 // Recursion will continue normally from here
             }
 
@@ -344,7 +377,9 @@ public class CodeGeneration {
         for (int i = 0; i <= PrintStatement.getASTChildren().size() - 1; i++) { System.out.println("PrintStatement Child: " + PrintStatement.getASTChild(i).getName() + " : " + PrintStatement.getASTChild(i).getProdKind()); }
         if (PrintStatement.getASTChildren().size() > 1) throw new CodeGenerationException("CodeGeneration, processPrintStatment", "I thought print statements could only have one child");
         
-        Terminal print_child = (Terminal) PrintStatement.getASTChild(0); 
+        Terminal print_child = (Terminal) PrintStatement.getASTChild(0);
+        pout("Print Child: " + print_child.getTokenAttribute()); 
+        pout("Print Child Type: " + print_child.getName()); 
 
         // Can't there only be one child...? Why did I do this...
         
@@ -361,6 +396,7 @@ public class CodeGeneration {
 
         } else if (print_child.getName().equals("CHARACTER")) {
             String hex_location = handleCHARACTERterminalAndGetStringAddress(print_child); 
+            pout("hex_location: " + hex_location);
             gen_loadYRegisterFromConstant_AO_LDY(hex_location);
             gen_finishPrintStatment("string"); 
         }
@@ -429,6 +465,7 @@ public class CodeGeneration {
 
     }
 
+    
     public void processIsEqual( NonTerminal IsEqual) throws CodeGenerationException {
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
@@ -457,10 +494,64 @@ public class CodeGeneration {
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register  // THE COMPARISON=
 
 
+            gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
+
+                // IF EQUAL (12 bytes)
+                gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getTruePointer()); // Load TRUE constant into Accumulator
+                gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+
+                    // Force Flip
+                    gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
+                    gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
+                    gen_branchNBytes_D0_BNE("05"); // BRANCH FORWARD 5 Bytes -- which IT WILL DO because it is guaranteed false --> SKIPS "IF FALSE"
+
+            //IF FALSE (Will be skipped if TRUE due to force flip ) (5 bytes)
+            gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load FALSE constant into Accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+
+            gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_2);
+
+            //gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+
         }
     
 
     }
+    
+    /*public void processIsEqual( NonTerminal IsEqual) throws CodeGenerationException {
+        Production lhs = IsEqual.getASTChild(0);
+        Production rhs = IsEqual.getASTChild(1);
+        
+        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) {     
+            String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
+            String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
+            String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, lhs_terminal, 0);
+            String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, rhs_terminal, 1);
+
+            // LHS goes in X Register
+
+
+            // Load LHS into X Register
+            if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            else gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+            
+            // Load RHS into Accumulator
+            if (constants.contains(rhs_terminal_name)) gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
+
+
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register  // THE COMPARISON=
+
+            //gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+
+        }
+    
+
+    }*/
 
     //public boolean processIsEqual (NonTerminal IsEqual, String assignment_locatio, boolean is_assignment) {
 
@@ -469,9 +560,7 @@ public class CodeGeneration {
     // ADDITION
     
     public void processADDITIONAssignment (NonTerminal ADDITION, String temp_addition_addr, String assignment_location, boolean within_nested_addition) throws CodeGenerationException {
-        
-        ArrayList<String> op_codes = new ArrayList<>(); 
-    
+            
         for (int i = 0; i <= ADDITION.getASTChildren().size() - 1; i++) { System.out.println("Addition Child: " + ADDITION.getASTChild(i).getName() + " : " + ADDITION.getASTChild(i).getProdKind()); }
     
         
@@ -535,28 +624,23 @@ public class CodeGeneration {
 
     public void processDIGITAssignment (Terminal DIGIT, String identifiers_temporary_location) throws CodeGenerationException {
         int digit_value = Integer.parseInt(DIGIT.getTokenAttribute());
-        ArrayList<String> op_codes = new ArrayList<>(); 
         gen_loadAccumulatorWithConstant_A9_LDA(""+ digit_value);
         gen_storeAccumulatorIntoMemory_8D_STA(identifiers_temporary_location);
     } 
 
     public void processCHARACTERAssignment (Terminal CHARACTER, String heap_pointer_hex, String identifiers_temporary_location) throws CodeGenerationException {
-        String string_value = CHARACTER.getTokenAttribute(); 
-        ArrayList<String> op_codes = new ArrayList<>(); 
         gen_loadAccumulatorWithConstant_A9_LDA(heap_pointer_hex); // Store pointer to location in the heap
         gen_storeAccumulatorIntoMemory_8D_STA(identifiers_temporary_location);
     }
     // Where LHS is identifier
 
     public void processIDENTIFIERAssignment(String rhs_id_temp_location, String lhs_id_temp_location) throws CodeGenerationException{
-        ArrayList<String> op_codes = new ArrayList<>(); 
         gen_loadAccumulatorFromMemory_AD_LDA(rhs_id_temp_location); // load accumulator with value from identifiers location
         gen_storeAccumulatorIntoMemory_8D_STA(lhs_id_temp_location);
     }
 
     public void processBOOLEANAssignment (Terminal boolean_terminal, String identifiers_temporary_location) throws CodeGenerationException {
         String boolean_value = boolean_terminal.getTokenAttribute();
-        ArrayList<String> op_codes = new ArrayList<>(); 
         String heap_boolean_location = (boolean_value.equals("KEYWORD_TRUE") ? execution_environment.getTruePointer() : execution_environment.getFalsePointer());
         gen_loadAccumulatorWithConstant_A9_LDA(heap_boolean_location);
         pout("processBOOLEANAssignment - loaded accumulator");
@@ -679,9 +763,35 @@ public class CodeGeneration {
 
     /*********************************************** Helpers ***********************************************/
 
+    public void clearArray (String[] strarr) {
+        for (int i = 0; i <= strarr.length - 1; i++) {
+            strarr[i]  = "00";
+        }
+    }
+
+    public void performRestoreOfPreviousValuesToExecutionEnvironment (String[] deep_copy_code_sequence, int stored_code_pointer, int stored_stack_pointer, int stored_heap_pointer) {
+        pout("Blocks Explored: " + blocks_explored);
+        if (blocks_explored != 0) {
+            //blocks_explored = blocks_explored - 1;
+            return;
+        } 
+
+        pout("Performing Restore");
+        execution_environment.restoreCodeSequenceValues(deep_copy_code_sequence); // Fill array back with the stored values
+        execution_environment.setCodePointer(stored_code_pointer);
+        execution_environment.setStackPointer(stored_stack_pointer);
+        execution_environment.setHeapPointer(stored_heap_pointer);
+        
+        pout("Clearing array");
+        clearArray(deep_copy_code_sequence);
+    }
+
     public void deepCopyStringArray (String[] main_array, String[] copy_of_array) {
+        pout("main arr len: " + main_array.length); 
+        pout("copy arr len: " + copy_of_array.length); 
         for (int i = 0; i <= main_array.length - 1; i++) {
             copy_of_array[i] = main_array[i]; 
+            //pout("i:" + i + "copy i:  " + copy_of_array[i]);
         }
     }
 
@@ -710,17 +820,23 @@ public class CodeGeneration {
         
         int heap_pointer;
         String[] hex_arraylist = terminals_string_value.chars().mapToObj(c -> String.format("%02X", c)).toArray(String[]::new);
+        
         if (exists_in_strdecls) {
             heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
-            System.out.println("Heap Pointer: " + heap_pointer);
+            pout("`" + terminals_string_value + "`" + " exists within String Declaration. [Address: " + heap_pointer + " ]");
             
         } else {
-            heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length - 1; // otherwise get the current heap pointer, making sure to modify it for what it will be 
-            System.out.println("Heap Pointer: " + heap_pointer);
-            execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
-            execution_environment.insert(hex_arraylist, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
-
-            
+            heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length - 1; // new insertion location
+           // String heap_pointer_hex = String.format("%02X", heap_pointer);
+            if (!within_jump) {
+                execution_environment.performHeapInsertion(hex_arraylist);
+                execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
+                // Checking proper insertion
+                heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
+                pout("Checking.. `" + terminals_string_value + "`" + " exists within String Declaration. [Address: " + heap_pointer + " ]");
+            }
+            //execution_environment.insertImmediately(new ArrayList<>(Arrays.asList(hex_arraylist)), "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
+            //execution_environment.insertImmediatelyHeap(hex_arraylist_actually, "Heap", ); // insert it into code_sequence without waiting, so we can specify Heap insertion
         }
         
         // Need to update heap pointer after being done, need to full on return after being in this elif block, need to store pointer for string in string_declarations map 
