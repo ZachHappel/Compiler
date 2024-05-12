@@ -207,17 +207,23 @@ public class CodeGeneration {
 
             // LHS goes in X Register
 
-            if (constants.contains(lhs_terminal_name)) {
 
+            if (constants.contains(lhs_terminal_name)) {
+                gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            } else {
+                gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
             }
 
             if (constants.contains(rhs_terminal_name)) {
-
+                gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            } else {
+                gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
             }
+
             // IF CONSTANT, USE A2, e.g., DIGIT, BOOLEANS 
             //gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
-            gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
-            gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            //gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+            //gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
             gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register
 
