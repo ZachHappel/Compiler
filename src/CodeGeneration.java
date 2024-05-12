@@ -147,7 +147,8 @@ public class CodeGeneration {
                 heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length - 1; // otherwise get the current heap pointer, making sure to modify it for what it will be 
                 System.out.println("Heap Pointer: " + heap_pointer);
                 execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
-                execution_environment.insert(hex_arraylist, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
+                ArrayList<String> hex_arraylist_actually = new ArrayList<>(Arrays.asList(hex_arraylist));
+                execution_environment.insertImmediately(hex_arraylist_actually, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
             }
             
             // Need to update heap pointer after being done, need to full on return after being in this elif block, need to store pointer for string in string_declarations map 

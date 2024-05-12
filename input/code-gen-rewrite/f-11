@@ -1,0 +1,7 @@
+{
+    boolean c
+    boolean a
+    a = false
+    c = (a == true)
+    print(c)
+}$ /* correctly evals to false*/

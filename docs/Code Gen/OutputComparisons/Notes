@@ -23,7 +23,7 @@ Load Accumulator with Constant, F5, store in 3B // c decl
 Load Accumulator with Constant, F5, store in 3A // init. 'a' with false (F5) 
 ///
 
-A2:: Load X Register:: from Address, 3A ('a'),  (LHS)
+AE:: Load X Register:: from Address, 3A ('a'),  (LHS)
 
 A9:: Load Accumulator:: with Constant, F5 // Load False Constant   
 8D:: -->   Store in NEW address, 30 // temp storage
