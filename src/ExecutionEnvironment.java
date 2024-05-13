@@ -183,19 +183,39 @@ public class ExecutionEnvironment {
 
         int stack_addressing_index = getStackPointer(); // + 1 because program ends with 00
 
+        for (int i = 0; i < code_sequence.length; i++) {
+            System.out.println("Code Sequence Entry: " + code_sequence[i]);
+        }
         for (Map.Entry<String, String> entry: static_table.entrySet()) {
             String temporary_location = entry.getKey();
+            System.out.println("Temp Location: " + temporary_location);
             String memory_location = String.format("%02X", stack_addressing_index);
             System.out.println("Backpatching Temp Location, " + temporary_location + ", with Address: " + memory_location);
             stack_addressing_index+=1; 
 
-            for (int i = 0; i <= code_sequence.length - 1; i++) if (code_sequence[i].equals(temporary_location)) code_sequence[i] = memory_location; 
+            for (int i = 0; i <= code_sequence.length - 1; i++) {
+                
+                if (code_sequence[i].equals(temporary_location)) {
+                    code_sequence[i] = memory_location; 
+                }
+            }
         }
 
         //String[] updatedArray = Arrays.stream(code_sequence).map(s -> s.equals("0") ? "00" : s).toArray(String[]::new);
 
 
     }
+
+    public String retrieveTemporaryLocation (String identifier_variable, String identifier_scope_name) {
+        String static_table_variable_name = identifier_variable + "@" + identifier_scope_name; 
+        String temp_location = retrieveLocationFromStaticTable(static_table_variable_name);   
+        return temp_location; 
+    }
+
+    private String retrieveLocationFromStaticTable (String variable_scope_combination) {
+        return reversed_static_table.get(variable_scope_combination); 
+    }
+
 
 
     public String createAndRetrieveNewTemporaryAddress () {
@@ -206,10 +226,16 @@ public class ExecutionEnvironment {
     }
 
     ////// Code Sequence 
+    
+   
+    
+
+
     public boolean variableExistsInStaticTable (String variable_id, String scope_name) {
         String static_table_variable_name = variable_id + "@" + scope_name; 
         return reversed_static_table.containsKey(static_table_variable_name); // reversed table is mapped like, variable : address 
     }
+
 
     public String retrieveTempLocationFromStaticTable (String static_table_variable_name) {
         return reversed_static_table.get(static_table_variable_name);
@@ -339,7 +365,7 @@ public class ExecutionEnvironment {
         int heap_insertion_location = getHeapPointer() - instructions_length; 
         heap_instructions[heap_instructions.length -1] = "00"; // add "00" in last position
         
-        // Update code_sequence with new instructions
+        // INSERTION
         System.arraycopy(heap_instructions, 0, code_sequence, heap_pointer - heap_instructions.length, instructions_length);
         
         setHeapPointer(heap_insertion_location - 1);

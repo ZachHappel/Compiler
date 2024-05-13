@@ -18,6 +18,7 @@ public class CodeGeneration {
     
     int blocks_explored = 0;
 
+    String addr_for_while_comparison = ""; 
 
     public ArrayList<String> constants = new ArrayList<String>(Arrays.asList("KEYWORD_TRUE", "KEYWORD_FALSE", "DIGIT")); // TODO: Add DIGIT?
 
@@ -66,6 +67,10 @@ public class CodeGeneration {
             case "If":
                 processIf(nt);
                 break;
+
+            case "While":
+                processWhile(nt);
+                break; 
 
             // Keep under those which use IsEqual
             case "IsEqual":
@@ -142,6 +147,11 @@ public class CodeGeneration {
                 //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                 break; 
                 
+            case "While": 
+                processWhile(nt);
+                jump_distance = execution_environment.getCodePointer(); 
+                pout("within switch jump distance :" + jump_distance);
+                break;
                 // Keep under those which use IsEqual
             case "IsEqual":
                 processIsEqual(nt);
@@ -197,7 +207,7 @@ public class CodeGeneration {
         
         Terminal type = (Terminal) VarDeclStatement.getASTChild(0);
         Terminal identifier = (Terminal) VarDeclStatement.getASTChild(1);
-        String identifier_type = getIdentifierType( (Production) VarDeclStatement, identifier);
+        String identifier_type = getIdentifierType(VarDeclStatement, identifier);
         String default_value = ""; 
         
         
@@ -335,18 +345,13 @@ public class CodeGeneration {
         **  RHS is nonterminal always
             Current if conditions handled:
             - LHS is NonTerminal IsEqual
+            - LHS is Terminal of KEYWORD_TRUE or KEYWORD_FALSE
         */
         if (if_statement_lhs.getProdKind().equals("NonTerminal")) {
             NonTerminal if_statement_lhs_nonterminal = (NonTerminal) if_statement_lhs; String lhs_nonterminal_name = if_statement_lhs_nonterminal.getName(); 
 
             if (lhs_nonterminal_name.equals("IsEqual")) {
-                /**
-                NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
-                int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
-                String jump_distance_hex = String.format("%02X", jump_distance);
-                pout("Jump Distance Calculated: " + jump_distance + ", hex: " + jump_distance_hex);
-                processIsEqual(if_statement_lhs_nonterminal, jump_distance_hex);                
-                **/
+               
                 processIsEqual(if_statement_lhs_nonterminal);                
 
                 if (!within_jump) {
@@ -366,6 +371,7 @@ public class CodeGeneration {
         
         } else {
             Terminal if_statement_lhs_terminal = (Terminal) if_statement_lhs; String lhs_terminal_name = if_statement_lhs_terminal.getName();
+            
             if (lhs_terminal_name.equals("KEYWORD_TRUE") || lhs_terminal_name.equals("KEYWORD_FALSE")) {
                 String terminal_addressing_component = getTerminalAddressingComponent(If, if_statement_lhs_terminal, 0); 
                 String temporary_address = execution_environment.performStaticTableInsertion("if" + execution_environment.getTemporaryValueCounter(), If.getScopeName()); // Create first temp addr
@@ -385,41 +391,145 @@ public class CodeGeneration {
                     gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
                     within_jump = false; 
                 }
+            } else {
+
+
+                System.out.println("HUH?");
+
             }
+
+
 
         }
 
     }
+
+
+
+
+    public void processWhile (NonTerminal While) throws CodeGenerationException {
+       
+        Production lhs = While.getASTChild(0);
+        Production rhs = While.getASTChild(1);
+        int starting_pointer = -1;
+        if (lhs.getProdKind().equals("NonTerminal")) {
+            NonTerminal lhs_nonterminal = (NonTerminal) lhs; String lhs_nonterminal_name = lhs_nonterminal.getName(); 
+            
+            if (!within_jump) starting_pointer = execution_environment.getCodePointer(); 
+        
+
+            if (lhs_nonterminal_name.equals("IsEqual")) {
+                
+
+                pout("While - IsEqual");
+                processIsEqual(lhs_nonterminal);                
+
+                if (!within_jump) {
+                    
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                    System.out.println("End of While Loop, starting pos: " + starting_pointer);
+                    System.out.println("End of While Loop, code pointer: " + execution_environment.getCodePointer());
+                    int jumpback_distance = starting_pointer - execution_environment.getCodePointer(); 
+                    String jumpback_distance_hex = String.format("%02X", jumpback_distance & 0xFF);
+                    
+                    gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer());
+                    gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(addr_for_while_comparison);
+                    gen_branchNBytes_D0_BNE(jumpback_distance_hex);
+                    System.out.println("End of While Loop, jumpback_distance: " + jumpback_distance);
+
+
+
+
+                } // Recursion will continue normally from here
+            } 
+
+        /*  
+        } else if (lhs.getProdKind().equals("Terminal")) {
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            if (lhs_terminal_name.equals("KEYWORD_TRUE") || lhs_terminal_name.equals("KEYWORD_FALSE")) {
+                String terminal_addressing_component = getTerminalAddressingComponent(While, if_statement_lhs_terminal, 0); 
+                String temporary_address = execution_environment.performStaticTableInsertion("while" + execution_environment.getTemporaryValueCounter(), While.getScopeName()); // Create first temp addr
+
+                gen_loadAccumulatorWithConstant_A9_LDA(terminal_addressing_component); 
+                gen_storeAccumulatorIntoMemory_8D_STA(temporary_address);
+                gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
+                gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temporary_address);
+                
+                if (!within_jump) {
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) while_statement_rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                }
+            }
+        } */
+
+            
+          
+            
+        }
+    }
+
+   
+    /*
+     * String scope = parent.getScopeName(); 
+        String name = identifier.getName(); 
+        String id = identifier.getTokenAttribute(); 
+        System.out.println("GetIdentifierType - Scope: " + scope + ", Name: " + name + " Id: " + id); 
+        pout("Scopes:  " + symbol_table.getScopeNames());
+        SymbolTableScope residing_scope = symbol_table.getScope(scope);
+        boolean entry_exists = residing_scope.entryExists(id);
+        if (!entry_exists) {
+            SymbolTableEntry specific_entry = symbol_table.retrieveEntryFromAccessibleScopes(residing_scope, identifier);
+            pout(specific_entry.getType());
+            String type = specific_entry.getType();
+            pout("Type: " + type);
+            return type; 
+        }
+        pout("Entry Exists: " + entry_exists);
+        SymbolTableEntry specific_entry = residing_scope.retrieveEntry(id);
+        String type = specific_entry.getType();
+        pout("Type: " + type);
+        return type; 
+     */
     
+    /*
+    * Currently only prints IDENTIFIERS
+    * If String is argument, e.g., print("string") --> It would fail
+    */
     public void processPrintStatement (NonTerminal PrintStatement) throws CodeGenerationException {
-        /*
-        * Currently only prints IDENTIFIERS
-        * If String is argument, e.g., print("string") --> It would fail
-        */
+       
         ArrayList<String> op_codes = new ArrayList<>(); 
         for (int i = 0; i <= PrintStatement.getASTChildren().size() - 1; i++) { System.out.println("PrintStatement Child: " + PrintStatement.getASTChild(i).getName() + " : " + PrintStatement.getASTChild(i).getProdKind()); }
         if (PrintStatement.getASTChildren().size() > 1) throw new CodeGenerationException("CodeGeneration, processPrintStatment", "I thought print statements could only have one child");
         
-        Terminal print_child = (Terminal) PrintStatement.getASTChild(0);
-        pout("Print Child: " + print_child.getTokenAttribute()); 
-        pout("Print Child Type: " + print_child.getName()); 
-
-        // Can't there only be one child...? Why did I do this...
         
-        //PrintStatement.getASTChild(0).getName().equals("IDENTIFIER")
+        String print_child_name = ((Terminal) PrintStatement.getASTChild(0)).getName(); 
+        
 
-
-
-        if (print_child.getName().equals("IDENTIFIER")) {
-            //Terminal identifier = (Terminal) PrintStatement.getASTChild(0);
-            String type = getIdentifierType(PrintStatement, print_child); System.out.println("PrintStatement - Terminal, type: " + type);
-            String temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(PrintStatement, 0); // Location in static table for the Identifier the print statement is trying to print    
-            gen_loadYRegisterFromMemory_AC_LDY(temp_location);
+        if (print_child_name.equals("IDENTIFIER")) {
+            Terminal identifier_terminal = (Terminal) PrintStatement.getASTChild(0); // Cast to terminal
+            String type = getIdentifierType(PrintStatement, identifier_terminal); // So proper ops can be chosen 
+            String identifier_scope_name = getIdentifierScopeName(PrintStatement, identifier_terminal); // Get scope location of identifier
+            String identifier_variable = identifier_terminal.getTokenAttribute(); // Get variable/value/id assigned to identifier
+            String static_location = execution_environment.retrieveTemporaryLocation(identifier_variable, identifier_scope_name); // Get location from static table
+            gen_loadYRegisterFromMemory_AC_LDY(static_location);
             gen_finishPrintStatment(type); 
 
-        } else if (print_child.getName().equals("CHARACTER")) {
-            String hex_location = handleCHARACTERterminalAndGetStringAddress(print_child); 
-            pout("hex_location: " + hex_location);
+        } else if (print_child_name.equals("CHARACTER")) {
+            Terminal character_terminal = (Terminal) PrintStatement.getASTChild(0);
+            String hex_location = characterTerminalHandler(character_terminal);             pout("hex_location: " + hex_location);
             gen_loadYRegisterFromConstant_AO_LDY(hex_location);
             gen_finishPrintStatment("string"); 
         }
@@ -431,8 +541,8 @@ public class CodeGeneration {
     public void processIsEqualAssignment ( NonTerminal IsEqual, String assignment_location ) throws CodeGenerationException {
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
+        System.out.println("IsEqual Assignment");
         if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) { 
-            
             String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
             String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
             
@@ -484,11 +594,9 @@ public class CodeGeneration {
             gen_storeAccumulatorIntoMemory_8D_STA(assignment_location); // Store answer in assignment location, the location of the variable in which the result of this comparison is being stored
 
         }
-    
-
     }
 
-    
+
     public void processIsEqual( NonTerminal IsEqual) throws CodeGenerationException {
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
@@ -500,9 +608,9 @@ public class CodeGeneration {
             Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
             String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, lhs_terminal, 0);
             String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, rhs_terminal, 1);
-
+            System.out.println("Lhs terminal addressing compontne : " + lhs_terminal_addressing_component + IsEqual.getScopeName());
+            System.out.println("Rhs terminal addressing compontne : " + rhs_terminal_addressing_component + IsEqual.getScopeName());
             // LHS goes in X Register
-
 
             // Load LHS into X Register
             if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
@@ -517,12 +625,13 @@ public class CodeGeneration {
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register  // THE COMPARISON=
 
 
+
             gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
 
                 // IF EQUAL (12 bytes)
                 gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getTruePointer()); // Load TRUE constant into Accumulator
                 gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
-
+                addr_for_while_comparison = temp_addr_2;  // Store for usage in WHILE loopback, in case it is required
                     // Force Flip
                     gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
                     gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
@@ -534,21 +643,12 @@ public class CodeGeneration {
 
             gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_2);
-
-            //gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
-
         }
-    
-
     }
 
     
-    //public boolean processIsEqual (NonTerminal IsEqual, String assignment_locatio, boolean is_assignment) {
-
-    //}
-
+ 
     // ADDITION
-    
     public void processADDITIONAssignment (NonTerminal ADDITION, String temp_addition_addr, String assignment_location, boolean within_nested_addition) throws CodeGenerationException {
             
         for (int i = 0; i <= ADDITION.getASTChildren().size() - 1; i++) { System.out.println("Addition Child: " + ADDITION.getASTChild(i).getName() + " : " + ADDITION.getASTChild(i).getProdKind()); }
@@ -584,6 +684,7 @@ public class CodeGeneration {
                     String scope = ADDITION.getScopeName();
                     String id = ((Terminal) ADDITION.getASTChild(1)).getTokenAttribute(); 
                     String static_table_variable_name = id + "@" + scope; 
+                    System.out.println("Second Value is static_table_variable_name: " + static_table_variable_name);
                     String static_table_temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
                     System.out.println("Second Value is Identifier: " + id);
                 
@@ -735,9 +836,13 @@ public class CodeGeneration {
             String value = terminal.getTokenAttribute(); 
             gen_loadXRegisterWithValue_A2_LDX(value);
         } else if (terminal.getName().equals("CHARACTER")) {
-            String string_location = handleCHARACTERterminalAndGetStringAddress(terminal);
+
+
+            String string_location = characterTerminalHandler(terminal);
             gen_loadXRegisterFromAddress_AE_LDX(string_location);
             
+
+
         } else if ( (terminal.getName().equals("KEYWORD_TRUE")) || (terminal.getName().equals("KEYWORD_FALSE"))) {
             if (terminal.getName().equals("KEYWORD_TRUE")) {
                 gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
@@ -785,14 +890,47 @@ public class CodeGeneration {
         }
     }
 
-    public String getTerminalAddressingComponent (NonTerminal parent, Terminal terminal, int index_if_identifier) throws CodeGenerationException {
-        String addressing_component = ""; 
-        
-        if (terminal.getName().equals("IDENTIFIER")) { addressing_component = execution_environment.retrieveTempLocationFromChildOfNonTerminal(parent, index_if_identifier);    
-        
-        } else if (terminal.getName().equals("DIGIT")) { addressing_component= "0" + terminal.getTokenAttribute(); 
+    public SymbolTableScope getScopeOfTerminal (NonTerminal parent, Terminal child) throws CodeGenerationException {
+        String parent_scope_name = parent.getScopeName(); 
+        String id = child.getTokenAttribute();
+        SymbolTableScope residing_scope = symbol_table.getScope(parent_scope_name);
+        if (residing_scope.entryExists(id)) {
+            return residing_scope; 
+        } else {
+            //SymbolTableEntry specific_entry = symbol_table.retrieveEntryFromAccessibleScopes(residing_scope, child);
+            SymbolTableScope scope_of_terminal = symbol_table.retrieveScopeWithNearestDeclaration(parent, child);
+            return scope_of_terminal;
+        }
+    }
 
-        } else if (terminal.getName().equals("CHARACTER")) { addressing_component = handleCHARACTERterminalAndGetStringAddress(terminal);
+    public String getIdentifierType (NonTerminal parent, Terminal child) throws CodeGenerationException {
+        SymbolTableScope scope_of_identifier = getScopeOfTerminal(parent, child);
+        
+        try {
+            SymbolTableEntry entry = scope_of_identifier.retrieveEntry(child.getTokenAttribute());
+            System.out.println( " ( " + child.getTokenAttribute() + " )  Found Entry: " + entry.getDetailsString());
+            return entry.getType();
+
+        } catch (Error err) { 
+            throw new CodeGenerationException("CodeGeneration, getIdentifierType()", "Unable to locate entry within scope");
+        }
+    }
+
+    public String getIdentifierScopeName (NonTerminal parent, Terminal child) throws CodeGenerationException {
+        SymbolTableScope scope_of_identifier = getScopeOfTerminal(parent, child);
+        return scope_of_identifier.getName();
+    }
+
+    public String getTerminalAddressingComponent (NonTerminal parent, Terminal terminal, int index_of_identifier) throws CodeGenerationException {
+        String addressing_component = ""; 
+
+        
+        if (terminal.getName().equals("IDENTIFIER")) { 
+            addressing_component = execution_environment.retrieveTemporaryLocation(getIdentifierScopeName(parent, terminal), terminal.getTokenAttribute());    
+            pout("Addressing COmpontnet: " + addressing_component );
+        } else if (terminal.getName().equals("DIGIT")) { addressing_component= "0" + terminal.getTokenAttribute(); // Digit formatted properly
+
+        } else if (terminal.getName().equals("CHARACTER")) { addressing_component = characterTerminalHandler(terminal); // Hexadecima location within heap 
             
         } else if ( (terminal.getName().equals("KEYWORD_TRUE")) || (terminal.getName().equals("KEYWORD_FALSE"))) {
             if (terminal.getName().equals("KEYWORD_TRUE"))  addressing_component = execution_environment.getTruePointer(); 
@@ -803,30 +941,54 @@ public class CodeGeneration {
         return addressing_component; 
     }
 
-    public String handleCHARACTERterminalAndGetStringAddress (Terminal terminal) throws CodeGenerationException {
-        String terminals_string_value = terminal.getTokenAttribute(); 
-        boolean exists_in_strdecls = execution_environment.stringExistsWithStringDeclarations(terminals_string_value);
-        System.out.println("\n\nExists within string decls: " + exists_in_strdecls);
-        
+    //execution_environment.insertImmediately(new ArrayList<>(Arrays.asList(hex_arraylist)), "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
+    //execution_environment.insertImmediatelyHeap(hex_arraylist_actually, "Heap", ); // insert it into code_sequence without waiting, so we can specify Heap insertion
+    
+
+    // Returns hexadecimal pointer to the beginning of the string within the heap
+    // Will retrieve address if string already exists in heap and is stored with its corresponding locaiton within string declarations
+    // Will store a hexadecimal transformation of the string in the string_declaration 
+    public String characterTerminalHandler (Terminal character_terminal) throws CodeGenerationException {
+        String string_stored_terminal = character_terminal.getTokenAttribute(); 
+        boolean exists_in_string_declarations = execution_environment.stringExistsWithStringDeclarations(string_stored_terminal);
+        String[] hexadecimal_array_of_string = string_stored_terminal.chars().mapToObj(c -> String.format("%02X", c)).toArray(String[]::new);
+        String hexadecimal_location_in_heap; 
+        int int_location_in_heap; // needed for storage into string decls if required
+        if (exists_in_string_declarations) hexadecimal_location_in_heap = String.format("%02X", (execution_environment.getAddressFromStringDeclarations(string_stored_terminal)));
+        else if (within_jump) { hexadecimal_location_in_heap = String.format("%02X", execution_environment.getHeapPointer() - hexadecimal_array_of_string.length - 1); } // Not actually going to store, but will provide location where it will be stored
+        else { 
+            execution_environment.insertImmediately(new ArrayList<>(Arrays.asList(hexadecimal_array_of_string)), "Heap");
+            int_location_in_heap = execution_environment.getHeapPointer() - hexadecimal_array_of_string.length - 1;
+            execution_environment.insertIntoStringDeclarations(string_stored_terminal, int_location_in_heap);
+            hexadecimal_location_in_heap = String.format("%02X", int_location_in_heap); 
+        }
+        return hexadecimal_location_in_heap; 
+    }
+
+
+    /**
+    public String characterTerminalHandler (Terminal character_terminal) throws CodeGenerationException {
         int heap_pointer;
-        String[] hex_arraylist = terminals_string_value.chars().mapToObj(c -> String.format("%02X", c)).toArray(String[]::new);
+        String string_stored_terminal = character_terminal.getTokenAttribute(); 
+        boolean exists_in_string_declarations = execution_environment.stringExistsWithStringDeclarations(string_stored_terminal);
         
-        if (exists_in_strdecls) {
-            heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
-            pout("`" + terminals_string_value + "`" + " exists within String Declaration. [Address: " + heap_pointer + " ]");
+        String[] hex_arraylist = string_stored_terminal.chars().mapToObj(c -> String.format("%02X", c)).toArray(String[]::new);
+        
+        if (exists_in_string_declarations) {        // If exists in string_decls already, get address
+            heap_pointer = execution_environment.getAddressFromStringDeclarations(string_stored_terminal);  pout("`" + string_stored_terminal + "`" + " exists within String Declaration. [Address: " + heap_pointer + " ]");
             
         } else {
             heap_pointer = execution_environment.getHeapPointer() - hex_arraylist.length - 1; // new insertion location
-           // String heap_pointer_hex = String.format("%02X", heap_pointer);
-            if (!within_jump) {
+            
+
+           // HUGE BUG TRACKED DOWN HERE
+           // (!within_jump ensures it is not added when jump distances are being determined, because when the cleared code_sequence is restored, string_declarations will believe it already exists and will not readd it
+           if (!within_jump) {
                 execution_environment.performHeapInsertion(hex_arraylist);
-                execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
-                // Checking proper insertion
-                heap_pointer = execution_environment.getAddressFromStringDeclarations(terminals_string_value); // If exists in string_decls already, get address
-                pout("Checking.. `" + terminals_string_value + "`" + " exists within String Declaration. [Address: " + heap_pointer + " ]");
+                execution_environment.insertIntoStringDeclarations(string_stored_terminal, heap_pointer); // Store in string_declarations hashmap 
+                heap_pointer = execution_environment.getAddressFromStringDeclarations(string_stored_terminal); // If exists in string_decls already, get address
+                pout("Checking.. `" + string_stored_terminal + "`" + " exists within String Declaration. [Address: " + heap_pointer + " ]"); // Checking proper insertion
             }
-            //execution_environment.insertImmediately(new ArrayList<>(Arrays.asList(hex_arraylist)), "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
-            //execution_environment.insertImmediatelyHeap(hex_arraylist_actually, "Heap", ); // insert it into code_sequence without waiting, so we can specify Heap insertion
         }
         
         // Need to update heap pointer after being done, need to full on return after being in this elif block, need to store pointer for string in string_declarations map 
@@ -834,8 +996,9 @@ public class CodeGeneration {
         System.out.println("Heap Pointer Hex: " + heap_pointer_hex);
         return heap_pointer_hex;
         
-    }
+    } **/
 
+    /*
     public String getIdentifierType (Production parent, Terminal identifier) {
         String scope = parent.getScopeName(); 
         String name = identifier.getName(); 
@@ -844,12 +1007,19 @@ public class CodeGeneration {
         pout("Scopes:  " + symbol_table.getScopeNames());
         SymbolTableScope residing_scope = symbol_table.getScope(scope);
         boolean entry_exists = residing_scope.entryExists(id);
+        if (!entry_exists) {
+            SymbolTableEntry specific_entry = symbol_table.retrieveEntryFromAccessibleScopes(residing_scope, identifier);
+            pout(specific_entry.getType());
+            String type = specific_entry.getType();
+            pout("Type: " + type);
+            return type; 
+        }
         pout("Entry Exists: " + entry_exists);
         SymbolTableEntry specific_entry = residing_scope.retrieveEntry(id);
         String type = specific_entry.getType();
         pout("Type: " + type);
         return type; 
-    }
+    } */
 
     public static ArrayList<String> parseHexadecimalString(String hexString) {
         // Split the string into an array of strings using space as the delimiter
@@ -922,6 +1092,8 @@ public class CodeGeneration {
             System.out.println("|-------------------------------------------READABLE INSTRUCTION OUTPUT----------------------------------------------|");
             System.out.println("|--------------------------------------------------------------------------------------------------------------------|");
             ArrayList<String> proper_ops = parseHexadecimalString("A9 F5 8D 44 00 A9 F5 8D 45 00 A9 F5 8D 46 00 A9 F5 8D 44 00 A9 F5 8D 45 00 AE 44 00 A9 F5 8D 47 00 EC 47 00 D0 0C A9 F0 8D 48 00 A2 FF EC F5 00 D0 05 A9 F5 8D 48 00 AD 48 00 8D 46 00 AC 46 00 A2 02 FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 74 72 75 65 00 66 61 6C 73 65 00 6E 75 6C 6C 00");
+            int hex2 = -53;
+            System.out.println(String.format("%02X", hex2 & 0xFF));
             String proper_readable_ops = execution_environment.translateOpcodesToEnglishUnrestricted(proper_ops);
             //System.out.println(proper_readable_ops);
             

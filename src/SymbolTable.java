@@ -246,6 +246,39 @@ public class SymbolTable {
         } return new SymbolTableEntry("", false, false); // otherwise return blank SymbolTableEntry with "" as type
     }
 
+    public SymbolTableEntry retrieveEntryFromAccessibleScopes (SymbolTableScope scope, Terminal identifier_terminal) {
+        String identifier_value = identifier_terminal.getTokenAttribute(); // Id
+        ArrayList<SymbolTableScope> current_scope_accessibles = scope.getAccessibleScopes(); // Obtain which it has reach/access to
+        
+        if (scope.entryExists(identifier_value)) return scope.retrieveEntry(identifier_value); // If in current scope, return
+        
+        // Iterate over list of scopes in which the current scope has access to
+        for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
+            SymbolTableScope scope_n = current_scope_accessibles.get(s);
+            if (scope_n.entryExists(identifier_value)) {
+                SymbolTableEntry entry = scope_n.retrieveEntry(identifier_value); // If exists, retrieve it
+                return entry; 
+            }
+        } return new SymbolTableEntry("", false, false); // otherwise return blank SymbolTableEntry with "" as type
+    }
+
+    public SymbolTableScope retrieveScopeWithNearestDeclaration (NonTerminal parent, Terminal identifier) {
+        SymbolTableScope parent_scope = getScope(parent.getScopeName());
+        String identifier_id = identifier.getTokenAttribute();
+        
+        if (parent_scope.entryExists(identifier_id)) return parent_scope; 
+        
+        else { 
+            ArrayList<SymbolTableScope> accessible_scopes = parent_scope.getAccessibleScopes();
+            for (int s = 0; s <= accessible_scopes.size() - 1; s++) {
+                SymbolTableScope scope_n = accessible_scopes.get(s);
+                if (scope_n.entryExists(identifier_id)) {
+                    return scope_n; 
+                }
+            }
+        } return new SymbolTableScope("error");
+    }
+
 
     public SymbolTableScope getScopeLocation (Terminal identifier_terminal) throws SemanticAnalysisException {
         String identifer_value = identifier_terminal.getTokenAttribute();
@@ -357,4 +390,51 @@ public class SymbolTable {
             ("SymbolTable, performEntry()", "Variable already exists with ID, " + identifier_value + ". Conflicting declaration exists within Scope: " + getConflictingScopeName(identifier_terminal) );
         }
     }
+
+    //public String getScopeOfIdentifierByFirstLookingAtCurrentScopeAndThenAccessibleOnesGivenTheParentNonTerminalAndTheIDOfTheIdentifier (NonTerminal nt, String id) {
+      //  SymbolTableScope curr_scope = nt.getScopeName();
+
+    //}
+
+    public String givenScopeFindScopeLocationOfID (String scope_name, String identifier_value) {
+        SymbolTableScope located_scope; 
+        
+        for (Map.Entry<String, SymbolTableScope> scope_n : table.entrySet()) {
+            if (scope_n.getKey().equals(scope_name)) {
+                located_scope = scope_n.getValue(); 
+                ArrayList<SymbolTableScope> located_scope_accessibles = located_scope.getAccessibleScopes();
+                if (located_scope.entryExists(identifier_value)) return located_scope.getName(); // If in current scope, return
+                else { 
+                    for (int s = 0; s <= located_scope_accessibles.size() - 1; s++) {
+                        SymbolTableScope scope = located_scope_accessibles.get(s);
+                        if (scope.entryExists(identifier_value)) {
+                            return scope.getName(); 
+                        }
+                    } 
+                }
+                
+
+            }  
+        }  return "";
+    }
+    
+    //scopes_and_entries = scopes_and_entries + "\nScope: " + scope_n.getKey() + "\n" + scope_n.getValue().getEntriesAndTheirDetails();
+
 }
+
+/*
+ *  ArrayList<SymbolTableScope> current_scope_accessibles = current_scope.getAccessibleScopes();
+        boolean exists_within_a_scope = false;
+
+        if (current_scope.entryExists(identifier_value)) {
+            return current_scope.getName(); // If in current scope, return
+        } 
+        
+        for (int s = 0; s <= current_scope_accessibles.size() - 1; s++) {
+            SymbolTableScope scope = current_scope_accessibles.get(s);
+            if (scope.entryExists(identifier_value)) {
+
+                exists_within_a_scope = true;
+            }
+        } 
+ */
