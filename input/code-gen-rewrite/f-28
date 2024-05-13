@@ -1,9 +1,9 @@
 {
-    while (true == true) {
+    while (false != true) {
         int j
         print("a")
     }
-    /*works!! */
+    /*works too!! */
     int a
     int b
 }$

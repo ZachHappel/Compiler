@@ -1,0 +1,8 @@
+{
+    int a
+    a = 1
+    if (true != false) {
+        print(a)
+    }
+    print("done")
+}$
