@@ -33,7 +33,7 @@ public class CodeGeneration {
             // Need to traverse down all and look for NT, 
             if (!is_terminal) {
                 NonTerminal nt = (NonTerminal) c;     
-                System.out.println("NonTerminal Name: " + nt.getName());
+                System.out.println("NonTerminal Name: " + nt.getName() + ", Kids: " + childrenAsString(nt));
                 
                 nonterminalRouter(nt);
                 
@@ -397,6 +397,7 @@ public class CodeGeneration {
     }
     
     public void processPrintStatement (NonTerminal PrintStatement) throws CodeGenerationException {
+        
         /*
         * Currently only prints IDENTIFIERS
         * If String is argument, e.g., print("string") --> It would fail
@@ -437,6 +438,11 @@ public class CodeGeneration {
             String hex_location = characterTerminalHandler(character_terminal);             pout("hex_location: " + hex_location);
             gen_loadYRegisterFromConstant_AO_LDY(hex_location);
             gen_finishPrintStatment("string"); 
+        } else if (print_child.getName().equals("DIGIT")) {
+            Terminal digit_terminal = (Terminal) PrintStatement.getASTChild(0);
+            int digit_value = Integer.parseInt(digit_terminal.getTokenAttribute());
+            gen_loadYRegisterFromConstant_AO_LDY("0"+digit_value);
+            gen_finishPrintStatment("int"); 
         }
 
     }
@@ -571,7 +577,7 @@ public class CodeGeneration {
     
         
         if (ADDITION.getASTChild(0).getName().equals("DIGIT")) {
-            int digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(0)).getTokenAttribute());  System.out.println("Digit Value: " + digit_value);
+            int digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(0)).getTokenAttribute()); // System.out.println("Digit Value: " + digit_value);
             
             gen_loadAccumulatorWithConstant_A9_LDA(""+digit_value); // Load accum. with value in Digit
 
@@ -583,7 +589,7 @@ public class CodeGeneration {
                 
                 // if of form: 3 + 1
                 if (ADDITION.getASTChild(1).getName().equals("DIGIT")) {
-                    int second_digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(1)).getTokenAttribute()); System.out.println("Second Digit: " + second_digit_value);
+                    int second_digit_value = Integer.parseInt(((Terminal) ADDITION.getASTChild(1)).getTokenAttribute()); //System.out.println("Second Digit: " + second_digit_value);
                     
                     gen_loadAccumulatorWithConstant_A9_LDA(""+second_digit_value);  // Load accumulator with second value
                     gen_addWithCarryToAccum_6D_ADC(temp_addition_addr); // Add with carry into to the accum
@@ -742,7 +748,6 @@ public class CodeGeneration {
 
 
     public void gen_loadXRegister(NonTerminal parent, Terminal terminal, int index) throws CodeGenerationException {
-        ArrayList<String> op_codes = new ArrayList<>(); 
         
         if (terminal.getName().equals("IDENTIFIER")) {
             String id_temp_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(parent, index); 
@@ -962,6 +967,12 @@ public class CodeGeneration {
     public String getStringFromCHARACTER (Production parent_production, int index) {
         String str = ((Terminal) parent_production.getASTChild(index)).getTokenAttribute();
         return str; 
+    }
+
+    public String childrenAsString (NonTerminal nt) { 
+        String children_string = "";
+        for (int i = 0; i<= nt.getASTChildren().size() - 1; i++) children_string = children_string + ", " +  nt.getASTChild(i).getName();
+        return children_string;
     }
 
     ///
