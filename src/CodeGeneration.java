@@ -97,6 +97,11 @@ public class CodeGeneration {
                 // do something
                 //processIsEqual(nt); 
                 break;
+            
+            case "IsNotEqual":
+                // do something
+                //processIsEqual(nt); 
+                break;
 
         /*  case "Block":
         *       Maybe, actually... no.
@@ -174,7 +179,13 @@ public class CodeGeneration {
                 
                 //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                 break;  
-                // do something 
+                
+            case "IsNotEqual":
+                processIsNotEqual(nt);
+                jump_distance = execution_environment.getCodePointer();
+                
+                //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                break;  
                 
             case "BLOCK": 
                 //.
@@ -343,11 +354,13 @@ public class CodeGeneration {
             if (!within_jump) starting_pointer = execution_environment.getCodePointer(); 
         
 
-            if (lhs_nonterminal_name.equals("IsEqual")) {
+            if ( (lhs_nonterminal_name.equals("IsEqual")) || (lhs_nonterminal_name.equals("IsNotEqual")) )  {
                 
 
-                pout("While - IsEqual");
-                processIsEqual(lhs_nonterminal);                
+                pout("While - IsEqual/IsNotEqual");
+                if (lhs_nonterminal_name.equals("IsEqual"))  processIsEqual(lhs_nonterminal);  
+                else if (lhs_nonterminal_name.equals("IsNotEqual")) processIsNotEqual(lhs_nonterminal);
+                              
 
                 if (!within_jump) {
                     
@@ -373,9 +386,6 @@ public class CodeGeneration {
                     //gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(addr_for_while_comparison);
                     //gen_branchNBytes_D0_BNE(jumpback_distance_hex);
                     
-
-
-
                 } // Recursion will continue normally from here
             } 
 
@@ -559,40 +569,23 @@ public class CodeGeneration {
     public void processIsEqualAssignment ( NonTerminal IsEqual, String assignment_location ) throws CodeGenerationException {
         Production lhs = IsEqual.getASTChild(0);
         Production rhs = IsEqual.getASTChild(1);
+
         if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) { 
-            
             String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
             String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsEqual.getScopeName()); // Create first temp addr
-            
             Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
             Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
-
             String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, lhs_terminal, 0);
             String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsEqual, rhs_terminal, 1);
 
-            // LHS goes in X Register
-
-
-            if (constants.contains(lhs_terminal_name)) {
-                gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
-            } else {
-                gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
-            }
-
-            if (constants.contains(rhs_terminal_name)) {
-                gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
-            } else {
-                gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
-            }
-
-            // IF CONSTANT, USE A2, e.g., DIGIT, BOOLEANS 
-            //gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
-            //gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
-            //gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
-             
+            if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            else gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+        
+            if (constants.contains(rhs_terminal_name)) gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
+            
             gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register
-
             gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
 
                 // IF EQUAL (12 bytes)
@@ -603,18 +596,51 @@ public class CodeGeneration {
                     gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
                     gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
                     gen_branchNBytes_D0_BNE("05"); // BRANCH FORWARD 5 Bytes -- which IT WILL DO because it is guaranteed false --> SKIPS "IF FALSE"
-
-            //IF FALSE (Will be skipped if TRUE due to force flip ) (5 bytes)
             gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load FALSE constant into Accumulator
-            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); 
 
             gen_loadAccumulatorFromMemory_AD_LDA(temp_addr_2);// Temp Addr 2, at this point, contains answer to whether equal or not
             //gen_loadAccumulatorWithConstant_A9_LDA(temp_addr_2); 
             gen_storeAccumulatorIntoMemory_8D_STA(assignment_location); // Store answer in assignment location, the location of the variable in which the result of this comparison is being stored
-
         }
-    
+    }
 
+
+    public void processIsNotEqualAssignment ( NonTerminal IsNotEqual, String assignment_location ) throws CodeGenerationException {
+        Production lhs = IsNotEqual.getASTChild(0);
+        Production rhs = IsNotEqual.getASTChild(1);
+        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) { 
+            String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsNotEqual.getScopeName()); // Create first temp addr
+            String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsNotEqual.getScopeName()); // Create first temp addr
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
+            String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsNotEqual, lhs_terminal, 0);
+            String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsNotEqual, rhs_terminal, 1);
+
+            if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            else gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+
+            if (constants.contains(rhs_terminal_name)) gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
+            
+            // IF CONSTANT, USE A2, e.g., DIGIT, BOOLEANS 
+            //gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            //gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+            //gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+             
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register
+            gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
+                gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load TRUE constant into Accumulator
+                gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+                    gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
+                    gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer());
+                    gen_branchNBytes_D0_BNE("05"); // BRANCH FORWARD 5 Bytes -- which IT WILL DO because it is guaranteed false --> SKIPS "IF FALSE"
+            gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load FALSE constant into Accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+            gen_loadAccumulatorFromMemory_AD_LDA(temp_addr_2);// Temp Addr 2, at this point, contains answer to whether equal or not
+            gen_storeAccumulatorIntoMemory_8D_STA(assignment_location); // Store answer in assignment location, the location of the variable in which the result of this comparison is being stored
+        }
     }
 
     
@@ -671,13 +697,44 @@ public class CodeGeneration {
 
     }
 
-    
-    //public boolean processIsEqual (NonTerminal IsEqual, String assignment_locatio, boolean is_assignment) {
+    public void processIsNotEqual( NonTerminal IsNotEqual) throws CodeGenerationException {
+        Production lhs = IsNotEqual.getASTChild(0);
+        Production rhs = IsNotEqual.getASTChild(1);
 
-    //}
+        if (lhs.getProdKind().equals("Terminal") && rhs.getProdKind().equals("Terminal")) {     
+            String temp_addr_1 = execution_environment.performStaticTableInsertion("ta1" + execution_environment.getTemporaryValueCounter(), IsNotEqual.getScopeName()); // Create first temp addr
+            String temp_addr_2 = execution_environment.performStaticTableInsertion("ta2" + execution_environment.getTemporaryValueCounter(), IsNotEqual.getScopeName()); // Create first temp addr
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            Terminal rhs_terminal = (Terminal) rhs; String rhs_terminal_name = rhs_terminal.getName();
+            String lhs_terminal_addressing_component = getTerminalAddressingComponent(IsNotEqual, lhs_terminal, 0);
+            String rhs_terminal_addressing_component = getTerminalAddressingComponent(IsNotEqual, rhs_terminal, 1);
+            // Load LHS into X Register
+            if (constants.contains(lhs_terminal_name)) gen_loadXRegisterWithValue_A2_LDX(lhs_terminal_addressing_component); // Load X Register with LHS 
+            else gen_loadXRegisterFromAddress_AE_LDX(lhs_terminal_addressing_component); // LOAD LHS
+            // Load RHS into Accumulator
+            if (constants.contains(rhs_terminal_name)) gen_loadAccumulatorWithConstant_A9_LDA(rhs_terminal_addressing_component); // Load RHS constant into Accumulator
+            else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
+
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register  // THE COMPARISON=
+            gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
+                gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // ONLY CHANGE IN NOT EQUAL
+                gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+                addr_for_while_comparison = temp_addr_2; 
+                    gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
+                    gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
+                    gen_branchNBytes_D0_BNE("05"); // BRANCH FORWARD 5 Bytes -- which IT WILL DO because it is guaranteed false --> SKIPS "IF FALSE"
+            gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load FALSE constant into Accumulator
+            gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
+            gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
+            gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_2);
+        }
+    }
+
+   
+
 
     // ADDITION
-    
     public void processADDITIONAssignment (NonTerminal ADDITION, String temp_addition_addr, String assignment_location, boolean within_nested_addition) throws CodeGenerationException {
             
         //for (int i = 0; i <= ADDITION.getASTChildren().size() - 1; i++) { System.out.println("Addition Child: " + ADDITION.getASTChild(i).getName() + " : " + ADDITION.getASTChild(i).getProdKind()); }

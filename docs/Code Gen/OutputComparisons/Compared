@@ -67,3 +67,21 @@ A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D
 A2 F0 A9 F0 8D 40 00 EC 40 00 D0 0C A9 F0 8D 41 00 A2 FF EC F5 00 D0 05 A9 F5 8D 41 00 A2 F0 EC 41 00 D0 11 A9 00 8D 42 00 A0 EE A2 02 FF A2 F5 EC 41 00 D0 CB A9 00 8D 43 00 A9 00 8D 44 00
 A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 11 A9 00 8D 3E 00 A0 EB A2 02 FF A9 F5 EC 3C 00 D0 DC A9 00 8D 3F 00 00 00 
 A2 F0 A9 F0 8D 40 00 EC 40 00 D0 0C A9 F0 8D 41 00 A2 FF EC F5 00 D0 05 A9 F5 8D 41 00 A2 F0 EC 41 00 D0 11 A9 00 8D 43 00 A0 EB A2 02 FF A9 F5 EC 41 00 D0 DC A9 00 8D 44 00 A9 00 8D 45 00
+
+
+
+------
+If Not Equal, int a, a = 1 -- 
+
+Compared to... If Is Equal, int a, a = 1
+
+A2 F0 A9 F5 8D 2F 00 EC 2F 00 D0 0C A9 F5 8D 30 00 A2 FF EC F5 00 D0 05 A9 F0 8D 30 00 A2 F0 EC 30 00 D0 0A A9 00 8D 31 00 A9 01 8D 31 00  // Example
+A2 F0 A9 F5 8D 2F 00 EC 2F 00 D0 0C A9 F0 8D 30 00 A2 FF EC F5 00 D0 05 A9 F5 8D 30 00 A2 F0 EC 30 00 D0 0A A9 00 8D 31 00 A9 01 8D 31     // Example of IsEqual 
+
+A2 F0 A9 F5 8D 2F 00 EC 2F 00 D0 0C A9 F0 8D 30 00 A2 FF EC F5 00 D0 05 A9 F5 8D 30 00 A2 F0 EC 30 00 D0 0A A9 00 8D 32 00 A9 01 8D 32 00   // Mine for IsEqual
+
+So instead of loading the accumulator with FALSE constant, as is the case with not equal, you store the TRUE constant 
+Store in temp location, Store FALSE constant in X Register, Compare FALSE Constant against location for the FALSE constant, BNE 5 bytes over loading of accumulator with false constant and storing in new temp value
+Branch again, 0A aka 10 Bytes, which would take you over and past the length of the program and now its over
+
+Only difference is you are loading the Accumulator with Constant from FALSE instead of true
