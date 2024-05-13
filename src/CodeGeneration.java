@@ -253,12 +253,8 @@ public class CodeGeneration {
     public void processAssignmentStatement (NonTerminal AssignmentStatement) throws CodeGenerationException {
         
         // Decls 
-        ArrayList<String> op_codes = new ArrayList<>(); 
         ArrayList<String> assignment_children = getProductionChildrenArrayList(AssignmentStatement);
         Terminal identifier_terminal = (Terminal) AssignmentStatement.getASTChild(0);
-        String type = getIdentifierType(AssignmentStatement, identifier_terminal); 
-        SymbolTableScope terminal_scope = getScopeOfTerminal(AssignmentStatement, identifier_terminal);
-
         ArrayList<Production> identifier_nt_astchildren = AssignmentStatement.getASTChildren();
         
         //String identifiers_temporary_location = execution_environment.retrieveTempLocationFromChildOfNonTerminal(AssignmentStatement, 0); // LHS, where value will be assigned
@@ -323,13 +319,14 @@ public class CodeGeneration {
                 //System.out.println("Heap Pointer: " + heap_pointer);
                 execution_environment.insertIntoStringDeclarations(terminals_string_value, heap_pointer); // Store in string_declarations hashmap 
                 ArrayList<String> hex_arraylist_actually = new ArrayList<>(Arrays.asList(hex_arraylist));
-                execution_environment.insertImmediately(hex_arraylist_actually, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
+                characterTerminalHandler(CHARACTER_terminal);
+                //execution_environment.insertImmediately(hex_arraylist_actually, "Heap"); // insert it into code_sequence without waiting, so we can specify Heap insertion
             }
             
             // Need to update heap pointer after being done, need to full on return after being in this elif block, need to store pointer for string in string_declarations map 
             String heap_pointer_hex = String.format("%02X", heap_pointer); System.out.println("Heap Pointer Hex: " + heap_pointer_hex);
 
-            processCHARACTERAssignment(CHARACTER_terminal, heap_pointer_hex, identifiers_temporary_location);  
+            //characterTerminalHandler(CHARACTER_terminal);//(CHARACTER_terminal, heap_pointer_hex, identifiers_temporary_location);  
         }
 
         else if (assignment_children.contains("ADDITION")) {            
@@ -483,6 +480,28 @@ public class CodeGeneration {
                 }
                 
                 // Recursion will continue normally from here
+            } else if (lhs_nonterminal_name.equals("IsNotEqual")) {
+                /**
+                NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
+                int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                String jump_distance_hex = String.format("%02X", jump_distance);
+                pout("Jump Distance Calculated: " + jump_distance + ", hex: " + jump_distance_hex);
+                processIsEqual(if_statement_lhs_nonterminal, jump_distance_hex);                
+                **/
+                processIsNotEqual(if_statement_lhs_nonterminal);                
+
+                if (!within_jump) {
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) if_statement_rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                }
+                
+                // Recursion will continue normally from here
             }
 
         
@@ -551,9 +570,10 @@ public class CodeGeneration {
 
         } else if (print_child.getName().equals("CHARACTER")) {
             // unchecked if imporvement
-            Terminal character_terminal = (Terminal) PrintStatement.getASTChild(0); 
+            Terminal character_terminal = (Terminal) PrintStatement.getASTChild(0);  
             String hex_location = characterTerminalHandler(character_terminal);             pout("hex_location: " + hex_location);
             gen_loadYRegisterFromConstant_AO_LDY(hex_location);
+            characterTerminalHandler(character_terminal);  
             gen_finishPrintStatment("string"); 
         } else if (print_child.getName().equals("DIGIT")) {
             Terminal digit_terminal = (Terminal) PrintStatement.getASTChild(0);
@@ -585,6 +605,7 @@ public class CodeGeneration {
             else gen_loadAccumulatorFromMemory_AD_LDA(rhs_terminal_addressing_component);
             
             gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_1); // Store into NEW Temp addr, the false pointer in Accumulator 
+            
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_1); // Compare Temp Addr 1 with what is in X Register
             gen_branchNBytes_D0_BNE("0C"); // Branch 12 bytes If NOT Equal 
 
@@ -724,7 +745,7 @@ public class CodeGeneration {
                     gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
                     gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
                     gen_branchNBytes_D0_BNE("05"); // BRANCH FORWARD 5 Bytes -- which IT WILL DO because it is guaranteed false --> SKIPS "IF FALSE"
-            gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer()); // Load FALSE constant into Accumulator
+            gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getTruePointer()); // Load FALSE constant into Accumulator
             gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
             gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
             gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temp_addr_2);
@@ -767,13 +788,19 @@ public class CodeGeneration {
 
                 // = 3 + a
                 } else if (ADDITION.getASTChild(1).getName().equals("IDENTIFIER")) {
-                    String scope = ADDITION.getScopeName();
-                    String id = ((Terminal) ADDITION.getASTChild(1)).getTokenAttribute(); 
-                    String static_table_variable_name = id + "@" + scope; 
-                    String static_table_temp_location = execution_environment.retrieveTempLocationFromStaticTable(static_table_variable_name);
+                    //String scope = ADDITION.getScopeName();
+                    
+
+                    Terminal identifier_terminal = (Terminal) ADDITION.getASTChild(1);
+                    String type = getIdentifierType(ADDITION, identifier_terminal); 
+                    pout("Addition AST Children Before Messing Around: " + type);
+                    String scope_location = getLocation(ADDITION, identifier_terminal);
+                    String identifiers_temporary_location = execution_environment.retrieveTemporaryLocation(identifier_terminal.getTokenAttribute(), scope_location);
+
+
                     //System.out.println("Second Value is Identifier: " + id);
-                
-                    gen_loadAccumulatorFromMemory_AD_LDA(static_table_temp_location); // Load value for a into accumulator
+                    pout("Assignment static_table_temp_location: " + identifiers_temporary_location);
+                    gen_loadAccumulatorFromMemory_AD_LDA(identifiers_temporary_location); // Load value for a into accumulator
                     gen_addWithCarryToAccum_6D_ADC(temp_addition_addr); // Add contents of temporary addition address to accumulator  
                     gen_storeAccumulatorIntoMemory_8D_STA(temp_addition_addr); // Store accumulator value in our temporary location for addition
                     
@@ -789,6 +816,7 @@ public class CodeGeneration {
         }  
         
         within_nested_addition = false;
+        pout("Assignment Location: " + assignment_location);
         gen_loadAccumulatorFromMemory_AD_LDA(temp_addition_addr); // Load accumulator with value at address
         gen_storeAccumulatorIntoMemory_8D_STA(assignment_location); // Store in location for id
         //System.out.println("Returning addition Final");
@@ -981,10 +1009,10 @@ public class CodeGeneration {
 
     public String getIdentifierType (NonTerminal parent, Terminal child) throws CodeGenerationException {
         SymbolTableScope scope_of_identifier = getScopeOfTerminal(parent, child);
-        
+        pout("Child Name: " + child.getName());
         try {
-            SymbolTableEntry entry = scope_of_identifier.retrieveEntry(child.getTokenAttribute());
-            System.out.println( " ( " + child.getTokenAttribute() + " )  Found Entry: " + entry.getDetailsString());
+            SymbolTableEntry entry = symbol_table.retrieveEntryFromAccessibleScopes(scope_of_identifier, child);
+            System.out.println( " ( " + child.getTokenAttribute() + " )  Found Entry: " + entry.getDetailsString() ); //entry.getDetailsString());
             System.out.println( " Scope Name: " + scope_of_identifier.getName());
             return entry.getType();
 
@@ -997,9 +1025,9 @@ public class CodeGeneration {
 
     public String getLocation (NonTerminal parent, Terminal child) throws CodeGenerationException {
         SymbolTableScope scope_of_identifier = getScopeOfTerminal(parent, child);
-        
+        pout("Child Name: " + child.getName());
         try {
-            SymbolTableEntry entry = scope_of_identifier.retrieveEntry(child.getTokenAttribute());
+            SymbolTableEntry entry = symbol_table.retrieveEntryFromAccessibleScopes(scope_of_identifier, child);
             System.out.println( " ( " + child.getTokenAttribute() + " )  Found Entry: " + entry.getDetailsString());
             System.out.println( " Scope Name: " + scope_of_identifier.getName());
             return scope_of_identifier.getName();
@@ -1018,11 +1046,21 @@ public class CodeGeneration {
         if (exists_in_string_declarations) hexadecimal_location_in_heap = String.format("%02X", (execution_environment.getAddressFromStringDeclarations(string_stored_terminal)));
         else if (within_jump) { hexadecimal_location_in_heap = String.format("%02X", execution_environment.getHeapPointer() - hexadecimal_array_of_string.length - 1); } // Not actually going to store, but will provide location where it will be stored
         else { 
-            execution_environment.insertImmediately(new ArrayList<>(Arrays.asList(hexadecimal_array_of_string)), "Heap");
+            //execution_environment.insertImmediately(new ArrayList<>(Arrays.asList(hexadecimal_array_of_string)), "Heap");
             int_location_in_heap = execution_environment.getHeapPointer() - hexadecimal_array_of_string.length - 1;
             execution_environment.insertIntoStringDeclarations(string_stored_terminal, int_location_in_heap);
+            int retrievd_location_from_static_table = execution_environment.getAddressFromStringDeclarations(string_stored_terminal);
             hexadecimal_location_in_heap = String.format("%02X", int_location_in_heap); 
-        }
+            pout("retrievd_location_from_static_table: " + retrievd_location_from_static_table);
+            pout("hexadecimal location in string: " + hexadecimal_location_in_heap);
+            pout(execution_environment.getValueFromCodeSequence(int_location_in_heap + 6));
+            pout(execution_environment.getCodeSequenceString());
+            execution_environment.performHeapInsertion(hexadecimal_array_of_string);
+        }   
+        pout("hexadecimal location in string: " + hexadecimal_location_in_heap);
+        pout("getHeapPointer: " + execution_environment.getHeapPointer());
+
+        //pout(execution_environment.getValueFromCodeSequence(int_location_in_heap));
         return hexadecimal_location_in_heap; 
     }
 

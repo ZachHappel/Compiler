@@ -346,6 +346,8 @@ public class ExecutionEnvironment {
         updateRemainingSpace(instructions, "Stack");
     }
 
+
+    // Requires hexadecimal values as it does not convert itself
     public void performHeapInsertion (String[] instructions) throws CodeGenerationException {
         String[] heap_instructions = Arrays.copyOf(instructions, instructions.length + 1); // copy instructions
         int instructions_length = heap_instructions.length; // instructions + "00" 
