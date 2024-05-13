@@ -926,7 +926,10 @@ public class CodeGeneration {
 
         
         if (terminal.getName().equals("IDENTIFIER")) { 
-            addressing_component = execution_environment.retrieveTemporaryLocation(getIdentifierScopeName(parent, terminal), terminal.getTokenAttribute());    
+            String id_scope_name = getIdentifierScopeName(parent, terminal);
+            pout("ID Scope Name: " + id_scope_name);
+            pout("Token Attribute: " + terminal.getTokenAttribute()); 
+            addressing_component = execution_environment.retrieveTemporaryLocation(terminal.getTokenAttribute(), id_scope_name); 
             pout("Addressing COmpontnet: " + addressing_component );
         } else if (terminal.getName().equals("DIGIT")) { addressing_component= "0" + terminal.getTokenAttribute(); // Digit formatted properly
 
