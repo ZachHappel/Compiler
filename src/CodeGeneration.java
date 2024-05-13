@@ -16,9 +16,13 @@ public class CodeGeneration {
     int stored_heap_pointer = 0; 
     boolean within_jump = false;
     
-    int blocks_explored = 0;
+    String addr_for_while_comparison = ""; 
+    ArrayList<String> to_insert_after_block = new ArrayList<String>();
+    boolean should_insert_after_block = false; 
+    int code_pointer_before_block = 0; 
+    int code_pointer_after_block = 0; 
 
-
+    int current_max_jump = 0; 
     public ArrayList<String> constants = new ArrayList<String>(Arrays.asList("KEYWORD_TRUE", "KEYWORD_FALSE", "DIGIT")); // TODO: Add DIGIT?
 
     // REMEMBER: Make it fluid, not rigid. 
@@ -34,13 +38,30 @@ public class CodeGeneration {
             if (!is_terminal) {
                 NonTerminal nt = (NonTerminal) c;     
                 System.out.println("NonTerminal Name: " + nt.getName() + ", Kids: " + childrenAsString(nt));
-                
                 nonterminalRouter(nt);
                 
             }
-
+            
             System.out.println("Traversing again...");
+            
+            if (c.getProdKind().equals("NonTerminal")) { 
+                if (((NonTerminal) c).getName().equals("BLOCK")) {
+                    code_pointer_before_block = execution_environment.getCodePointer();
+                }
+            }
             traverseIntermediateRepresentation(c, index + 1);
+
+            if (c.getProdKind().equals("NonTerminal")) {
+                if ( ((NonTerminal) c).getName().equals("BLOCK")) {
+                    pout("Just Exitted Block");
+                    if ( should_insert_after_block ) {
+                        code_pointer_after_block = execution_environment.getCodePointer();  pout("Pointer Before Block: " + code_pointer_before_block + ",  Pointer After Block: " + code_pointer_after_block);
+                        execution_environment.insertImmediately(to_insert_after_block, "Code"); // Insert ArrayList into code_sequence at location of "Code"
+                        should_insert_after_block = false;  // Flip it so it can be used again without issue
+                        to_insert_after_block.clear();     // Empty arraylist
+                    }
+                }
+            }
         }
     }
 
@@ -67,6 +88,10 @@ public class CodeGeneration {
                 processIf(nt);
                 break;
 
+            case "While":
+                processWhile(nt);
+                pout("\n\n\n\n\nDONE WITH WHILE\n\n\n\n");
+                break;
             // Keep under those which use IsEqual
             case "IsEqual":
                 // do something
@@ -127,9 +152,8 @@ public class CodeGeneration {
                 break; 
 
             case "PrintStatement": 
-                processPrintStatement(nt);
+            pout("Current Code Pointer: " + execution_environment.getCodePointer());
                 jump_distance = execution_environment.getCodePointer();
-                
                 //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                 break;  
                 
@@ -140,6 +164,9 @@ public class CodeGeneration {
                 //performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
                 break; 
                 
+            case "While":
+                processWhile(nt);
+                jump_distance = execution_environment.getCodePointer();
                 // Keep under those which use IsEqual
             case "IsEqual":
                 processIsEqual(nt);
@@ -179,6 +206,7 @@ public class CodeGeneration {
     public void processBlock (NonTerminal Block) throws CodeGenerationException {
         Production block_production = (Production) Block; 
         traverseIntermediateRepresentation(block_production, 0);
+        pout("Could add now...");
         /*
         ArrayList<Production> block_children = Block.getASTChildren(); 
         for (int i = 0; i <= block_children.size(); i++) {
@@ -303,6 +331,85 @@ public class CodeGeneration {
  
     }
 
+    public void processWhile (NonTerminal While) throws CodeGenerationException {
+         
+        System.out.println("processWhile");
+        Production lhs = While.getASTChild(0);
+        Production rhs = While.getASTChild(1);
+        int starting_pointer = -1;
+        if (lhs.getProdKind().equals("NonTerminal")) {
+            NonTerminal lhs_nonterminal = (NonTerminal) lhs; String lhs_nonterminal_name = lhs_nonterminal.getName(); 
+            
+            if (!within_jump) starting_pointer = execution_environment.getCodePointer(); 
+        
+
+            if (lhs_nonterminal_name.equals("IsEqual")) {
+                
+
+                pout("While - IsEqual");
+                processIsEqual(lhs_nonterminal);                
+
+                if (!within_jump) {
+                    
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block) + 7; // get jump distance
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                    System.out.println("End of While Loop, starting pos: " + starting_pointer);
+                    System.out.println("End of While Loop, code pointer: " + execution_environment.getCodePointer());
+                    int jumpback_distance = starting_pointer - execution_environment.getCodePointer(); 
+                    String jumpback_distance_hex = String.format("%02X", jumpback_distance & 0xFF);
+                    
+                    to_insert_after_block.add("A9"); to_insert_after_block.add(execution_environment.getFalsePointer());
+                    to_insert_after_block.add("EC"); to_insert_after_block.add(addr_for_while_comparison); to_insert_after_block.add("00");
+                    to_insert_after_block.add("D0"); to_insert_after_block.add(jumpback_distance_hex);
+                    should_insert_after_block = true; // Will be triggered by main loop when recursion exits the NonTerminal for BLOCK
+                    System.out.println("End of While Loop, jumpback_distance: " + jumpback_distance);
+                    //gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getFalsePointer());
+                    //gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(addr_for_while_comparison);
+                    //gen_branchNBytes_D0_BNE(jumpback_distance_hex);
+                    
+
+
+
+                } // Recursion will continue normally from here
+            } 
+
+        /*  
+        } else if (lhs.getProdKind().equals("Terminal")) {
+            Terminal lhs_terminal = (Terminal) lhs; String lhs_terminal_name = lhs_terminal.getName();
+            if (lhs_terminal_name.equals("KEYWORD_TRUE") || lhs_terminal_name.equals("KEYWORD_FALSE")) {
+                String terminal_addressing_component = getTerminalAddressingComponent(While, if_statement_lhs_terminal, 0); 
+                String temporary_address = execution_environment.performStaticTableInsertion("while" + execution_environment.getTemporaryValueCounter(), While.getScopeName()); // Create first temp addr
+
+                gen_loadAccumulatorWithConstant_A9_LDA(terminal_addressing_component); 
+                gen_storeAccumulatorIntoMemory_8D_STA(temporary_address);
+                gen_loadXRegisterWithValue_A2_LDX(execution_environment.getTruePointer());
+                gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(temporary_address);
+                
+                if (!within_jump) {
+                    within_jump = true; 
+                    NonTerminal block = (NonTerminal) while_statement_rhs; // Block 
+                    int jump_distance = nonterminalRouterWithJumpWatcher(block); // get jump distance
+                    String jump_distance_hex = String.format("%02X", jump_distance);
+                    performRestoreOfPreviousValuesToExecutionEnvironment (deep_copy_code_sequence, stored_code_pointer, stored_stack_pointer, stored_heap_pointer);
+                    pout("Setting Jump Distance: " + jump_distance + ", and in hex: " + jump_distance_hex); 
+                    gen_branchNBytes_D0_BNE(jump_distance_hex); // Branch 12 bytes If NOT Equal 
+                    within_jump = false; 
+                }
+            }
+        } */
+
+            
+          
+            
+        }
+    }
+
     public void processIf (NonTerminal If) throws CodeGenerationException {
         /** 
          * Something 
@@ -397,7 +504,7 @@ public class CodeGeneration {
     }
     
     public void processPrintStatement (NonTerminal PrintStatement) throws CodeGenerationException {
-        
+        pout("processPrintStatement");
         /*
         * Currently only prints IDENTIFIERS
         * If String is argument, e.g., print("string") --> It would fail
@@ -544,7 +651,7 @@ public class CodeGeneration {
                 // IF EQUAL (12 bytes)
                 gen_loadAccumulatorWithConstant_A9_LDA(execution_environment.getTruePointer()); // Load TRUE constant into Accumulator
                 gen_storeAccumulatorIntoMemory_8D_STA(temp_addr_2); // Store in NEW TEMP 2
-
+                addr_for_while_comparison = temp_addr_2; 
                     // Force Flip
                     gen_loadXRegisterWithValue_A2_LDX("FF"); // 255 which is 00 in code_sequence
                     gen_compareValueAtAddressWithXRegister_EC_ArrayList_CPX(execution_environment.getFalsePointer()); // Load FALSE constant as address (not sure if the constant as address is what guarantees flip or the if it does reference false in heap, nevertheless it is false)
@@ -781,11 +888,7 @@ public class CodeGeneration {
     }
 
     public void performRestoreOfPreviousValuesToExecutionEnvironment (String[] deep_copy_code_sequence, int stored_code_pointer, int stored_stack_pointer, int stored_heap_pointer) {
-        //pout("Blocks Explored: " + blocks_explored);
-        if (blocks_explored != 0) {
-            //blocks_explored = blocks_explored - 1;
-            return;
-        } 
+        
 
         pout("Performing Restore");
         execution_environment.restoreCodeSequenceValues(deep_copy_code_sequence); // Fill array back with the stored values
