@@ -1,4 +1,4 @@
-# Compiler (NOTE: If you are reading this right now, I am currently programming and am going to be merging the *um* branch over in a few... I just had to create it.. Long story)
+# *[UPDATE:* ***NAPPING]*** If you are reading this right now, I am currently programming and am going to be merging the *um* branch over in a few... I just had to create it.. Long story... This is the most tedious programming I have ever had to deal with. Brutal. But we persist...
 Compiler written in Java.
 
 BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
