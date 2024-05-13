@@ -164,6 +164,19 @@ public class ExecutionEnvironment {
         return temp_addr; 
     }
 
+
+    public String retrieveTemporaryLocation (String identifier_variable, String identifier_scope_name) {
+        String static_table_variable_name = identifier_variable + "@" + identifier_scope_name; 
+        String temp_location = retrieveLocationFromStaticTable(static_table_variable_name);   
+        return temp_location; 
+    }
+
+    private String retrieveLocationFromStaticTable (String variable_scope_combination) {
+        return reversed_static_table.get(variable_scope_combination); 
+    }
+
+
+    
     
     public void backpatch() throws CodeGenerationException {
         
@@ -278,7 +291,7 @@ public class ExecutionEnvironment {
     // Takes in op_codes array and returns an empty one after insertiom 
     public ArrayList<String> insertImmediately (ArrayList<String> op_codes, String location) throws CodeGenerationException {
         //if (op_codes.size() == 0) return new ArrayList<String>(); // If empty, do not add
-        System.out.println("Insert Immediately: " + op_codes);
+        //System.out.println("Insert Immediately: " + op_codes);
         
         String[] instructions = op_codes.toArray(new String[0]);
         System.out.println("Instructions Array: " + Arrays.toString(instructions));
@@ -286,11 +299,11 @@ public class ExecutionEnvironment {
 
             case "Code":
                 if (codeInsertionPossible(instructions, "Code")) {
-                    System.out.println("Before insertion: Code pointer at " + getCodePointer());
-                    System.out.println("Inserting: " + Arrays.toString(instructions));
+                    //System.out.println("Before insertion: Code pointer at " + getCodePointer());
+                    //System.out.println("Inserting: " + Arrays.toString(instructions));
                     performCodeInsertion(instructions);
-                    System.out.println("After insertion: Code pointer at " + getCodePointer());
-                    System.out.println("Current code sequence: " + Arrays.toString(getCodeSequence()));
+                    //System.out.println("After insertion: Code pointer at " + getCodePointer());
+                    //System.out.println("Current code sequence: " + Arrays.toString(getCodeSequence()));
                     break;
                 } else throw new CodeGenerationException("ExecutionEnvironment, insert(), case: `Code`", " Unable to insert into `Code`.\n\n  ---\n  Instructions: " + Arrays.toString(instructions) + "\n  Bytes Remaining: " + getRemainingBytes() + "/256 Bytes\n" +  getCodeSequenceString()) ;
                 
@@ -309,10 +322,10 @@ public class ExecutionEnvironment {
         }
 
         op_codes = new ArrayList<String>();
-        System.out.println("Insert Immediately: RETURNING" );
-        System.out.println("Code Pointer Now: " + getCodePointer() );
+        //System.out.println("Insert Immediately: RETURNING" );
+        //System.out.println("Code Pointer Now: " + getCodePointer() );
         String codeseq = String.join(" ", this.code_sequence);
-        System.out.println("Sequence to String: " + codeseq );
+        //System.out.println("Sequence to String: " + codeseq );
 
         return new ArrayList<String>(); 
 
