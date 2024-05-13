@@ -1,4 +1,4 @@
-# Compiler (NOTE: See *semantic-analysis* branch)
+# Compiler (NOTE: If you are reading this right now, I am currently programming and am going to be merging the *um* branch over in a few... I just had to create it.. Long story)
 Compiler written in Java.
 
 BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
