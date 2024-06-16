@@ -1,4 +1,4 @@
-# **[Note: See Code-Gen branch for latest]**
+# **6502(a) Compiler**
 Compiler written in Java.
 
 BNF notation of our language, https://labouseur.com/courses/compilers/grammar.pdf
