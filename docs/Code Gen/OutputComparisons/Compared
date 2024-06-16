@@ -1,0 +1,87 @@
+A9 F5 8D 3A 00 A9 F5 8D 3B 00 A9 F5 8D 3B 00 AE 3B 00 A9 F5 8D 3C 00 EC 3C 00 D0 OC A9 FA 8D 3D 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3D 00 AD 3D 00 8D 3A 00 AC 3A 00 A2 02 FF 00 00
+A9 F5 8D 3A 00 A9 F5 8D 3B 00 A9 F5 8D 3B 00 AE 3B 00 A9 F5 8D 3C 00 EC 3C 00 D0 0C A9 F0 8D 3D 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3D 00 AD 3D 00 8D 3A 00 AC 3A 00 A2 02 FF 00 00 
+A9 F5 8D 3A 00 A9 F5 8D 3B 00 A9 F5 8D 3B 00 AE 3B 00 A9 F5 8D 3C 00 EC 3C 00 D0 OC A9 F0 8D 3D 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3D 00 AD 3D 00 8D 3A 00 AC 3A 00 A2 02 FF
+
+
+A9 F5 8D 44 00 A9 F5 8D 45 00 A9 F5 8D 46 00 A9 F5 8D 44 00 A9 F5 8D 45 00 AE 44 00 A9 F5 8D 47 00 EC 47 00 D0 0C A9 F0 8D 48 00 A2 FF EC F5 00 D0 05 A9 F5 8D 48 00 AD 48 00 8D 46 00 AC 46 00 A2 02 FF 00
+A9 F5 8D 44 00 A9 F5 8D 45 00 A9 F5 8D 46 00 A9 F5 8D 44 00 A9 F5 8D 45 00 AE 44 00 A9 F0 8D 47 00 EC 47 00 D0 0C A9 F0 8D 48 00 A2 FF EC F5 00 D0 05 A9 F5 8D 48 00 AD 48 00 8D 46 00 AC 46 00 A2 02 FF 00
+
+A9 F5 8D 8E 00 A9 F5 8D 8F 00 A9 F5 8D 90 00 AE F0 00 A9 F0 8D 91 00 EC 91 00 D0 0C A9 F0 8D 92 00 A2 FF EC F5 00 D0 05 A9 F5 8D 92 00 AD 92 00 8D 8E 00 AE F5 00 A9 F5 8D 93 00 EC 93 00 D0 0C A9 F0 8D 94 00 A2 FF EC F5 00 D0 05 A9 F5 8D 94 00 AD 94 00 8D 8F 00 AE F0 00 A9 F5 8D 95 00 EC 95 00 D0 0C A9 F0 8D 96 00 A2 FF EC F5 00 D0 05 A9 F5 8D 96 00 AD 96 00 8D 90 00 AC 8E 00 A2 02 FF AC 8F 00 A2 02 FF AC 90 00 A2 02 FF
+A9 F5 8D 8B 00 A9 F5 8D 8C 00 A9 F5 8D 8D 00 A2 F0 A9 F0 8D 8E 00 EC 8E 00 D0 0C A9 F0 8D 8F 00 A2 FF EC F5 00 D0 05 A9 F5 8D 8F 00 AD 8F 00 8D 8B 00 A2 F5 A9 F5 8D 90 00 EC 90 00 D0 0C A9 F0 8D 91 00 A2 FF EC F5 00 D0 05 A9 F5 8D 91 00 AD 91 00 8D 8C 00 A2 F0 A9 F5 8D 92 00 EC 92 00 D0 0C A9 F0 8D 93 00 A2 FF EC F5 00 D0 05 A9 F5 8D 93 00 AD 93 00 8D 8D 00 AC 8B 00 A2 02 FF AC 8C 00 A2 02 FF AC 8D 00 A2 02 FF 00
+A9 F5 8D 8B 00 A9 F5 8D 8C 00 A9 F5 8D 8D 00 A2 02 A9 02 8D 8E 00 EC 8E 00 D0 0C A9 F0 8D 8F 00 A2 FF EC F5 00 D0 05 A9 F5 8D 8F 00 AD 8F 00 8D 8B 00 A2 F5 A9 F5 8D 90 00 EC 90 00 D0 0C A9 F0 8D 91 00 A2 FF EC F5 00 D0 05 A9 F5 8D 91 00 AD 91 00 8D 8C 00 A2 F0 A9 F5 8D 92 00 EC 92 00 D0 0C A9 F0 8D 93 00 A2 FF EC F5 00 D0 05 A9 F5 8D 93 00 AD 93 00 8D 8D 00 AC 8B 00 A2 02 FF AC 8C 00 A2 02 FF AC 8D 00 A2 02 FF 00
+
+
+
+A9 F5 8D 8B 00 A9 F5 8D 8C 00 A9 F5 8D 8D 00 A2 02 A9 02 8D 8E 00 EC 8E 00 D0 0C A9 F0 8D 8F 00 A2 FF EC F5 00 D0 05 A9 F5 8D 8F 00 AD 8F 00 8D 8B 00 A2 F5 A9 F5 8D 90 00 EC 90 00 D0 0C A9 F0 8D 91 00 A2 FF EC F5 00 D0 05 A9 F5 8D 91 00 AD 91 00 8D 8C 00 A2 F0 A9 F5 8D 92 00 EC 92 00 D0 0C A9 F0 8D 93 00 A2 FF EC F5 00 D0 05 A9 F5 8D 93 00 AD 93 00 8D 8D 00 AC 8B 00 A2 02 FF AC 8C 00 A2 02 FF AC 8D 00 A2 02 FF 00
+A9 F5 8D 8B 00 A9 F5 8D 8C 00 A9 F5 8D 8D 00 A2 02 A9 02 8D 8E 00 EC 8E 00 D0 0C A9 F0 8D 8F 00 A2 FF EC F5 00 D0 05 A9 F5 8D 8F 00 AD 8F 00 8D 8B 00 A2 F5 A9 F5 8D 90 00 EC 90 00 D0 0C A9 F0 8D 91 00 A2 FF EC F5 00 D0 05 A9 F5 8D 91 00 AD 91 00 8D 8C 00 A2 F0 A9 F5 8D 92 00 EC 92 00 D0 0C A9 F0 8D 93 00 A2 FF EC F5 00 D0 05 A9 F5 8D 93 00 AD 93 00 8D 8D 00 AC 8B 00 A2 02 FF AC 8C 00 A2 02 FF AC 8D 00 A2 02 FF 00 
+
+
+A9 6E 8D 0B 00 A9 EA 8D 0B 00 00 00
+
+
+A2 F0 A9 F0 8D 31 00 EC 31 00 D0 0C A9 F0 8D 32 00 A2 FF EC F5 00 D0 05 A9 F5 8D 32 00 A2 F0 EC 32 00 D0 0C A0 EA A2 02 FF A2 F5 EC 32 00
+A2 F0 A9 F0 8D 31 00 EC 31 00 D0 0C A9 F0 8D 32 00 A2 FF EC F5 00 D0 05 A9 F5 8D 32 00 A2 F0 EC 32 00 D0 05 A9 F5 EC 32 00 D0 DC A0 E3 A2 02 FF 00
+A2 F0 A9 F0 8D 31 00 EC 31 00 D0 0C A9 F0 8D 32 00 A2 FF EC F5 00 D0 05 A9 F5 8D 32 00 A2 F0 EC 32 00 D0 0C A0 EA A2 02 FF A2 F5 EC 32 00 D0 D0 00
+
+
+A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 05 A9 F5 EC 3C 00 D0 DC A0 EB A2 02 FF A9 00 8D 3D 00 A9 00 8D 3E 00 
+A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 0C A0 EE A2 02 FF A2 F5 EC 3C 00 D0 D0 A9 00 8D 3D 00 A9 00 8D 3E 00
+
+
+
+
+A2 F0 A9 F0 8D 31 00 EC 31 00 D0 0C A9 F0 8D 32 00 A2 FF EC F5 00 D0 05 A9 F5 8D 32 00 A2 F0 EC 32 00 D0 05 A9 F5 EC 32 00 D0 DC A0 EB A2 02 FF 00 
+A2 F0 A9 F0 8D 31 00 EC 31 00 D0 0C A9 F0 8D 32 00 A2 FF EC F5 00 D0 05 A9 F5 8D 32 00 A2 F0 EC 32 00 D0 0C A0 EE A2 02 FF A2 F5 EC 32 00 D0 D0 00
+                                                                                                                    
+
+A2 F0 A9 F0 8D 36 00 EC 36 00 D0 0C A9 F0 8D 37 00 A2 FF EC F5 00 D0 05 A9 F5 8D 37 00 A2 F0 EC 37 00       D0 0C A0 EE A2 02 FF A2 F5 EC 37 00 D0 D0 A9 00 8D 38 00                                                                                                                    
+A2 F0 A9 F0 8D 36 00 EC 36 00 D0 0C A9 F0 8D 37 00 A2 FF EC F5 00 D0 05 A9 F5 8D 37 00 A2 F0 EC 37 00       D0 05 A9 F5 EC 37 00 D0 DC A0 EB A2 02 FF A9 00 8D 38 00
+                                                                                                            
+
+
+                                                                                                            Axios branches 12, 
+                                                                                                            Loads Y register with the String
+                                                                                                            Load X Register with constant 02 to print string, FF print
+                                                                                                            Load X Register with False, compare to temp from isEqual
+                                                                                                            DO DO backwards 
+                                                                                                            ---
+
+                                                                                                            Everything that comes after 
+                                                                                                            --
+
+
+                                                                                                            I D0 05 instead of 12
+                                                                                                            I do loading accumulator with false
+                                                                                                            I  compare 37 temp
+                                                                                                                DO backwards
+                                                                                                                Load Y register with Hex for string, FF
+                                                                                                                Load accumulator with 00 and store it because it is for new int
+
+
+A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 0C A9 F5 EC 3C 00 D0 DC A9 00 8D 3E 00 A0 EB A2 02 FF A9 00 8D 3F 00 00
+A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 11 A9 00 8D 3D 00 A0 EE A2 02 FF A2 F5 EC 3C 00 D0 CB A9 00 8D 3E 00 00
+
+A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 0C A9 00 8D 3E 00 A0 EB A2 02 FF A9 F5 EC 3C 00 D0 DC A9 00 8D 3F 00 00
+
+
+A2 F0 A9 F0 8D 40 00 EC 40 00 D0 0C A9 F0 8D 41 00 A2 FF EC F5 00 D0 05 A9 F5 8D 41 00 A2 F0 EC 41 00 D0 11 A9 00 8D 42 00 A0 EE A2 02 FF A2 F5 EC 41 00 D0 CB A9 00 8D 43 00 A9 00 8D 44 00
+A2 F0 A9 F0 8D 3B 00 EC 3B 00 D0 0C A9 F0 8D 3C 00 A2 FF EC F5 00 D0 05 A9 F5 8D 3C 00 A2 F0 EC 3C 00 D0 11 A9 00 8D 3E 00 A0 EB A2 02 FF A9 F5 EC 3C 00 D0 DC A9 00 8D 3F 00 00 00 
+A2 F0 A9 F0 8D 40 00 EC 40 00 D0 0C A9 F0 8D 41 00 A2 FF EC F5 00 D0 05 A9 F5 8D 41 00 A2 F0 EC 41 00 D0 11 A9 00 8D 43 00 A0 EB A2 02 FF A9 F5 EC 41 00 D0 DC A9 00 8D 44 00 A9 00 8D 45 00
+
+
+
+------
+If Not Equal, int a, a = 1 -- 
+
+Compared to... If Is Equal, int a, a = 1
+
+A2 F0 A9 F5 8D 2F 00 EC 2F 00 D0 0C A9 F5 8D 30 00 A2 FF EC F5 00 D0 05 A9 F0 8D 30 00 A2 F0 EC 30 00 D0 0A A9 00 8D 31 00 A9 01 8D 31 00  // Example
+A2 F0 A9 F5 8D 2F 00 EC 2F 00 D0 0C A9 F0 8D 30 00 A2 FF EC F5 00 D0 05 A9 F5 8D 30 00 A2 F0 EC 30 00 D0 0A A9 00 8D 31 00 A9 01 8D 31     // Example of IsEqual 
+
+A2 F0 A9 F5 8D 2F 00 EC 2F 00 D0 0C A9 F0 8D 30 00 A2 FF EC F5 00 D0 05 A9 F5 8D 30 00 A2 F0 EC 30 00 D0 0A A9 00 8D 32 00 A9 01 8D 32 00   // Mine for IsEqual
+
+So instead of loading the accumulator with FALSE constant, as is the case with not equal, you store the TRUE constant 
+Store in temp location, Store FALSE constant in X Register, Compare FALSE Constant against location for the FALSE constant, BNE 5 bytes over loading of accumulator with false constant and storing in new temp value
+Branch again, 0A aka 10 Bytes, which would take you over and past the length of the program and now its over
+
+Only difference is you are loading the Accumulator with Constant from FALSE instead of true

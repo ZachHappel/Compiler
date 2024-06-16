@@ -1,0 +1,17 @@
+ {
+    int a
+    int b
+    int c
+    a = 1 
+    b = 1
+    c = 0
+     
+    if (a == b) {
+       print(a)
+       a = 2
+       print(a)
+       
+    }
+}$
+
+/*errors due to scope*/

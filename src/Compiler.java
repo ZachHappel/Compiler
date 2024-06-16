@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import javax.tools.Tool;
 
@@ -44,15 +45,13 @@ public class Compiler {
 
     // Args: filename, optional flag "-s"
     public static void main(String[] args) {
-        
-       
+    
         if (args.length > 2 || args.length == 0) Toolkit.endProgram("Invalid amount of arguments.\n (REQUIRED) Argument One: filename \n (OPTIONAL) Flags: '-t' for terse mode.");
         if (args.length == 2 && args[1].equals("-t")) {
             Toolkit.setIsVerbose(false);
         } else if (args.length == 2 && args[1].equals("-d")) {
             Toolkit.setIsDebugMode(true);
         }
-
 
         String file_path = args[0];
         String f_name = file_path.contains("/") ? (file_path.split("/"))[file_path.split("/").length - 1] : file_path; 
@@ -67,30 +66,45 @@ public class Compiler {
         for (int p = 0; p <= programs.size() - 1; p++) {
             byte[] program = programs.get(p);
             Toolkit.generateProgramOverview(programs.get(p), p);
-            //System.out.println("\nLexing Program " + (p + 1));
+
             ArrayList<Object> lexical_analysis_output = LexicalAnalysis.Lex(Toolkit, program);
             ArrayList<Token> token_stream = (ArrayList<Token>) lexical_analysis_output.get(0);
             Boolean successful_lex = (Boolean) lexical_analysis_output.get(1);
             String error_description = (String) lexical_analysis_output.get(2);
             
             if (successful_lex) {
+                
+                // Lex output
                 System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - LEXICAL ANALYSIS COMPLETE. \n");
+                Toolkit.printTokenStreamDetailed(token_stream);
+                
+                try {    
+                    // Parse
+                    Parse parse = new Parse(); 
+                    ArrayList<Production> derivation = parse.ParseTokens(token_stream, Toolkit);
+                    // Semantic Analysis
+                    SemanticAnalysis sa = new SemanticAnalysis();
+                    ArrayList<Object> AST_and_Symbol_Table = sa.performSemanticAnalysis(derivation, Toolkit);
+                    ArrayList<Production> AST = (ArrayList<Production>) AST_and_Symbol_Table.get(0);
+                    SymbolTable symbol_table = (SymbolTable) AST_and_Symbol_Table.get(1);
+                    
+                    // Code Generation
+                    CodeGeneration codegen = new CodeGeneration(); 
+                    codegen.performCodeGeneration(AST, symbol_table, Toolkit);
+                    
+
+                } catch (ParsingException | SemanticAnalysisException | CodeGenerationException e) {
+                    System.err.println(e.getMessage());
+                }
+
             } else {
                 System.out.println("\n\n(#) PROGRAM " + (p + 1) + " - ERROR OCCURRED DURING LEXICAL ANALYSIS");
                 System.out.println("(#) ERROR DESCRIPTION: \n\"" + error_description + "\""+"\n\n(#) INCOMPLETE TOKEN STREAM: ");
 
             }
 
-            Toolkit.printTokenStreamDetailed(token_stream);
-
             if (p != programs.size() - 1) System.out.println("\n Proceeding to next program...");
             
         }
-
-        
-        //LexicalAnalysis.Lex(Toolkit, fileName);
-        //LexicalAnalysis.Lex(Toolkit, fileName);
     }
-
-
 }

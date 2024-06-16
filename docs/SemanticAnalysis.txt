@@ -1,0 +1,67 @@
+// Creating an AST from the CST
+
+PreReq Knowledge:
+Lex/Parse prevent issue of incomplete BoolExpr, so there will always be a valid bool expr at this point.
+    BoolExprs are simple in our grammar,
+        Limited to (Expr boolop Expr) or boolval
+
+        When we go to perform semantic analysis, we ignore open and close paren, and add according to....
+
+        If WhileStatement, we add WhileStatment, then check children...
+            - Should be
+
+
+Each block is a new scope
+
+We need assignment statements, if statements, while statements, vardecl statements, print statements 
+
+BooleanExprs when within statments are defined as IfEqual IsNotEqual
+
+Groupings:
+Assignments
+While Statements
+
+
+
+Official Handlings:
+
+PrintStatement
+    When NonTerminal "PrintStatement" encountered...
+    Children will be:  KEYWORD_PRINT, SYMBOL_OPENPAREN, Expression, SYMBOL_STRINGEXPRBOUNDARY, SYMBOL_CLOSEPAREN
+
+    We take Expression, which houses a StringExpression, which then contains SYMBOL_STRINGEXPRBOUNDARY, a nested CharacterList/Character branch, and then another SYMBOL_STRINGEXPRBOUNDARY
+
+    Ultimately, we only want the Character NonTerminal 
+
+
+Notes To Self:
+
+print("hello") 
+    (CST) Semantic Analysis Results: 
+            [PrintStatement]
+                hello
+
+    (AST) Parse Results:
+            5     [PrintStatement] 
+                    6   < print >
+                    6   < ( >
+                    6     [Expression]
+                    7     [StringExpression]
+                        8   < " >
+                        8     [CharacterList]
+                        9     [Character]
+                            10   < h >
+                        9     [CharacterList]
+                            10     [Character]
+                            11   < e >
+                            10     [CharacterList]
+                            11     [Character]
+                                12   < l >
+                            11     [CharacterList]
+                                12     [Character]
+                                13   < l >
+                                12     [CharacterList]
+                                13     [Character]
+                                    14   < o >
+                        8   < " >
+                    6   < ) >

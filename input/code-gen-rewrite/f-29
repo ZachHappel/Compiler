@@ -1,0 +1,13 @@
+{   
+    int b
+    b = 1
+    int a
+    a = 1
+    while (true == true) {
+        a = 1 + a
+        print(a)
+    }
+    /*works too!! */
+    int r
+    int j
+}$

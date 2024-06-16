@@ -1,0 +1,433 @@
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4400 - Store the accumulator into memory at address $4400
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4500 - Store the accumulator into memory at address $4500
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4600 - Store the accumulator into memory at address $4600
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4400 - Store the accumulator into memory at address $4400
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4500 - Store the accumulator into memory at address $4500
+   BRK - Break
+
+   LDX $4400 - Load the X register from memory at address $4400, which contains 00
+   BRK - Break
+
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4700 - Store the accumulator into memory at address $4700
+   BRK - Break
+
+   CPX $4700 - Compare the X register with memory at address $4700, which contains 00
+   BRK - Break
+
+   BNE $0C - Branch n bytes if Z flag is 0, to skip 0C bytes
+   LDA #$F0 - Load the accumulator with constant F0
+   STA $4800 - Store the accumulator into memory at address $4800
+   BRK - Break
+
+   LDX #$FF - Load the X register with constant FF
+   CPX $F500 - Compare the X register with memory at address $F500, which contains 66
+   BRK - Break
+
+   BNE $05 - Branch n bytes if Z flag is 0, to skip 05 bytes
+   LDA #$F5 - Load the accumulator with constant F5
+   STA $4800 - Store the accumulator into memory at address $4800
+   BRK - Break
+
+   LDA $4800 - Load the accumulator from memory at address $4800, which contains 00
+   BRK - Break
+
+   STA $4600 - Store the accumulator into memory at address $4600
+   BRK - Break
+
+   LDY $4600 - Load the Y register from memory at address $4600, which contains 00
+   BRK - Break
+
+   LDX #$02 - Load the X register with constant 02
+   SYS - System Call
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   BRK - Break
+
+   Unknown opcode: 74
+
+   Unknown opcode: 72
+
+   Unknown opcode: 75
+
+   Unknown opcode: 65
+
+   BRK - Break
+
+   Unknown opcode: 66
+
+   Unknown opcode: 61
+
+   Unknown opcode: 6C
+
+   Unknown opcode: 73
+
+   Unknown opcode: 65
+
+   BRK - Break
+
+   Unknown opcode: 6E
+
+   Unknown opcode: 75
+
+   Unknown opcode: 6C
+
+   Unknown opcode: 6C
+
+   BRK - Break

@@ -1,0 +1,10 @@
+{
+    boolean a
+    boolean b
+    boolean c
+
+    c = (false == true)
+    print(c )
+    
+    
+}$ 

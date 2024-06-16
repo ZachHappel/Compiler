@@ -1,0 +1,11 @@
+{
+        int b
+        while(true == false) {
+                while true {
+                        int a
+                        a = 1
+                }
+        }
+        int c
+
+}$

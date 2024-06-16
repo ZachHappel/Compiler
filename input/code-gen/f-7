@@ -1,0 +1,8 @@
+{
+    boolean a
+    boolean b
+    boolean c
+    a = false
+    b = false
+    c = ((a == b) == ( a == b))
+}$

@@ -1,0 +1,10 @@
+{
+    int a
+    int b
+    string c
+    c = "hello"
+    a = 3
+    b = 1 + a
+    print(b)
+    
+    }$

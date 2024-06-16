@@ -1,0 +1,20 @@
+{
+  if (true == true) {
+    print("hello")
+    
+    if (false == false) {
+        print("shouldprint")
+        if (false == false) {
+            print("shouldprint")
+            
+        }
+    }
+
+    if (false == true) {
+        print("shouldntprint")
+    }
+
+  }
+  print("done")
+}$
+

@@ -1,0 +1,9 @@
+{
+    while (false != true) {
+        int j
+        print("a")
+    }
+    /*works too!! */
+    int a
+    int b
+}$

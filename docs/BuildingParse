@@ -1,0 +1,182 @@
+parseProgram()
+
+parseBlock()
+
+parseStatementList() {
+}
+
+parseStatement()
+
+parseAssignmentStatement()
+
+parseVarDecl()
+
+parseWhileStatement()
+
+parseIfStatement()
+
+parseExpression()
+
+parseIntExpression()
+
+parseStringExpression()
+
+parseBooleanExpression()
+
+parseId()
+
+parseChar()
+
+parseCharList()
+
+match()
+
+---
+
+ArrayList token_stream
+
+parseProgram (  token_stream ) {
+
+    parseBlock()
+    match($)
+
+}
+
+
+parseBlock () {
+    match({)
+    parseStatementList()
+    match(})
+}
+
+
+parseStatementList() {
+
+    // create statement list
+    statementListNew = new StatementListl; 
+    statement = parseStatement();
+    statementListNew.setChild(statement)
+
+
+
+    if (parsedStatment) {
+        childStatementList = new parseStatementList() // recursion, thereby creates another statement, which could be or something and another statementList
+
+        statementListNew.addChild(childStatementList)
+    }
+
+}
+
+
+parsePrintStatement () {
+    match(KEYWORD_PRINT)
+    match(SYMBOL_OPENPAREN)
+    parseExpression()
+    match(SYMBOL_CLOSEPAREN)
+}
+
+parseAssignmentStatement () {
+    match(IDENTIFIER)
+    match(SYMBOL_ASSIGNMENT)
+    parseExpr()
+}
+
+parseVariableDeclaration () {
+    String type = token.type
+    switch (type) {
+        case KEYWORD_INT:
+            match(KEYWORD_INT)
+            match(IDENTIFIER)
+            break;
+        case KEYWORD_STRING:
+            match(KEYWORD_STRING)
+            match(IDENTIFIER)
+            break; 
+        
+        case KEYWORD_BOOLEAN:
+            match(KEYWORD_BOOLEAN)
+            match(IDENTIFIER)
+            break;
+
+    }
+}
+
+parseWhileStatement () {
+    match(KEYWORD_WHILE)
+    parseBooleanExpression();
+    parseBlock();
+}
+
+parseIfStatement () {
+    match(IF_KEYWORD)
+    parseBooleanExpression()
+    parseBlock();
+}
+
+parseExpression () {
+
+}
+
+parseIntExpression () {
+    String tokenName = token.getName();
+    
+    match(DIGIT) // hopeful
+    if (next token !exists) return
+    new_token = getNextToken();
+    if (new_token.getName() is SYMBOL_INTOP) {
+        match(SYMBOL_INTOP) // assured
+        parseExpression()
+    }
+
+    return
+}
+
+parseStringExpression () {
+    match(SYMBOL_STRINGEXPRBOUNDARY)
+    parseCharacterList()
+    match(SYMBOL_STRINGEXPRBOUNDARY)
+}
+
+parseCharacterList () {
+    String token_name = token.getName()
+
+    if (name is char or space) {
+        parseCharacter()
+    }
+
+    else if (E) {
+        // Nothing gets added as children, empty charList
+    }
+}
+
+parseCharacter() {
+    if (character)
+        match(CHARACTER)
+    if (space)
+        match(SPACE)
+        
+}
+
+parseBooleanExpression () {
+    String tokenName = token.getName();
+
+    if (tokenName is SYMBOL_OPENPAREN) {
+        match(SYMBOL_OPENPAREN)
+        parseExpression()
+        if (nextToken.getName is SYMBOL_EQUIVALENCE or  
+            SYMBOL_INEQUIVALENCE)
+            
+            match(either SYMBOL_EQUIVALENCE or SYMBOL_INEQUIVALENCE)
+            parseExpression()
+            match(SYMBOL_CLOSEPAREN)
+    
+        else return // Maybe error here
+    
+    }
+
+    else if (tokenName is KEYWORD_TRUE or KEYWORD_FALSE) {
+        match(KEYWORD_TRUE or KEWYORD_FALSE)
+    }
+}
+
+

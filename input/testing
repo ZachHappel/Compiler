@@ -1,0 +1,38 @@
+{
+    print("hel lo")
+    print("z")
+    print("")
+    int x
+    int v
+    string s
+    boolean b
+    x = 3
+    v = 3 
+    while ( x == 3) {
+        while (x == v) {
+            b = true
+            int r
+            r = 3 + true /* Technically legal as far as parse is concerned */
+        }
+    }
+
+    if true {
+        int y
+        while false {
+            int z
+            if ( b == true) {
+                s = "hello"
+                if (x == 1 + 2) {
+                    s = "goodbye"
+                }
+            }
+
+        }
+    }
+
+    
+
+    
+    
+   
+}$

@@ -1,0 +1,23 @@
+{
+    boolean b
+    
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+    b = false
+
+
+    print(b)
+    print(b)
+
+    print(b)
+    print(b)
+    print(b)
+    print(b)
+    print(b)
+    
+}$

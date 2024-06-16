@@ -1,0 +1,17 @@
+{
+    int a
+    int b
+    a = 0
+    b = 0
+    boolean c
+    c = true
+    while (c == true) {
+        a = 1 + a
+        print(a)
+        if (a == 5) {
+            print("yes")
+            c = false
+        }
+    }
+    print("done")
+}$
